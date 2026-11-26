@@ -21,6 +21,7 @@ export function CameraCaptureModal({
   const fallbackInputRef = useRef<HTMLInputElement | null>(null);
 
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [cameraReady, setCameraReady] = useState(false);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualQr, setManualQr] = useState('');
@@ -35,6 +36,7 @@ export function CameraCaptureModal({
   useEffect(() => {
     if (!open) {
       stopStream();
+      setCameraReady(false);
       setCapturedDataUrl(null);
       setCameraError(null);
       setManualQr('');
@@ -42,6 +44,7 @@ export function CameraCaptureModal({
     }
 
     let cancelled = false;
+    setCameraReady(false);
     setCameraError(null);
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -200,8 +203,34 @@ export function CameraCaptureModal({
           </div>
         ) : (
           <>
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            {mode === 'qr' && (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              onLoadedData={() => setCameraReady(true)}
+              onPlaying={() => setCameraReady(true)}
+              className={`w-full h-full object-cover transition-opacity duration-200 ${
+                cameraReady ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+            {!cameraReady && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0F141E]">
+                <div className="relative h-16 w-16 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-[3px] border-white/15 border-t-[#FFF2A7] border-r-[#BEDEFF] animate-spin" />
+                  <img
+                    src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
+                    alt="Tolk"
+                    className="h-8 w-8 object-contain brightness-0 invert select-none"
+                  />
+                </div>
+                <span className="text-xs font-semibold text-white/75">
+                  Menyiapkan kamera...
+                </span>
+              </div>
+            )}
+            {mode === 'qr' && cameraReady && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="w-60 h-60 rounded-3xl border-4 border-[#FFF2A7] shadow-[0_0_0_9999px_rgba(15,20,30,0.55)]" />
               </div>

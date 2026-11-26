@@ -389,12 +389,12 @@ export function Sidebar({
       <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
         <div className="flex items-center justify-between gap-2">
           {/* Clean Left Logo (Chats) or Tab Title */}
-          <div className="h-10 px-1 flex items-center min-w-0">
+          <div className="h-11 px-1 flex items-center min-w-0">
             {activeTab === 'chats' ? (
               <img
                 src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
                 alt="Tolk by Lunola"
-                className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
+                className="tolk-logo-adaptive h-10 w-auto object-contain select-none"
               />
             ) : (
               <h1 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA] truncate">

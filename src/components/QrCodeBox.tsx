@@ -77,7 +77,7 @@ export function DigitalProfileQrCard({ user }: { user: UserProfile }) {
         <img
           src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
           alt="Tolk by Lunola"
-          className="h-5 w-auto object-contain brightness-0 invert"
+          className="h-7 w-auto object-contain brightness-0 invert"
         />
         <span className="px-2.5 py-0.5 rounded-full bg-[#FFF2A7] text-[#161B26] text-[10px] font-bold">
           ID Card

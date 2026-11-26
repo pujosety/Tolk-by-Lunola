@@ -154,7 +154,7 @@ export function AuthScreen({
                 <img
                   src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
                   alt="Tolk by Lunola"
-                  className="h-9 w-auto object-contain select-none brightness-0 invert"
+                  className="h-12 w-auto object-contain select-none brightness-0 invert"
                 />
               </div>
 

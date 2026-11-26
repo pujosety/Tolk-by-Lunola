@@ -1590,11 +1590,11 @@ export function App() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
               <div className="p5-impact-slam px-7 py-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg max-w-sm flex flex-col items-center">
-                <div className="mb-3.5 flex items-center justify-center">
+                <div className="mb-4 flex items-center justify-center">
                   <img
                     src="/assets/aistudio/tolk-stacked_d5d93707.svg"
                     alt="Tolk by Lunola"
-                    className="tolk-logo-adaptive h-24 w-auto object-contain select-none"
+                    className="tolk-logo-adaptive h-32 w-auto object-contain select-none"
                   />
                 </div>
                 <h2 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
