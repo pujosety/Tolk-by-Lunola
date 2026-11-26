@@ -211,32 +211,38 @@
 @keyframes p5ModalImpact {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.96);
+    filter: blur(5px);
+    transform: translateY(16px) scale(0.96);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateY(0) scale(1);
   }
 }
 
 @keyframes p5DrawerSlideLeft {
   0% {
-    opacity: 0.4;
+    opacity: 0.35;
+    filter: blur(4px);
     transform: translateX(-100%);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateX(0);
   }
 }
 
 @keyframes p5DrawerSlideRight {
   0% {
-    opacity: 0.4;
+    opacity: 0.35;
+    filter: blur(4px);
     transform: translateX(100%);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateX(0);
   }
 }
@@ -244,10 +250,12 @@
 @keyframes p5ChatSwitch {
   0% {
     opacity: 0;
-    transform: translateX(14px);
+    filter: blur(4px);
+    transform: translateX(16px);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateX(0);
   }
 }
@@ -255,14 +263,12 @@
 @keyframes p5MsgOwnPop {
   0% {
     opacity: 0;
-    transform: translate(14px, 10px) scale(0.92);
-  }
-  68% {
-    opacity: 1;
-    transform: translate(-1.5px, -1px) scale(1.015);
+    filter: blur(3px);
+    transform: translate(10px, 8px) scale(0.94);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translate(0, 0) scale(1);
   }
 }
@@ -270,14 +276,12 @@
 @keyframes p5MsgPeerPop {
   0% {
     opacity: 0;
-    transform: translate(-14px, 10px) scale(0.92);
-  }
-  68% {
-    opacity: 1;
-    transform: translate(1.5px, -1px) scale(1.015);
+    filter: blur(3px);
+    transform: translate(-10px, 8px) scale(0.94);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translate(0, 0) scale(1);
   }
 }
@@ -285,40 +289,36 @@
 @keyframes p5ImpactSlam {
   0% {
     opacity: 0;
-    transform: scale(0.82) rotate(-2.5deg) translateY(16px);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.035) rotate(0.6deg) translateY(-2px);
+    filter: blur(6px);
+    transform: scale(0.92) translateY(14px);
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(0deg) translateY(0);
+    filter: blur(0px);
+    transform: scale(1) translateY(0);
   }
 }
 
 @keyframes p5ToastImpact {
   0% {
     opacity: 0;
-    transform: translate(-50%, 24px) scale(0.88) skewX(-6deg);
-  }
-  65% {
-    opacity: 1;
-    transform: translate(-50%, -3px) scale(1.03) skewX(1deg);
+    filter: blur(4px);
+    transform: translateY(-14px) scale(0.94);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1) skewX(0deg);
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes p5ReactionPop {
   0% {
-    transform: scale(0.5);
+    transform: scale(0.6);
     opacity: 0;
   }
   70% {
-    transform: scale(1.18);
+    transform: scale(1.12);
     opacity: 1;
   }
   100% {
@@ -329,35 +329,34 @@
 
 @keyframes p5ImpactRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(139, 17, 43, 0.55);
+    box-shadow: 0 0 0 0 rgba(140, 0, 39, 0.42);
   }
   100% {
-    box-shadow: 0 0 0 14px rgba(139, 17, 43, 0);
+    box-shadow: 0 0 0 12px rgba(140, 0, 39, 0);
   }
 }
 
 @keyframes p5SendRecoil {
   0% {
-    transform: scale(1) translateX(0);
+    transform: scale(1);
   }
-  30% {
-    transform: scale(0.88) translateX(-3px);
-  }
-  68% {
-    transform: scale(1.09) translateX(3px);
+  40% {
+    transform: scale(0.92);
   }
   100% {
-    transform: scale(1) translateX(0);
+    transform: scale(1);
   }
 }
 
 @keyframes p5PanelReveal {
   0% {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    filter: blur(3px);
+    transform: translateY(-6px) scale(0.985);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateY(0) scale(1);
   }
 }
@@ -374,91 +373,103 @@
 @keyframes p5ModalOut {
   0% {
     opacity: 1;
-    transform: translateY(0) scale(1) skewX(0deg);
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(14px) scale(0.94) skewX(-2deg);
+    filter: blur(4px);
+    transform: translateY(12px) scale(0.96);
   }
 }
 
 @keyframes p5DrawerSlideLeftOut {
   0% {
     opacity: 1;
-    transform: translateX(0) skewX(0deg);
+    filter: blur(0px);
+    transform: translateX(0);
   }
   100% {
     opacity: 0.2;
-    transform: translateX(-104%) skewX(-3deg);
+    filter: blur(4px);
+    transform: translateX(-102%);
   }
 }
 
 @keyframes p5DrawerSlideRightOut {
   0% {
     opacity: 1;
-    transform: translateX(0) skewX(0deg);
+    filter: blur(0px);
+    transform: translateX(0);
   }
   100% {
     opacity: 0.2;
-    transform: translateX(104%) skewX(3deg);
+    filter: blur(4px);
+    transform: translateX(102%);
   }
 }
 
 @keyframes p5PanelHide {
   0% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-8px) scale(0.975);
+    filter: blur(3px);
+    transform: translateY(-6px) scale(0.98);
   }
 }
 
 @keyframes p5MenuPopIn {
   0% {
     opacity: 0;
-    transform: translateY(-6px) scale(0.92) skewX(-2deg);
-  }
-  70% {
-    opacity: 1;
-    transform: translateY(1px) scale(1.015) skewX(0.3deg);
+    filter: blur(4px);
+    transform: translateY(-6px) scale(0.94);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1) skewX(0deg);
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes p5MenuPopOut {
   0% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-6px) scale(0.92);
+    filter: blur(3px);
+    transform: translateY(-6px) scale(0.94);
   }
 }
 
 @keyframes p5ToastOut {
   0% {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1) skewX(0deg);
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, 20px) scale(0.9) skewX(-4deg);
+    filter: blur(4px);
+    transform: translateY(-10px) scale(0.95);
   }
 }
 
 @keyframes p5SidebarSwap {
   0% {
     opacity: 0;
+    filter: blur(3px);
     transform: translateX(-8px);
   }
   100% {
     opacity: 1;
+    filter: blur(0px);
     transform: translateX(0);
   }
 }
