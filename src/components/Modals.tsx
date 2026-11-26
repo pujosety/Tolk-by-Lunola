@@ -13,6 +13,7 @@ import {
   LogOut,
   Megaphone,
   MonitorSmartphone,
+  Palette,
   QrCode,
   Radio,
   RotateCcw,
@@ -29,8 +30,12 @@ import {
 } from 'lucide-react';
 import type {
   Attachment,
+  BubbleAccentId,
+  BubbleStyleId,
+  ChatAppearancePrefs,
   ChatRoom,
   ChatType,
+  ChatWallpaperId,
   DeviceSession,
   FriendRequest,
   LanguageCode,
@@ -47,6 +52,14 @@ import { formatTimeShort, isRunningInAndroidWebView } from '../lib/androidBridge
 import { requestBrowserNotificationPermission } from '../lib/pwa';
 import { Avatar } from './Avatar';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
+import {
+  BUBBLE_ACCENT_OPTIONS,
+  BUBBLE_STYLE_OPTIONS,
+  DEFAULT_CHAT_APPEARANCE,
+  WALLPAPER_OPTIONS,
+  getBubbleClasses,
+  getWallpaperStyle,
+} from '../lib/appearance';
 import { QrCodeBox } from './QrCodeBox';
 
 function ModalShell({
@@ -184,16 +197,16 @@ export function AuthModal({
       onClose={onClose}
     >
       <div className="flex items-center justify-center mb-4">
-        <div className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm flex items-center gap-2.5">
+        <div className="px-2 py-1 flex items-center gap-2.5">
           <img
             src="/assets/aistudio/tolk-symbol_95df402c.svg"
             alt="Tolk symbol"
-            className="h-8 w-8 object-contain select-none"
+            className="tolk-logo-adaptive h-8 w-8 object-contain select-none"
           />
           <img
             src="/assets/aistudio/tolk-wordmark_36d1b947.svg"
             alt="Tolk by Lunola"
-            className="h-7 w-auto object-contain select-none"
+            className="tolk-logo-adaptive h-7 w-auto object-contain select-none"
           />
         </div>
       </div>
@@ -1326,6 +1339,8 @@ export function SettingsModal({
   highContrast,
   notificationTone,
   vibrateEnabled,
+  appearance,
+  darkMode,
   user,
   users,
   onClose,
@@ -1334,6 +1349,7 @@ export function SettingsModal({
   onToggleHighContrast,
   onChangeTone,
   onToggleVibrate,
+  onChangeAppearance,
   onUpdatePrivacy,
   onUnblockUser,
 }: {
@@ -1343,6 +1359,8 @@ export function SettingsModal({
   highContrast: boolean;
   notificationTone: NotificationTone;
   vibrateEnabled: boolean;
+  appearance: ChatAppearancePrefs;
+  darkMode: boolean;
   user: UserProfile;
   users: Record<string, UserProfile>;
   onClose: () => void;
@@ -1351,9 +1369,11 @@ export function SettingsModal({
   onToggleHighContrast: () => void;
   onChangeTone: (tone: NotificationTone) => void;
   onToggleVibrate: () => void;
+  onChangeAppearance: (next: ChatAppearancePrefs) => void;
   onUpdatePrivacy: (patch: Partial<UserPrivacySettings>) => Promise<void>;
   onUnblockUser: (targetId: string) => Promise<void>;
 }) {
+  const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
   const [notifPermission, setNotifPermission] = useState<string>(() =>
     typeof window !== 'undefined' && 'Notification' in window
       ? Notification.permission
@@ -1382,8 +1402,154 @@ export function SettingsModal({
       onClose={onClose}
     >
       <div className="space-y-5 text-xs">
-        {/* Language & Accessibility */}
+        {/* Chat Personalization (Wallpaper & Bubble Style) */}
         <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
+              <Palette className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+              <span>Personalisasi Chat</span>
+            </h3>
+            <button
+              type="button"
+              onClick={() => onChangeAppearance(DEFAULT_CHAT_APPEARANCE)}
+              className="text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8] hover:text-[#8C0027]"
+            >
+              Reset Default
+            </button>
+          </div>
+
+          {/* Live Mini Chat Preview */}
+          <div
+            style={getWallpaperStyle(appearance, darkMode)}
+            className="p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col gap-2"
+          >
+            <div className={`self-start max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, false)}`}>
+              Wih, tampilan chatnya kece banget!
+            </div>
+            <div className={`self-end max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, true)}`}>
+              Bisa ganti wallpaper &amp; style bubble sesuka hati.
+            </div>
+          </div>
+
+          {/* Bubble Style */}
+          <div>
+            <div className="text-[#5A6578] dark:text-[#CBD5E1] font-semibold mb-1.5">Gaya Bubble</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {BUBBLE_STYLE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() =>
+                    onChangeAppearance({ ...appearance, bubbleStyle: opt.id as BubbleStyleId })
+                  }
+                  className={`py-2 px-2.5 rounded-xl border font-bold text-center transition-colors ${
+                    appearance.bubbleStyle === opt.id
+                      ? 'bg-[#8C0027] border-[#8C0027] text-white brutal-shadow-sm'
+                      : 'bg-[#F5F7FA] dark:bg-[#232D40] border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bubble Color */}
+          <div>
+            <div className="text-[#5A6578] dark:text-[#CBD5E1] font-semibold mb-1.5">Warna Bubble Kamu</div>
+            <div className="flex flex-wrap gap-2">
+              {BUBBLE_ACCENT_OPTIONS.map((acc) => (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() =>
+                    onChangeAppearance({ ...appearance, bubbleAccent: acc.id as BubbleAccentId })
+                  }
+                  aria-label={acc.label}
+                  title={acc.label}
+                  className={`h-8 px-2.5 rounded-full border flex items-center gap-1.5 font-bold ${
+                    appearance.bubbleAccent === acc.id
+                      ? 'border-[#161B26] dark:border-white bg-[#FFFFFF] dark:bg-[#232D40] brutal-shadow-sm'
+                      : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#1E2738]'
+                  }`}
+                >
+                  <span
+                    className="w-3.5 h-3.5 rounded-full shrink-0"
+                    style={{ backgroundColor: acc.hex }}
+                  />
+                  <span className="text-[11px]">{acc.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Wallpaper Presets + Custom Upload */}
+          <div>
+            <div className="text-[#5A6578] dark:text-[#CBD5E1] font-semibold mb-1.5">Wallpaper Chat</div>
+            <div className="grid grid-cols-3 gap-2">
+              {WALLPAPER_OPTIONS.map((wp) => (
+                <button
+                  key={wp.id}
+                  type="button"
+                  onClick={() =>
+                    onChangeAppearance({ ...appearance, wallpaper: wp.id as ChatWallpaperId })
+                  }
+                  className={`p-2 rounded-xl border text-left transition-all ${
+                    appearance.wallpaper === wp.id
+                      ? 'border-[#8C0027] ring-2 ring-[#8C0027]/25 bg-[#FFFFFF] dark:bg-[#232D40]'
+                      : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#1E2738]'
+                  }`}
+                >
+                  <div
+                    className="h-7 w-full rounded-lg border border-black/10 mb-1"
+                    style={{ background: wp.swatch }}
+                  />
+                  <div className="text-[11px] font-bold truncate">{wp.label}</div>
+                </button>
+              ))}
+
+              <input
+                ref={wallpaperInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    if (typeof reader.result === 'string') {
+                      onChangeAppearance({
+                        ...appearance,
+                        wallpaper: 'custom',
+                        customWallpaperUrl: reader.result,
+                      });
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => wallpaperInputRef.current?.click()}
+                className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                  appearance.wallpaper === 'custom'
+                    ? 'border-[#8C0027] ring-2 ring-[#8C0027]/25 bg-[#FFFFFF] dark:bg-[#232D40]'
+                    : 'border-dashed border-[#8C0027]/50 bg-[#EAF4FF]/60 dark:bg-[#1E2738]'
+                }`}
+              >
+                <div className="h-7 w-full rounded-lg bg-[#BEDEFF]/60 dark:bg-[#2B364B] flex items-center justify-center mb-1">
+                  <Camera className="w-4 h-4 text-[#161B26] dark:text-[#F1F5F9]" />
+                </div>
+                <div className="text-[11px] font-bold truncate">Foto Sendiri</div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Language & Accessibility */}
+        <section className="pt-4 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-3">
           <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
             <Globe className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Bahasa & Aksesibilitas</span>

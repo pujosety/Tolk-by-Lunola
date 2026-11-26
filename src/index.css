@@ -597,6 +597,11 @@
   background-color: rgba(214, 40, 73, 0.35);
 }
 
+/* Adaptive Tolk SVG logo in dark mode (turns dark ink wordmark crisp white without needing a frame) */
+.dark .tolk-logo-adaptive {
+  filter: brightness(0) invert(1);
+}
+
 /* Accessibility: text scaling */
 html[data-text-scale="sm"] {
   font-size: 14px;

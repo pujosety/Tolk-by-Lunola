@@ -84,11 +84,11 @@ export function AuthScreen({
             <div className="pointer-events-none absolute -bottom-12 -left-10 w-40 h-40 rounded-full bg-[#F59B00]/35 blur-xl" />
 
             <div className="relative z-10">
-              <div className="inline-flex items-center px-4 py-2.5 rounded-2xl bg-[#FFFFFF] border border-white/80 brutal-shadow-sm">
+              <div className="inline-flex items-center">
                 <img
                   src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
                   alt="Tolk by Lunola"
-                  className="h-8 w-auto object-contain select-none"
+                  className="h-9 w-auto object-contain select-none brightness-0 invert"
                 />
               </div>
 

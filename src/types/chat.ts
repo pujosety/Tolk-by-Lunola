@@ -21,6 +21,25 @@ export type TextScale = 'sm' | 'md' | 'lg';
 
 export type NotificationTone = 'lunola' | 'crystal' | 'soft' | 'mute';
 
+export type ChatWallpaperId =
+  | 'default'
+  | 'sky-breeze'
+  | 'butter-warm'
+  | 'burgundy-glow'
+  | 'minimal'
+  | 'custom';
+
+export type BubbleStyleId = 'tiktok' | 'classic' | 'clay' | 'outline';
+
+export type BubbleAccentId = 'burgundy' | 'amber' | 'sky' | 'emerald' | 'violet';
+
+export interface ChatAppearancePrefs {
+  wallpaper: ChatWallpaperId;
+  customWallpaperUrl?: string | null;
+  bubbleStyle: BubbleStyleId;
+  bubbleAccent: BubbleAccentId;
+}
+
 export interface UserPrivacySettings {
   lastSeenVisibility: PrivacyScope;
   whoCanMessage: PrivacyScope;

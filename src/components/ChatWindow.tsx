@@ -34,11 +34,13 @@ import {
 } from 'lucide-react';
 import type {
   Attachment,
+  ChatAppearancePrefs,
   ChatRoom,
   LanguageCode,
   Message,
   UserProfile,
 } from '../types/chat';
+import { getBubbleClasses, getWallpaperStyle } from '../lib/appearance';
 import {
   formatBytes,
   formatDateDivider,
@@ -66,6 +68,8 @@ interface ChatWindowProps {
   typingUserIds: string[];
   draftText: string;
   maxUploadMb: number;
+  appearance: ChatAppearancePrefs;
+  darkMode: boolean;
   onDraftChange: (text: string) => void;
   onBackMobile: () => void;
   onOpenInfo: () => void;
@@ -252,6 +256,8 @@ export function ChatWindow({
   typingUserIds,
   draftText,
   maxUploadMb,
+  appearance,
+  darkMode,
   onDraftChange,
   onBackMobile,
   onOpenInfo,
@@ -917,6 +923,7 @@ export function ChatWindow({
       {/* Messages Canvas */}
       <div
         key={chat.id}
+        style={getWallpaperStyle(appearance, darkMode)}
         className="p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5"
         onClick={() => setActiveMenuMsgId(null)}
       >
@@ -996,11 +1003,7 @@ export function ChatWindow({
 
                   <div className="relative max-w-[84%] sm:max-w-[68%]">
                     <div
-                      className={`rounded-xl px-3.5 py-2.5 border brutal-shadow-sm ${
-                        isOwn
-                          ? 'bg-[#8C0027] text-white border-[#6E001F]/30 dark:border-[#F47296]/25'
-                          : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] border-white/80 dark:border-[#2A364B]'
-                      }`}
+                      className={`px-3.5 py-2.5 ${getBubbleClasses(appearance, isOwn)}`}
                     >
                       {/* Group Sender Name */}
                       {showSenderName && (

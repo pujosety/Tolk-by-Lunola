@@ -210,12 +210,12 @@ export function Sidebar({
             onClick={onOpenDrawer}
             aria-label="Buka menu navigasi"
             title="Menu Tolk by Lunola"
-            className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#F5F7FA] bg-[#FFFFFF] hover:bg-[#EAF4FF] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
+            className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#2B364B] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
           >
             <img
               src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
               alt="Tolk by Lunola"
-              className="w-full h-full object-contain"
+              className="tolk-logo-adaptive w-full h-full object-contain"
             />
           </button>
 
@@ -311,11 +311,11 @@ export function Sidebar({
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="h-10 px-2.5 py-1 rounded-xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm flex items-center min-w-0">
+            <div className="h-10 px-1 flex items-center min-w-0">
               <img
                 src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
                 alt="Tolk by Lunola"
-                className="h-7 w-auto object-contain select-none"
+                className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
               />
             </div>
           </div>

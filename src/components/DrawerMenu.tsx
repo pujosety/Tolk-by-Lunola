@@ -315,11 +315,11 @@ export function DrawerMenu({
 
         {/* Footer */}
         <div className="pt-3 pb-safe-3 px-4 border-t border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] text-[11px] text-[#5A6578] dark:text-[#94A3B8] flex items-center justify-between gap-2">
-          <div className="px-2.5 py-1 rounded-xl bg-[#F5F7FA] border border-[#E6ECF2] flex items-center">
+          <div className="px-1 flex items-center">
             <img
               src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
               alt="Tolk by Lunola"
-              className="h-5 w-auto object-contain select-none"
+              className="tolk-logo-adaptive h-6 w-auto object-contain select-none"
             />
           </div>
           <span className="font-mono font-bold">Tolk by Lunola</span>

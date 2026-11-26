@@ -3,6 +3,7 @@ import { AlertTriangle, Megaphone, WifiOff, X } from 'lucide-react';
 import type {
   Attachment,
   CallRecord,
+  ChatAppearancePrefs,
   ChatRoom,
   ChatType,
   DeviceSession,
@@ -31,6 +32,7 @@ import {
   useOnlineStatus,
 } from './lib/pwa';
 import { useAnimatedPresence, useRetainedValue } from './lib/useAnimatedPresence';
+import { DEFAULT_CHAT_APPEARANCE } from './lib/appearance';
 import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInfoDrawer } from './components/ChatInfoDrawer';
@@ -129,6 +131,24 @@ export function App() {
   const [highContrast, setHighContrast] = useState(false);
   const [notificationTone, setNotificationTone] = useState<NotificationTone>('lunola');
   const [vibrateEnabled, setVibrateEnabled] = useState(true);
+  const [appearance, setAppearance] = useState<ChatAppearancePrefs>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_chat_appearance');
+      if (raw) return { ...DEFAULT_CHAT_APPEARANCE, ...(JSON.parse(raw) as Partial<ChatAppearancePrefs>) };
+    } catch {
+      // Ignore parse errors
+    }
+    return DEFAULT_CHAT_APPEARANCE;
+  });
+
+  const handleChangeAppearance = useCallback((next: ChatAppearancePrefs) => {
+    setAppearance(next);
+    try {
+      window.localStorage.setItem('tolk_chat_appearance', JSON.stringify(next));
+    } catch {
+      // Ignore quota errors
+    }
+  }, []);
 
   // Panels & Modals
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1371,6 +1391,8 @@ export function App() {
               typingUserIds={typingByChat[activeChat.id] || []}
               draftText={draftsByChat[activeChat.id] || ''}
               maxUploadMb={maxUploadMb}
+              appearance={appearance}
+              darkMode={darkMode}
               onDraftChange={(text) =>
                 setDraftsByChat((prev) => ({ ...prev, [activeChat.id]: text }))
               }
@@ -1399,11 +1421,11 @@ export function App() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
               <div className="p5-impact-slam px-6 py-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg max-w-sm flex flex-col items-center">
-                <div className="px-4 py-3 mb-3 rounded-xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm">
+                <div className="mb-3 flex items-center justify-center">
                   <img
                     src="/assets/aistudio/tolk-stacked_d5d93707.svg"
                     alt="Tolk by Lunola"
-                    className="h-24 w-auto object-contain select-none"
+                    className="tolk-logo-adaptive h-24 w-auto object-contain select-none"
                   />
                 </div>
                 <h2 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
@@ -1625,6 +1647,8 @@ export function App() {
         highContrast={highContrast}
         notificationTone={notificationTone}
         vibrateEnabled={vibrateEnabled}
+        appearance={appearance}
+        darkMode={darkMode}
         user={currentUser}
         users={users}
         onClose={() => setSettingsModalOpen(false)}
@@ -1636,6 +1660,7 @@ export function App() {
           playNotificationSound(tone, vibrateEnabled);
         }}
         onToggleVibrate={() => setVibrateEnabled((v) => !v)}
+        onChangeAppearance={handleChangeAppearance}
         onUpdatePrivacy={async (patch: Partial<UserPrivacySettings>) => {
           const { user: updated } = await api.updatePrivacy(token, patch);
           setCurrentUser(updated);

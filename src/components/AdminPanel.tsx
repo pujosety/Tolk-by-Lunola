@@ -288,16 +288,16 @@ export function AdminPanel({
         <div className="hidden md:flex pt-safe-2 pb-2 px-3.5 min-h-16 items-center justify-between gap-2 border-b border-[#E6ECF2] dark:border-[#2A364B] p5-maroon-banner shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <div className="px-2 py-0.5 rounded-lg bg-[#FFFFFF] border border-[#E6ECF2] brutal-shadow-sm flex items-center gap-1.5">
+              <div className="px-1 flex items-center gap-1.5">
                 <img
                   src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
                   alt="Tolk"
-                  className="h-4 w-4 object-contain"
+                  className="h-4 w-4 object-contain brightness-0 invert"
                 />
                 <img
                   src="/assets/aistudio/tolk-wordmark_36d1b947.svg"
                   alt="Tolk by Lunola"
-                  className="h-4 w-auto object-contain"
+                  className="h-4 w-auto object-contain brightness-0 invert"
                 />
               </div>
               <span className="p5-skew inline-block px-1.5 py-0.5 bg-[#161B26] text-[#FFFFFF] text-[10px] font-display font-extrabold uppercase tracking-wider">
