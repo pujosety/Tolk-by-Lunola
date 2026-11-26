@@ -78,7 +78,16 @@ interface StoredUser extends UserProfile {
   lastReadByChat: Record<string, number>;
   blockedUserIds: string[];
   mutedStoryUserIds: string[];
+  contactIds?: string[];
   privacy: UserPrivacySettings;
+}
+
+interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: number;
 }
 
 interface StoredChat {
@@ -111,6 +120,7 @@ interface StoreData {
   scheduledMessages: Message[];
   stories: StoryItem[];
   calls: CallRecord[];
+  friendRequests?: FriendRequest[];
   reports: ModerationReport[];
   auditLogs: AuditLogEntry[];
   settings: PlatformSettings;
@@ -594,6 +604,7 @@ function createSeedStore(): StoreData {
     scheduledMessages: [],
     stories,
     calls: [],
+    friendRequests: [],
     reports,
     auditLogs,
     settings,
@@ -616,6 +627,7 @@ function mergeAndRepairStore(parsed: Partial<StoreData>): { merged: StoreData; m
     scheduledMessages: parsed.scheduledMessages || [],
     stories: parsed.stories || base.stories,
     calls: parsed.calls || [],
+    friendRequests: parsed.friendRequests || [],
     reports: parsed.reports || base.reports,
     auditLogs: parsed.auditLogs || base.auditLogs,
     settings: { ...base.settings, ...(parsed.settings || {}) },
@@ -827,6 +839,7 @@ function toPublicUser(u: StoredUser, includeSelfFields = false): UserProfile {
     privacy: includeSelfFields ? u.privacy : undefined,
     blockedUserIds: includeSelfFields ? u.blockedUserIds : undefined,
     mutedStoryUserIds: includeSelfFields ? u.mutedStoryUserIds : undefined,
+    contactIds: includeSelfFields ? u.contactIds || [] : undefined,
   };
 }
 
@@ -1430,12 +1443,17 @@ async function startServer(): Promise<void> {
       .sort((a, b) => b.startedAt - a.startedAt)
       .slice(0, 50);
 
+    const userFriendRequests = (store.friendRequests || [])
+      .filter((r) => r.fromUserId === userId || r.toUserId === userId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
     res.json({
       user: toPublicUser(user, true),
       users: usersMap,
       chats,
       stories: getVisibleStoriesForUser(userId),
       calls: userCalls,
+      friendRequests: userFriendRequests,
       onlineUserIds: getOnlineUserIds(),
       settings: store.settings,
       adminAuthState: {
@@ -1567,6 +1585,147 @@ async function startServer(): Promise<void> {
     res.json({ users: list });
   });
 
+  // Lookup user by @username or display name (for adding contacts)
+  app.get('/api/users/lookup', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const raw = sanitizeText(req.query?.q, 64).replace(/^@/, '').toLowerCase();
+    if (raw.length < 2) {
+      res.json({ users: [] });
+      return;
+    }
+    const matches = Object.values(store.users)
+      .filter(
+        (u) =>
+          u.id !== userId &&
+          u.status === 'active' &&
+          (u.username.toLowerCase().includes(raw) || u.displayName.toLowerCase().includes(raw))
+      )
+      .slice(0, 15)
+      .map((u) => toPublicUser(u, false));
+    res.json({ users: matches });
+  });
+
+  // Send contact / friend request
+  app.post('/api/contacts/request', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const user = store.users[userId];
+    const targetUserId = sanitizeText(req.body?.targetUserId, 64);
+    const usernameInput = sanitizeUsername(req.body?.username || '');
+
+    const target = targetUserId
+      ? store.users[targetUserId]
+      : Object.values(store.users).find((u) => u.username.toLowerCase() === usernameInput);
+
+    if (!target || target.id === userId || target.status !== 'active') {
+      res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+      return;
+    }
+    if (target.blockedUserIds?.includes(userId)) {
+      res.status(403).json({ error: 'Tidak dapat mengirim permintaan kontak ke pengguna ini.' });
+      return;
+    }
+
+    user.contactIds = user.contactIds || [];
+    target.contactIds = target.contactIds || [];
+    if (user.contactIds.includes(target.id)) {
+      res.status(409).json({ error: 'Pengguna ini sudah ada di daftar kontak Anda.' });
+      return;
+    }
+
+    store.friendRequests = store.friendRequests || [];
+    // If target already sent a pending request to user, auto-accept
+    const reversePending = store.friendRequests.find(
+      (r) => r.fromUserId === target.id && r.toUserId === userId && r.status === 'pending'
+    );
+    if (reversePending) {
+      reversePending.status = 'accepted';
+      if (!user.contactIds.includes(target.id)) user.contactIds.push(target.id);
+      if (!target.contactIds.includes(userId)) target.contactIds.push(userId);
+      saveStore(store);
+      sendWsToUser(target.id, {
+        type: 'contact:accepted',
+        request: reversePending,
+        user: toPublicUser(user, false),
+      });
+      res.json({
+        request: reversePending,
+        autoAccepted: true,
+        targetUser: toPublicUser(target, false),
+      });
+      return;
+    }
+
+    const existingPending = store.friendRequests.find(
+      (r) => r.fromUserId === userId && r.toUserId === target.id && r.status === 'pending'
+    );
+    if (existingPending) {
+      res.status(409).json({ error: 'Permintaan kontak sudah dikirim dan menunggu persetujuan.' });
+      return;
+    }
+
+    const requestObj: FriendRequest = {
+      id: `freq_${crypto.randomBytes(6).toString('hex')}`,
+      fromUserId: userId,
+      toUserId: target.id,
+      status: 'pending',
+      createdAt: Date.now(),
+    };
+    store.friendRequests.unshift(requestObj);
+    saveStore(store);
+
+    sendWsToUser(target.id, {
+      type: 'contact:request',
+      request: requestObj,
+      fromUser: toPublicUser(user, false),
+    });
+
+    res.status(201).json({
+      request: requestObj,
+      autoAccepted: false,
+      targetUser: toPublicUser(target, false),
+    });
+  });
+
+  // Respond to incoming contact request
+  app.post('/api/contacts/respond', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const user = store.users[userId];
+    const requestId = sanitizeText(req.body?.requestId, 64);
+    const action = req.body?.action as 'accept' | 'reject';
+    if (action !== 'accept' && action !== 'reject') {
+      res.status(400).json({ error: 'Aksi tidak valid.' });
+      return;
+    }
+
+    store.friendRequests = store.friendRequests || [];
+    const freq = store.friendRequests.find(
+      (r) => r.id === requestId && r.toUserId === userId && r.status === 'pending'
+    );
+    if (!freq) {
+      res.status(404).json({ error: 'Permintaan kontak tidak ditemukan.' });
+      return;
+    }
+
+    freq.status = action === 'accept' ? 'accepted' : 'rejected';
+    const sender = store.users[freq.fromUserId];
+
+    if (action === 'accept' && sender) {
+      user.contactIds = user.contactIds || [];
+      sender.contactIds = sender.contactIds || [];
+      if (!user.contactIds.includes(sender.id)) user.contactIds.push(sender.id);
+      if (!sender.contactIds.includes(userId)) sender.contactIds.push(userId);
+
+      sendWsToUser(sender.id, {
+        type: 'contact:accepted',
+        request: freq,
+        user: toPublicUser(user, false),
+      });
+    }
+
+    saveStore(store);
+    res.json({ request: freq, contactIds: user.contactIds || [] });
+  });
+
   // Create Chat (DM, Group, Channel)
   app.post('/api/chats', requireAuth, (req: AuthedRequest, res) => {
     const userId = req.userId!;
@@ -1586,6 +1745,16 @@ async function startServer(): Promise<void> {
       const dmId = `dm_${[userId, targetUserId].sort().join('_')}`;
       let chat = store.chats[dmId];
       if (!chat) {
+        const caller = store.users[userId];
+        const isMutualContact =
+          Boolean(caller?.contactIds?.includes(targetUserId)) ||
+          Boolean(target.contactIds?.includes(userId));
+        if (!isMutualContact) {
+          res.status(403).json({
+            error: 'Tambahkan pengguna ke kontak terlebih dahulu dan tunggu persetujuan.',
+          });
+          return;
+        }
         chat = {
           id: dmId,
           type: 'dm',

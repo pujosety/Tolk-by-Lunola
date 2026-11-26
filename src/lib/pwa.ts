@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { NotificationTone } from '../types/chat';
+import { isRunningInAndroidWebView, notifyAndroidSystem } from './androidBridge';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -125,7 +126,12 @@ export async function requestBrowserNotificationPermission(): Promise<Notificati
 }
 
 export function showBrowserNotification(title: string, body: string, tag?: string): void {
-  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (typeof window === 'undefined') return;
+  if (isRunningInAndroidWebView()) {
+    notifyAndroidSystem(title, body);
+    return;
+  }
+  if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   if (!document.hidden) return;
   try {

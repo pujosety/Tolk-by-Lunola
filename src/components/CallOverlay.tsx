@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import type { CallRecord, UserProfile } from '../types/chat';
-import { formatDuration, formatTimeShort } from '../lib/androidBridge';
+import { formatDuration, formatTimeShort, setAndroidCallAudioMode } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
 
@@ -72,12 +72,22 @@ export function CallOverlay({
   }, [localStream]);
 
   useEffect(() => {
+    setAndroidCallAudioMode(Boolean(session));
+    return () => {
+      setAndroidCallAudioMode(false);
+    };
+  }, [session]);
+
+  useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      void remoteVideoRef.current.play().catch(() => {});
     }
     if (remoteAudioRef.current && remoteStream) {
       remoteAudioRef.current.srcObject = remoteStream;
       remoteAudioRef.current.muted = !speakerOn;
+      remoteAudioRef.current.volume = 1;
+      void remoteAudioRef.current.play().catch(() => {});
     }
   }, [remoteStream, speakerOn]);
 

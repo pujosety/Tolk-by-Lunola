@@ -46,6 +46,15 @@ export interface UserProfile {
   privacy?: UserPrivacySettings;
   blockedUserIds?: string[];
   mutedStoryUserIds?: string[];
+  contactIds?: string[];
+}
+
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: number;
 }
 
 export interface DeviceSession {
@@ -243,6 +252,7 @@ export interface BootstrapPayload {
   chats: ChatRoom[];
   stories: StoryItem[];
   calls: CallRecord[];
+  friendRequests?: FriendRequest[];
   onlineUserIds: string[];
   settings: PlatformSettings;
   adminAuthState: {

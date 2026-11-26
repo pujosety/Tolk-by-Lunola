@@ -10,6 +10,7 @@ import {
   Flag,
   Globe,
   LogOut,
+  Megaphone,
   MonitorSmartphone,
   QrCode,
   Radio,
@@ -30,10 +31,12 @@ import type {
   ChatRoom,
   ChatType,
   DeviceSession,
+  FriendRequest,
   LanguageCode,
   Message,
   ModerationReport,
   NotificationTone,
+  PlatformSettings,
   PrivacyScope,
   TextScale,
   UserPrivacySettings,
@@ -773,14 +776,22 @@ export function CreateChatModal({
   initialMode,
   users,
   currentUserId,
+  contactIds,
+  friendRequests,
   onClose,
+  onLookupUsers,
+  onSendContactRequest,
   onCreateChat,
 }: {
   open: boolean;
   initialMode: 'dm' | 'group' | 'channel';
   users: Record<string, UserProfile>;
   currentUserId: string;
+  contactIds: string[];
+  friendRequests: FriendRequest[];
   onClose: () => void;
+  onLookupUsers: (query: string) => Promise<UserProfile[]>;
+  onSendContactRequest: (targetUserId: string) => Promise<void>;
   onCreateChat: (payload: {
     type: ChatType;
     targetUserId?: string;
@@ -792,6 +803,8 @@ export function CreateChatModal({
 }) {
   const [mode, setMode] = useState<'dm' | 'group' | 'channel'>(initialMode);
   const [query, setQuery] = useState('');
+  const [lookupResults, setLookupResults] = useState<UserProfile[]>([]);
+  const [lookingUp, setLookingUp] = useState(false);
   const [title, setTitle] = useState('');
   const [handle, setHandle] = useState('');
   const [description, setDescription] = useState('');
@@ -801,13 +814,50 @@ export function CreateChatModal({
 
   useEffect(() => {
     setMode(initialMode);
+    if (open) {
+      setQuery('');
+      setLookupResults([]);
+      setError('');
+    }
   }, [initialMode, open]);
 
-  const otherUsers = Object.values(users).filter((u) => u.id !== currentUserId);
+  useEffect(() => {
+    const q = query.trim();
+    if (!open || mode !== 'dm' || q.length < 2) {
+      setLookupResults([]);
+      return;
+    }
+    let cancelled = false;
+    setLookingUp(true);
+    const timer = window.setTimeout(() => {
+      void onLookupUsers(q)
+        .then((res) => {
+          if (!cancelled) setLookupResults(res);
+        })
+        .catch(() => {
+          if (!cancelled) setLookupResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLookingUp(false);
+        });
+    }, 260);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, open, mode, onLookupUsers]);
+
+  const contactSet = new Set(contactIds);
+  const otherUsers = Object.values(users).filter(
+    (u) => u.id !== currentUserId && contactSet.has(u.id)
+  );
   const filteredUsers = otherUsers.filter(
     (u) =>
       u.displayName.toLowerCase().includes(query.toLowerCase()) ||
       u.username.toLowerCase().includes(query.toLowerCase())
+  );
+  const nonContactMatches = lookupResults.filter(
+    (u) => u.id !== currentUserId && !contactSet.has(u.id)
   );
 
   const toggleMember = (id: string) => {
@@ -898,34 +948,110 @@ export function CreateChatModal({
               className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
           </div>
-          <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-1">
-            {filteredUsers.map((u) => (
-              <button
-                key={u.id}
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    await onCreateChat({ type: 'dm', targetUserId: u.id });
-                    onClose();
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-                className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
-              >
-                <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
-                    {u.displayName}
-                  </div>
-                  <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
-                    @{u.username}
-                  </div>
+          <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-2">
+            {filteredUsers.length > 0 && (
+              <div className="space-y-1">
+                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E]">
+                  Kontak Anda ({filteredUsers.length})
                 </div>
-              </button>
-            ))}
+                {filteredUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await onCreateChat({ type: 'dm', targetUserId: u.id });
+                        onClose();
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
+                  >
+                    <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                        {u.displayName}
+                      </div>
+                      <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                        @{u.username}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {query.trim().length >= 2 && (
+              <div className="space-y-1 pt-1">
+                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E]">
+                  {lookingUp ? 'Mencari pengguna...' : 'Tambah Kontak Baru'}
+                </div>
+                {!lookingUp && nonContactMatches.length === 0 && filteredUsers.length === 0 && (
+                  <p className="px-2 py-2 text-xs text-[#787F75] dark:text-[#A3AD9E]">
+                    Pengguna tidak ditemukan.
+                  </p>
+                )}
+                {nonContactMatches.map((u) => {
+                  const outgoingPending = friendRequests.some(
+                    (r) => r.fromUserId === currentUserId && r.toUserId === u.id && r.status === 'pending'
+                  );
+                  const incomingPending = friendRequests.some(
+                    (r) => r.fromUserId === u.id && r.toUserId === currentUserId && r.status === 'pending'
+                  );
+                  return (
+                    <div
+                      key={u.id}
+                      className="w-full p-2.5 rounded-xl border border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2]/70 dark:bg-[#252C22] flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                            {u.displayName}
+                          </div>
+                          <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                            @{u.username}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={busy || outgoingPending}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            await onSendContactRequest(u.id);
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 brutal-press ${
+                          outgoingPending
+                            ? 'bg-[#E3E1DC] dark:bg-[#364032] text-[#5E645C] dark:text-[#A3AD9E] cursor-default'
+                            : 'bg-[#6A994E] hover:bg-[#58823F] text-white brutal-shadow-sm'
+                        }`}
+                      >
+                        {outgoingPending ? 'Menunggu' : incomingPending ? 'Terima' : '+ Tambah'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {filteredUsers.length === 0 && query.trim().length < 2 && (
+              <div className="px-3 py-6 text-center rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032]">
+                <p className="text-xs font-bold text-[#252A24] dark:text-[#F2F2F2]">
+                  Belum ada kontak
+                </p>
+                <p className="mt-1 text-[11px] text-[#5E645C] dark:text-[#A3AD9E]">
+                  Ketik minimal 2 huruf @username atau nama di atas untuk mencari dan menambahkan kontak.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -1612,6 +1738,164 @@ private val lunolaUrl = "${currentUrl}"
             Mode klien: <strong className="text-[#252A24] dark:text-[#F2F2F2]">{inAndroid ? 'Android WebView' : 'Web / PWA'}</strong>
           </span>
         </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+export function NotificationsModal({
+  open,
+  currentUserId,
+  users,
+  friendRequests,
+  settings,
+  onClose,
+  onRespondRequest,
+}: {
+  open: boolean;
+  currentUserId: string;
+  users: Record<string, UserProfile>;
+  friendRequests: FriendRequest[];
+  settings: PlatformSettings | null;
+  onClose: () => void;
+  onRespondRequest: (requestId: string, action: 'accept' | 'reject') => Promise<void>;
+}) {
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const incomingPending = friendRequests.filter(
+    (r) => r.toUserId === currentUserId && r.status === 'pending'
+  );
+  const outgoingPending = friendRequests.filter(
+    (r) => r.fromUserId === currentUserId && r.status === 'pending'
+  );
+  const announcement = settings?.globalAnnouncement?.trim() || '';
+
+  return (
+    <ModalShell
+      open={open}
+      title="Notifikasi"
+      subtitle="Pengumuman platform & permintaan kontak masuk."
+      onClose={onClose}
+    >
+      <div className="space-y-4">
+        {/* Platform Announcement */}
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
+            <Megaphone className="w-3.5 h-3.5 text-[#D96868]" />
+            <span>Pengumuman</span>
+          </div>
+          {announcement ? (
+            <div className="p-3.5 rounded-2xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#D96868]/30 text-xs text-[#252A24] dark:text-[#F2F2F2] leading-relaxed brutal-shadow-sm">
+              {announcement}
+            </div>
+          ) : (
+            <div className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] text-xs text-[#787F75] dark:text-[#A3AD9E]">
+              Tidak ada pengumuman terbaru.
+            </div>
+          )}
+        </div>
+
+        {/* Incoming Friend Requests */}
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
+            <UserPlus className="w-3.5 h-3.5 text-[#6A994E]" />
+            <span>Permintaan Kontak ({incomingPending.length})</span>
+          </div>
+          {incomingPending.length === 0 ? (
+            <div className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] text-xs text-[#787F75] dark:text-[#A3AD9E]">
+              Belum ada permintaan kontak masuk.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {incomingPending.map((req) => {
+                const sender = users[req.fromUserId];
+                if (!sender) return null;
+                return (
+                  <div
+                    key={req.id}
+                    className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-2 brutal-shadow-sm"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar
+                        name={sender.displayName}
+                        imageUrl={sender.avatarUrl}
+                        color={sender.avatarColor}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                          {sender.displayName}
+                        </div>
+                        <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                          @{sender.username} · {formatTimeShort(req.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        disabled={busyId === req.id}
+                        onClick={async () => {
+                          setBusyId(req.id);
+                          try {
+                            await onRespondRequest(req.id, 'reject');
+                          } finally {
+                            setBusyId(null);
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#1E241C] text-xs font-bold text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#D96868]"
+                      >
+                        Tolak
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === req.id}
+                        onClick={async () => {
+                          setBusyId(req.id);
+                          try {
+                            await onRespondRequest(req.id, 'accept');
+                          } finally {
+                            setBusyId(null);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-[#6A994E] hover:bg-[#58823F] text-white text-xs font-bold brutal-shadow-sm brutal-press"
+                      >
+                        Terima
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Outgoing Pending */}
+        {outgoingPending.length > 0 && (
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
+              Menunggu Persetujuan ({outgoingPending.length})
+            </div>
+            <div className="space-y-1.5">
+              {outgoingPending.map((req) => {
+                const target = users[req.toUserId];
+                if (!target) return null;
+                return (
+                  <div
+                    key={req.id}
+                    className="p-2.5 rounded-xl bg-[#F2F2F2]/70 dark:bg-[#252C22]/70 flex items-center justify-between gap-2 text-xs"
+                  >
+                    <span className="font-semibold truncate">
+                      {target.displayName} (@{target.username})
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#E3E1DC] dark:bg-[#364032] text-[11px] font-bold text-[#5E645C] dark:text-[#A3AD9E]">
+                      Menunggu
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </ModalShell>
   );

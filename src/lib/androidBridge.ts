@@ -4,6 +4,8 @@ declare global {
       isAndroidWebView?: () => boolean;
       hapticClick?: () => void;
       setStatusBarTheme?: (isDark: boolean) => void;
+      setCallAudioMode?: (inCall: boolean) => void;
+      showNotification?: (title: string, body: string) => void;
       showToast?: (message: string) => void;
     };
     __lunolaTalkHandleBack?: () => boolean;
@@ -35,6 +37,22 @@ export function syncAndroidStatusBar(isDark: boolean): void {
 export function notifyAndroidToast(message: string): void {
   try {
     window.LunolaTalkAndroid?.showToast?.(message);
+  } catch {
+    // Ignore outside Android WebView
+  }
+}
+
+export function notifyAndroidSystem(title: string, body: string): void {
+  try {
+    window.LunolaTalkAndroid?.showNotification?.(title, body);
+  } catch {
+    // Ignore outside Android WebView
+  }
+}
+
+export function setAndroidCallAudioMode(inCall: boolean): void {
+  try {
+    window.LunolaTalkAndroid?.setCallAudioMode?.(inCall);
   } catch {
     // Ignore outside Android WebView
   }

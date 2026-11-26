@@ -7,6 +7,7 @@ import type {
   ChatType,
   DeviceSession,
   FolderKey,
+  FriendRequest,
   LanguageCode,
   Message,
   ModerationReport,
@@ -38,6 +39,7 @@ import {
   AuthModal,
   CreateChatModal,
   ForwardModal,
+  NotificationsModal,
   ProfileModal,
   ReportModal,
   SessionsModal,
@@ -95,6 +97,7 @@ export function App() {
   const [chats, setChats] = useState<ChatRoom[]>([]);
   const [stories, setStories] = useState<StoryItem[]>([]);
   const [calls, setCalls] = useState<CallRecord[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [adminAuthState, setAdminAuthState] = useState({
     hasClaimedAdmin: false,
@@ -138,6 +141,7 @@ export function App() {
   const [sessionsList, setSessionsList] = useState<DeviceSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [callHistoryOpen, setCallHistoryOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [createModalState, setCreateModalState] = useState<{
     open: boolean;
@@ -280,6 +284,7 @@ export function App() {
         setChats(sortChats(data.chats));
         setStories(data.stories);
         setCalls(data.calls);
+        setFriendRequests(data.friendRequests || []);
         setSettings(data.settings);
         setAdminAuthState(data.adminAuthState);
         setMaxUploadMb(data.serverInfo.maxUploadMb || 25);
@@ -364,10 +369,8 @@ export function App() {
       };
 
       pc.ontrack = (ev) => {
-        const stream = ev.streams[0];
-        if (stream) {
-          setRemoteStream(stream);
-        }
+        const stream = ev.streams[0] || new MediaStream([ev.track]);
+        setRemoteStream(stream);
       };
 
       pc.onconnectionstatechange = () => {
@@ -748,6 +751,34 @@ export function App() {
         case 'settings:updated':
           setSettings(evt.settings);
           setMaxUploadMb(evt.settings.maxUploadMb || 25);
+          break;
+
+        case 'contact:request':
+          setUsers((prev) => ({ ...prev, [evt.fromUser.id]: evt.fromUser }));
+          setFriendRequests((prev) => [evt.request, ...prev.filter((r) => r.id !== evt.request.id)]);
+          playNotificationSound(toneRef.current, vibrateRef.current);
+          showBrowserNotification(
+            'Permintaan Kontak Baru',
+            `${evt.fromUser.displayName} (@${evt.fromUser.username}) ingin menambahkan Anda sebagai kontak.`,
+            evt.request.id
+          );
+          showToast(`${evt.fromUser.displayName} mengirim permintaan kontak.`);
+          break;
+
+        case 'contact:accepted':
+          setUsers((prev) => ({ ...prev, [evt.user.id]: evt.user }));
+          setFriendRequests((prev) =>
+            prev.map((r) => (r.id === evt.request.id ? { ...r, status: 'accepted' } : r))
+          );
+          setCurrentUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  contactIds: Array.from(new Set([...(prev.contactIds || []), evt.user.id])),
+                }
+              : prev
+          );
+          showToast(`${evt.user.displayName} menerima permintaan kontak Anda.`);
           break;
 
         // WebRTC Call Signaling
@@ -1249,6 +1280,11 @@ export function App() {
             searchInputRef={searchInputRef}
             wsConnected={wsConnected}
             minimized={sidebarMinimized}
+            notificationCount={
+              friendRequests.filter(
+                (r) => r.toUserId === currentUser.id && r.status === 'pending'
+              ).length + (settings?.globalAnnouncement?.trim() ? 1 : 0)
+            }
             onToggleMinimize={() => setSidebarMinimized((v) => !v)}
             onQuickSearch={() => {
               setSidebarMinimized(false);
@@ -1259,6 +1295,43 @@ export function App() {
             onSelectChat={handleSelectChat}
             onOpenDrawer={() => setDrawerOpen(true)}
             onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
+            onOpenNotifications={() => setNotificationsOpen(true)}
+            onDeleteChat={async (chatId) => {
+              await api.deleteChat(token, chatId);
+              setChats((prev) => prev.filter((c) => c.id !== chatId));
+              setMessagesByChat((prev) => {
+                const next = { ...prev };
+                delete next[chatId];
+                return next;
+              });
+              if (activeChatId === chatId) {
+                setActiveChatId(null);
+                setMobileShowChat(false);
+              }
+              showToast('Percakapan dihapus.');
+            }}
+            onTogglePinChat={async (chatId) => {
+              const target = chats.find((c) => c.id === chatId);
+              if (!target) return;
+              const prefs = await api.updateChatPreferences(token, chatId, {
+                pinned: !target.isPinnedByUser,
+              });
+              setChats((prev) =>
+                sortChats(prev.map((c) => (c.id === chatId ? { ...c, ...prefs } : c)))
+              );
+              showToast(prefs.isPinnedByUser ? 'Chat disematkan.' : 'Semat dilepas.');
+            }}
+            onToggleArchiveChat={async (chatId) => {
+              const target = chats.find((c) => c.id === chatId);
+              if (!target) return;
+              const prefs = await api.updateChatPreferences(token, chatId, {
+                archived: !target.isArchivedByUser,
+              });
+              setChats((prev) =>
+                sortChats(prev.map((c) => (c.id === chatId ? { ...c, ...prefs } : c)))
+              );
+              showToast(prefs.isArchivedByUser ? 'Chat diarsipkan.' : 'Dikeluarkan dari arsip.');
+            }}
             onCreateStory={handleCreateStory}
             onUploadStoryMedia={(file) => handleUploadFile(file)}
             onViewStory={(storyId) => {
@@ -1480,8 +1553,47 @@ export function App() {
         initialMode={createModalState.mode}
         users={users}
         currentUserId={currentUser.id}
+        contactIds={currentUser.contactIds || []}
+        friendRequests={friendRequests}
         onClose={() => setCreateModalState((s) => ({ ...s, open: false }))}
+        onLookupUsers={async (q) => {
+          const { users: matched } = await api.lookupUsers(token, q);
+          return matched;
+        }}
+        onSendContactRequest={async (targetUserId) => {
+          const res = await api.sendContactRequest(token, { targetUserId });
+          setUsers((prev) => ({ ...prev, [res.targetUser.id]: res.targetUser }));
+          setFriendRequests((prev) => [res.request, ...prev.filter((r) => r.id !== res.request.id)]);
+          if (res.autoAccepted) {
+            setCurrentUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    contactIds: Array.from(new Set([...(prev.contactIds || []), res.targetUser.id])),
+                  }
+                : prev
+            );
+            showToast(`${res.targetUser.displayName} ditambahkan ke kontak.`);
+          } else {
+            showToast(`Permintaan kontak dikirim ke ${res.targetUser.displayName}.`);
+          }
+        }}
         onCreateChat={handleCreateChat}
+      />
+
+      <NotificationsModal
+        open={notificationsOpen}
+        currentUserId={currentUser.id}
+        users={users}
+        friendRequests={friendRequests}
+        settings={settings}
+        onClose={() => setNotificationsOpen(false)}
+        onRespondRequest={async (requestId, action) => {
+          const res = await api.respondContactRequest(token, requestId, action);
+          setFriendRequests((prev) => prev.map((r) => (r.id === requestId ? res.request : r)));
+          setCurrentUser((prev) => (prev ? { ...prev, contactIds: res.contactIds } : prev));
+          showToast(action === 'accept' ? 'Permintaan kontak diterima.' : 'Permintaan kontak ditolak.');
+        }}
       />
 
       <ForwardModal

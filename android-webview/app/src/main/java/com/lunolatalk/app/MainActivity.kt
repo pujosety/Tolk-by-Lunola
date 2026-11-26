@@ -2,9 +2,14 @@ package com.lunolatalk.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,8 +27,11 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 /**
@@ -34,9 +42,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingWebPermissionRequest: PermissionRequest? = null
+    private var pendingWebResources: List<String> = emptyList()
+    private var notificationCounter = 100
 
-    // Ganti URL ini dengan domain Wasmer Edge hasil `wasmer deploy`
     private val wasmerAppUrl = BuildConfig.WASMER_APP_URL
+    private val notifChannelId = "tolk_messages_channel"
 
     private val fileChooserLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -48,8 +59,34 @@ class MainActivity : AppCompatActivity() {
 
     private val mediaPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
-            val denied = results.values.any { !it }
-            if (denied) {
+            val req = pendingWebPermissionRequest
+            val resources = pendingWebResources
+            pendingWebPermissionRequest = null
+            pendingWebResources = emptyList()
+
+            if (req != null) {
+                val grantable = mutableListOf<String>()
+                if (resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE) &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    grantable.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                }
+                if (resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE) &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    grantable.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                }
+                if (grantable.isNotEmpty()) {
+                    req.grant(grantable.toTypedArray())
+                } else {
+                    req.deny()
+                }
+            }
+
+            val deniedMedia = results.entries.any {
+                (it.key == Manifest.permission.RECORD_AUDIO || it.key == Manifest.permission.CAMERA) && !it.value
+            }
+            if (deniedMedia) {
                 Toast.makeText(
                     this,
                     "Izin mikrofon/kamera dibutuhkan untuk pesan suara & panggilan WebRTC",
@@ -58,13 +95,27 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        createNotificationChannel()
+        requestNotificationPermissionIfNeeded()
 
         webView = WebView(this)
         setContentView(webView)
+
+        // Adaptive system bar + IME insets so buttons & bottom nav never get covered
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
+            val insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
+            )
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
 
         webView.settings.apply {
             javaScriptEnabled = true
@@ -73,7 +124,7 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = false
             allowContentAccess = true
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            userAgentString = "$userAgentString LunolaTalkAndroid/2.0"
+            userAgentString = "$userAgentString LunolaTalkAndroid/2.1"
         }
 
         webView.addJavascriptInterface(LunolaTalkJsBridge(), "LunolaTalkAndroid")
@@ -106,7 +157,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPermissionRequest(request: PermissionRequest?) {
-                val resources = request?.resources ?: return
+                val req = request ?: return
+                val resources = req.resources ?: return
                 val allowed = mutableListOf<String>()
                 val missingAndroidPerms = mutableListOf<String>()
 
@@ -129,12 +181,13 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (missingAndroidPerms.isNotEmpty()) {
+                    pendingWebPermissionRequest = req
+                    pendingWebResources = resources.toList()
                     mediaPermissionLauncher.launch(missingAndroidPerms.toTypedArray())
-                    request.deny()
                 } else if (allowed.isNotEmpty()) {
-                    request.grant(allowed.toTypedArray())
+                    req.grant(allowed.toTypedArray())
                 } else {
-                    request.deny()
+                    req.deny()
                 }
             }
         }
@@ -156,6 +209,33 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(wasmerAppUrl)
     }
 
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                notifChannelId,
+                "Pesan & Panggilan Tolk",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi pesan baru, panggilan, dan permintaan kontak"
+                enableVibration(true)
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
     inner class LunolaTalkJsBridge {
         @JavascriptInterface
         fun isAndroidWebView(): Boolean = true
@@ -173,9 +253,64 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun setStatusBarTheme(isDark: Boolean) {
             runOnUiThread {
-                window.statusBarColor = if (isDark) Color.parseColor("#0D0B0E") else Color.parseColor("#F6F2EB")
+                val bg = if (isDark) Color.parseColor("#151914") else Color.parseColor("#F2F2F2")
+                window.statusBarColor = bg
+                window.navigationBarColor = bg
                 val controller = WindowInsetsControllerCompat(window, window.decorView)
                 controller.isAppearanceLightStatusBars = !isDark
+                controller.isAppearanceLightNavigationBars = !isDark
+            }
+        }
+
+        @JavascriptInterface
+        fun setCallAudioMode(inCall: Boolean) {
+            runOnUiThread {
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return@runOnUiThread
+                if (inCall) {
+                    audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+                    @Suppress("DEPRECATION")
+                    audioManager.isSpeakerphoneOn = true
+                } else {
+                    @Suppress("DEPRECATION")
+                    audioManager.isSpeakerphoneOn = false
+                    audioManager.mode = AudioManager.MODE_NORMAL
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun showNotification(title: String, body: String) {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return@runOnUiThread
+                }
+
+                val launchIntent = Intent(this@MainActivity, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    this@MainActivity,
+                    0,
+                    launchIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                val notification = NotificationCompat.Builder(this@MainActivity, notifChannelId)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle(title.take(80))
+                    .setContentText(body.take(180))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                    .build()
+
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.notify(notificationCounter++, notification)
             }
         }
 

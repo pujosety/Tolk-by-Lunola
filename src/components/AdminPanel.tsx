@@ -283,9 +283,9 @@ export function AdminPanel({
         closing ? 'p5-modal-out pointer-events-none' : 'p5-modal-impact'
       } fixed inset-0 z-50 bg-[#F2F2F2] dark:bg-[#151914] flex flex-col md:flex-row overflow-hidden`}
     >
-      {/* Left Admin Navigation (10 Modules) */}
-      <aside className="w-full md:w-64 shrink-0 bg-[#FBF9F6] dark:bg-[#1E241C] border-b-2 md:border-b-0 md:border-r-2 border-[#E3E1DC] dark:border-[#364032] flex flex-col">
-        <div className="pt-safe-2 pb-2 px-3.5 min-h-16 flex items-center justify-between gap-2 border-b-2 border-[#E3E1DC] dark:border-[#364032] p5-maroon-banner shrink-0">
+      {/* Navigation: Left Sidebar on Desktop, Bottom Icon Bar on Mobile */}
+      <aside className="order-last md:order-first w-full md:w-64 shrink-0 bg-[#FBF9F6] dark:bg-[#1E241C] border-t md:border-t-0 md:border-r border-[#E3E1DC] dark:border-[#364032] flex flex-col z-20">
+        <div className="hidden md:flex pt-safe-2 pb-2 px-3.5 min-h-16 items-center justify-between gap-2 border-b border-[#E3E1DC] dark:border-[#364032] p5-maroon-banner shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <div className="px-2 py-0.5 rounded-lg bg-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm flex items-center gap-1.5">
@@ -318,7 +318,7 @@ export function AdminPanel({
           </button>
         </div>
 
-        <nav className="flex md:flex-col overflow-x-auto md:overflow-y-auto p-2.5 gap-1.5 thin-scrollbar">
+        <nav className="flex md:flex-col overflow-x-auto md:overflow-y-auto px-2 pt-2 pb-safe-2 md:p-2.5 gap-1.5 thin-scrollbar justify-start">
           {ADMIN_MENUS.map((item) => {
             const active = menu === item.key;
             return (
@@ -326,14 +326,16 @@ export function AdminPanel({
                 key={item.key}
                 type="button"
                 onClick={() => setMenu(item.key)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 transition-colors text-left brutal-press ${
+                title={item.label}
+                aria-label={item.label}
+                className={`flex items-center justify-center md:justify-start gap-2.5 h-11 w-11 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 transition-colors text-left brutal-press ${
                   active
                     ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white brutal-shadow-sm'
                     : 'border-transparent text-[#5E645C] dark:text-[#CBBBC2] hover:border-[#E3E1DC] dark:hover:border-[#3C4738] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
                 }`}
               >
                 {item.icon}
-                <span>{item.label}</span>
+                <span className="hidden md:inline">{item.label}</span>
               </button>
             );
           })}
@@ -342,18 +344,27 @@ export function AdminPanel({
 
       {/* Main Admin Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 px-6 bg-[#FBF9F6] dark:bg-[#1E241C] border-b-2 border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-4 shrink-0">
-          <div className="font-display font-extrabold text-lg text-[#252A24] dark:text-[#F2F2F2] truncate">
+        <header className="pt-safe-2 pb-2 min-h-16 px-4 sm:px-6 bg-[#FBF9F6] dark:bg-[#1E241C] border-b border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-3 shrink-0">
+          <div className="font-display font-extrabold text-base sm:text-lg text-[#252A24] dark:text-[#F2F2F2] truncate">
             Admin Panel / <span className="text-[#D96868] dark:text-[#E58383]">{ADMIN_MENUS.find((m) => m.key === menu)?.label}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={refreshSection}
+              aria-label="Segarkan"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-press"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Segarkan</span>
+              <span className="hidden sm:inline">Segarkan</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Tutup Admin Panel"
+              className="md:hidden h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white flex items-center justify-center shrink-0"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
         </header>

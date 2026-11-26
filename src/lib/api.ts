@@ -8,6 +8,7 @@ import type {
   ChatRoom,
   ChatType,
   DeviceSession,
+  FriendRequest,
   Message,
   ModerationReport,
   PlatformSettings,
@@ -35,6 +36,8 @@ export type ServerWsEvent =
   | { type: 'story:updated'; story: StoryItem }
   | { type: 'story:deleted'; storyId: string }
   | { type: 'settings:updated'; settings: PlatformSettings }
+  | { type: 'contact:request'; request: FriendRequest; fromUser: UserProfile }
+  | { type: 'contact:accepted'; request: FriendRequest; user: UserProfile }
   | {
       type: 'call:invite' | 'call:offer' | 'call:answer' | 'call:ice' | 'call:reject' | 'call:end';
       fromUserId: string;
@@ -94,6 +97,28 @@ export const api = {
 
   logout: (token: string) =>
     requestJson<{ ok: boolean }>('/api/auth/logout', { method: 'POST', token }),
+
+  lookupUsers: (token: string, query: string) =>
+    requestJson<{ users: UserProfile[] }>(`/api/users/lookup?q=${encodeURIComponent(query)}`, {
+      token,
+    }),
+
+  sendContactRequest: (token: string, payload: { targetUserId?: string; username?: string }) =>
+    requestJson<{ request: FriendRequest; autoAccepted?: boolean; targetUser: UserProfile }>(
+      '/api/contacts/request',
+      { method: 'POST', token, body: payload }
+    ),
+
+  respondContactRequest: (
+    token: string,
+    requestId: string,
+    action: 'accept' | 'reject'
+  ) =>
+    requestJson<{ request: FriendRequest; contactIds: string[] }>('/api/contacts/respond', {
+      method: 'POST',
+      token,
+      body: { requestId, action },
+    }),
 
   getSessions: (token: string) =>
     requestJson<{ sessions: DeviceSession[] }>('/api/sessions', { token }),

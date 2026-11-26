@@ -1,6 +1,7 @@
-import { useMemo, type RefObject } from 'react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
 import {
   Archive,
+  Bell,
   BellOff,
   Check,
   CheckCheck,
@@ -16,6 +17,7 @@ import {
   Radio,
   Search,
   Timer,
+  Trash2,
   Users,
   X,
 } from 'lucide-react';
@@ -47,6 +49,7 @@ interface SidebarProps {
   searchInputRef: RefObject<HTMLInputElement | null>;
   wsConnected: boolean;
   minimized: boolean;
+  notificationCount: number;
   onToggleMinimize: () => void;
   onQuickSearch: () => void;
   onSelectFolder: (folder: FolderKey) => void;
@@ -54,6 +57,10 @@ interface SidebarProps {
   onSelectChat: (chatId: string) => void;
   onOpenDrawer: () => void;
   onOpenNewChat: () => void;
+  onOpenNotifications: () => void;
+  onDeleteChat: (chatId: string) => Promise<void>;
+  onTogglePinChat: (chatId: string) => Promise<void>;
+  onToggleArchiveChat: (chatId: string) => Promise<void>;
   onCreateStory: (payload: {
     kind: 'text' | 'image' | 'video';
     text: string;
@@ -85,6 +92,7 @@ export function Sidebar({
   searchInputRef,
   wsConnected,
   minimized,
+  notificationCount,
   onToggleMinimize,
   onQuickSearch,
   onSelectFolder,
@@ -92,6 +100,10 @@ export function Sidebar({
   onSelectChat,
   onOpenDrawer,
   onOpenNewChat,
+  onOpenNotifications,
+  onDeleteChat,
+  onTogglePinChat,
+  onToggleArchiveChat,
   onCreateStory,
   onUploadStoryMedia,
   onViewStory,
@@ -99,6 +111,27 @@ export function Sidebar({
   onMuteStoryAuthor,
   onReplyToStory,
 }: SidebarProps) {
+  const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+
+  const startLongPress = (chat: ChatRoom) => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+    }
+    longPressTimerRef.current = window.setTimeout(() => {
+      setConfirmDeleteId(null);
+      setPreviewChat(chat);
+    }, 480);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   const archivedCount = useMemo(
     () => chats.filter((c) => Boolean(c.isArchivedByUser)).length,
     [chats]
@@ -287,15 +320,31 @@ export function Sidebar({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onToggleMinimize}
-            aria-label="Perkecil sidebar"
-            title="Perkecil sidebar (Ctrl+B)"
-            className="hidden md:flex h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
-          >
-            <PanelLeftClose className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              aria-label="Notifikasi"
+              title="Notifikasi & Permintaan Kontak"
+              className="relative h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Bell className="w-4 h-4" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#D96868] text-white text-[10px] font-mono font-bold flex items-center justify-center border border-white dark:border-[#1E241C]">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleMinimize}
+              aria-label="Perkecil sidebar"
+              title="Perkecil sidebar (Ctrl+B)"
+              className="hidden md:flex h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="relative">
@@ -437,7 +486,16 @@ export function Sidebar({
                 key={chat.id}
                 type="button"
                 onClick={() => onSelectChat(chat.id)}
-                className={`p5-row-motion w-full px-2.5 py-2.5 rounded-xl flex items-center gap-3 text-left border ${
+                onPointerDown={() => startLongPress(chat)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onPointerCancel={cancelLongPress}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteId(null);
+                  setPreviewChat(chat);
+                }}
+                className={`p5-row-motion w-full px-2.5 py-2.5 rounded-xl flex items-center gap-3 text-left border select-none ${
                   isSelected
                     ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm'
                     : 'bg-[#FBF9F6] dark:bg-[#252C22] text-[#252A24] dark:text-[#F2F2F2] border-transparent hover:border-[#E3E1DC] dark:hover:border-[#D96868] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]'
@@ -578,16 +636,138 @@ export function Sidebar({
 
       </div>
 
-      {/* Neo-Brutalist Floating Compose Button */}
+      {/* 3D Pastel Floating Compose Button */}
       <button
         type="button"
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="absolute bottom-5 right-5 h-12 w-12 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow brutal-press p5-slash-btn flex items-center justify-center z-20"
+        className="absolute bottom-6 right-5 h-12 w-12 rounded-2xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-white/60 dark:border-[#F2F2F2]/40 brutal-shadow-maroon brutal-press p5-slash-btn flex items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>
+
+      {/* Long-Press Chat Preview & Quick Actions Popup */}
+      {previewChat && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div
+            className="p5-backdrop-in fixed inset-0 bg-[#151914]/60 backdrop-blur-[2px]"
+            onClick={() => setPreviewChat(null)}
+          />
+          <div className="p5-modal-impact relative z-10 w-full max-w-sm rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-lg overflow-hidden">
+            <div className="p-4 border-b border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar
+                  name={previewChat.title}
+                  imageUrl={previewChat.avatarUrl}
+                  color={previewChat.avatarColor}
+                  chatType={previewChat.type}
+                  size="sm"
+                />
+                <div className="min-w-0">
+                  <div className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] truncate">
+                    {previewChat.title}
+                  </div>
+                  <div className="text-[11px] text-[#5E645C] dark:text-[#A3AD9E] truncate">
+                    {previewChat.type === 'saved'
+                      ? 'Pesan Tersimpan'
+                      : previewChat.type === 'dm'
+                        ? 'Obrolan Pribadi'
+                        : `${previewChat.memberIds.length} anggota`}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewChat(null)}
+                aria-label="Tutup pratinjau"
+                className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#2B3328] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032]">
+                <div className="text-[11px] font-bold text-[#5E645C] dark:text-[#A3AD9E] mb-1">
+                  Pratinjau Pesan Terakhir
+                </div>
+                <p className="text-xs text-[#252A24] dark:text-[#F2F2F2] line-clamp-3 leading-relaxed">
+                  {previewChat.lastMessage?.text ||
+                    previewChat.lastMessage?.attachment?.name ||
+                    previewChat.description ||
+                    'Belum ada pesan di percakapan ini.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id = previewChat.id;
+                    setPreviewChat(null);
+                    onSelectChat(id);
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-white text-xs font-bold brutal-shadow-sm brutal-press"
+                >
+                  Buka Chat
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const id = previewChat.id;
+                    setPreviewChat(null);
+                    await onTogglePinChat(id);
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#364032] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] flex items-center justify-center gap-1.5"
+                >
+                  <Pin className="w-3.5 h-3.5 text-[#D96868]" />
+                  <span>{previewChat.isPinnedByUser ? 'Lepas Semat' : 'Sematkan'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const id = previewChat.id;
+                    setPreviewChat(null);
+                    await onToggleArchiveChat(id);
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#364032] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] flex items-center justify-center gap-1.5"
+                >
+                  <Archive className="w-3.5 h-3.5 text-[#6A994E]" />
+                  <span>{previewChat.isArchivedByUser ? 'Buka Arsip' : 'Arsipkan'}</span>
+                </button>
+
+                {previewChat.type !== 'saved' && (
+                  confirmDeleteId === previewChat.id ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const id = previewChat.id;
+                        setPreviewChat(null);
+                        setConfirmDeleteId(null);
+                        await onDeleteChat(id);
+                      }}
+                      className="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold brutal-shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Konfirmasi Hapus</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(previewChat.id)}
+                      className="py-2.5 px-3 rounded-xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#D96868]/40 text-xs font-bold text-[#C45454] dark:text-[#E58383] flex items-center justify-center gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus Chat</span>
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
