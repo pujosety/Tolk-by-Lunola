@@ -9,7 +9,9 @@ import {
   FileText,
   Film,
   Image as ImageIcon,
+  LayoutGrid,
   Menu,
+  MessageCircle,
   Mic,
   PanelLeftClose,
   PanelLeftOpen,
@@ -419,7 +421,7 @@ export function Sidebar({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-2 pb-20 space-y-1.5">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 md:pb-20 space-y-2 bg-[#F5F7FA] dark:bg-[#0F141E]">
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="font-display font-bold text-base text-[#161B26] dark:text-[#F5F7FA]">
@@ -636,16 +638,63 @@ export function Sidebar({
 
       </div>
 
-      {/* 3D Pastel Floating Compose Button */}
+      {/* Desktop Floating Compose Button */}
       <button
         type="button"
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="absolute bottom-6 right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn flex items-center justify-center z-20"
+        className="hidden md:flex absolute bottom-6 right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>
+
+      {/* Mobile Native-Style Bottom Tab Bar (Apple HIG) */}
+      <nav
+        aria-label="Navigasi utama"
+        className="md:hidden pt-2 pb-safe-2 px-3 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-4 gap-1.5 shrink-0 z-20"
+      >
+        <button
+          type="button"
+          onClick={() => onSelectFolder('all')}
+          className="h-11 rounded-2xl bg-[#EAF4FF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>Obrolan</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenNewChat}
+          className="h-11 rounded-2xl bg-[#8C0027] text-white flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-shadow-sm brutal-press"
+        >
+          <Edit3 className="w-4 h-4" />
+          <span>Mulai</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenNotifications}
+          className="relative h-11 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+        >
+          <Bell className="w-4 h-4" />
+          <span>Notif</span>
+          {notificationCount > 0 && (
+            <span className="absolute top-1 right-4 min-w-[16px] h-[16px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+              {notificationCount > 9 ? '9+' : notificationCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenDrawer}
+          className="h-11 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+        >
+          <LayoutGrid className="w-4 h-4" />
+          <span>Menu</span>
+        </button>
+      </nav>
 
       {/* Long-Press Chat Preview & Quick Actions Popup */}
       {previewChat && (
