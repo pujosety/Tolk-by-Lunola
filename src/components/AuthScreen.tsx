@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowRight,
@@ -8,10 +8,14 @@ import {
   MessageCircleHeart,
   Moon,
   PhoneCall,
+  QrCode,
+  RefreshCw,
   Sparkles,
   Sun,
   UserPlus,
 } from 'lucide-react';
+import { api } from '../lib/api';
+import { QrCodeBox } from './QrCodeBox';
 
 interface AuthScreenProps {
   darkMode: boolean;
@@ -24,6 +28,7 @@ interface AuthScreenProps {
     password: string;
     bio?: string;
   }) => Promise<void>;
+  onQrLoginSuccess?: (token: string) => Promise<void>;
   notice?: string | null;
 }
 
@@ -34,9 +39,52 @@ export function AuthScreen({
   onToggleDarkMode,
   onLogin,
   onRegister,
+  onQrLoginSuccess,
   notice,
 }: AuthScreenProps) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'qr'>('login');
+  const [qrChallenge, setQrChallenge] = useState<{
+    challengeId: string;
+    secret: string;
+    expiresAt: number;
+  } | null>(null);
+  const [qrExpired, setQrExpired] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const loadQrChallenge = useCallback(async () => {
+    setQrLoading(true);
+    setQrExpired(false);
+    try {
+      const next = await api.createQrLogin();
+      setQrChallenge(next);
+    } catch {
+      setQrExpired(true);
+    } finally {
+      setQrLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode !== 'qr') return;
+    if (!qrChallenge) {
+      void loadQrChallenge();
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void api
+        .pollQrLogin(qrChallenge.challengeId, qrChallenge.secret)
+        .then((res) => {
+          if (res.status === 'expired') {
+            setQrExpired(true);
+          } else if (res.status === 'approved' && res.token) {
+            window.clearInterval(timer);
+            void onQrLoginSuccess?.(res.token);
+          }
+        })
+        .catch(() => {});
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [mode, qrChallenge, loadQrChallenge, onQrLoginSuccess]);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -171,8 +219,8 @@ export function AuthScreen({
             className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center"
           >
             {/* Morphing Pill Mode Switcher */}
-            <div className="relative flex rounded-2xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 mb-5 gap-1.5">
-              {(['login', 'register'] as const).map((tabKey) => {
+            <div className="relative flex rounded-2xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 mb-5 gap-1">
+              {(['login', 'register', 'qr'] as const).map((tabKey) => {
                 const active = mode === tabKey;
                 return (
                   <button
@@ -181,12 +229,15 @@ export function AuthScreen({
                     onClick={() => {
                       setMode(tabKey);
                       setError('');
+                      if (tabKey === 'qr' && (!qrChallenge || qrExpired)) {
+                        void loadQrChallenge();
+                      }
                     }}
                     className={`relative flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 ${
                       active
                         ? 'text-white'
                         : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
-                    }`}
+                    } ${tabKey === 'qr' ? 'hidden md:flex' : ''}`}
                   >
                     {active && (
                       <motion.span
@@ -198,12 +249,17 @@ export function AuthScreen({
                     {tabKey === 'login' ? (
                       <>
                         <Lock className="w-3.5 h-3.5" />
-                        <span>Masuk Akun</span>
+                        <span>Masuk</span>
+                      </>
+                    ) : tabKey === 'register' ? (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Daftar</span>
                       </>
                     ) : (
                       <>
-                        <UserPlus className="w-3.5 h-3.5" />
-                        <span>Daftar Baru</span>
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Login QR</span>
                       </>
                     )}
                   </button>
@@ -222,22 +278,65 @@ export function AuthScreen({
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={mode}
-                  initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
-                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#161B26] dark:text-[#F5F7FA]">
-                    {mode === 'login' ? 'Balik Lagi, Gas Ngobrol!' : 'Bikin Akun Tolk'}
+                    {mode === 'login'
+                      ? 'Balik Lagi, Gas Ngobrol!'
+                      : mode === 'register'
+                        ? 'Bikin Akun Tolk'
+                        : 'Masuk Cepat Pakai QR'}
                   </h2>
                   <p className="mt-1 text-xs text-[#5A6578] dark:text-[#94A3B8]">
                     {mode === 'login'
                       ? 'Masuk pakai username atau email kamu.'
-                      : 'Bikin akun dulu biar bisa add temen dan mulai chat.'}
+                      : mode === 'register'
+                        ? 'Bikin akun dulu biar bisa add temen dan mulai chat.'
+                        : 'Scan kode QR ini dari menu Perangkat Tertaut di HP kamu.'}
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
+
+            {mode === 'qr' ? (
+              <div className="flex flex-col items-center justify-center py-3 space-y-4">
+                <div className="p-4 rounded-3xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] flex flex-col items-center gap-3">
+                  {qrLoading || !qrChallenge ? (
+                    <div className="w-[184px] h-[184px] rounded-2xl bg-[#E6ECF2]/60 dark:bg-[#1E2738] flex items-center justify-center text-xs text-[#5A6578] dark:text-[#94A3B8]">
+                      Menyiapkan QR...
+                    </div>
+                  ) : qrExpired ? (
+                    <div className="w-[184px] h-[184px] rounded-2xl bg-[#FFF9D6] dark:bg-[#1E2738] flex flex-col items-center justify-center gap-2.5 p-4 text-center">
+                      <span className="text-xs font-bold text-[#161B26] dark:text-[#F1F5F9]">
+                        QR kedaluwarsa
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void loadQrChallenge()}
+                        className="px-3.5 py-2 rounded-xl bg-[#8C0027] text-white text-xs font-bold flex items-center gap-1.5 brutal-press"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Muat Ulang</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <QrCodeBox
+                      value={`tolk-qr-login:${qrChallenge.challengeId}:${qrChallenge.secret}`}
+                      label="Scan dari Tolk di HP"
+                      size={184}
+                    />
+                  )}
+                </div>
+                <ol className="text-xs text-[#5A6578] dark:text-[#94A3B8] space-y-1 text-left w-full max-w-xs">
+                  <li>1. Buka Tolk by Lunola di HP yang sudah login.</li>
+                  <li>2. Masuk ke tab <strong>Kamu</strong> lalu pilih <strong>Perangkat Tertaut</strong>.</li>
+                  <li>3. Ketuk <strong>Tautkan Perangkat (Scan QR)</strong> dan arahkan ke layar ini.</li>
+                </ol>
+              </div>
+            ) : (
 
             <motion.form layout transition={SPRING_MORPH} onSubmit={handleSubmit} className="space-y-3.5">
               <AnimatePresence initial={false}>
@@ -390,6 +489,7 @@ export function AuthScreen({
                 {!busy && <ArrowRight className="w-4 h-4" />}
               </motion.button>
             </motion.form>
+            )}
           </motion.div>
         </motion.div>
       </div>

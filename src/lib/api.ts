@@ -142,6 +142,27 @@ export const api = {
 
   bootstrap: (token: string) => requestJson<BootstrapPayload>('/api/bootstrap', { token }),
 
+  createQrLogin: () =>
+    requestJson<{ challengeId: string; secret: string; expiresAt: number }>('/api/auth/qr/create', {
+      method: 'POST',
+    }),
+
+  pollQrLogin: (challengeId: string, secret: string) =>
+    requestJson<{
+      status: 'pending' | 'approved' | 'expired';
+      token?: string;
+      user?: UserProfile;
+    }>(
+      `/api/auth/qr/status?challengeId=${encodeURIComponent(challengeId)}&secret=${encodeURIComponent(secret)}`
+    ),
+
+  approveQrLogin: (token: string, challengeId: string, secret: string) =>
+    requestJson<{ ok: boolean }>('/api/auth/qr/approve', {
+      method: 'POST',
+      token,
+      body: { challengeId, secret },
+    }),
+
   updateProfile: (
     token: string,
     payload: {

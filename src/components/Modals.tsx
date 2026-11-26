@@ -1323,6 +1323,7 @@ export function SessionsModal({
   onClose,
   onRefresh,
   onRevokeSession,
+  onApproveQrLogin,
   onLogoutCurrent,
 }: {
   open: boolean;
@@ -1331,8 +1332,12 @@ export function SessionsModal({
   onClose: () => void;
   onRefresh: () => void;
   onRevokeSession: (sid: string) => Promise<void>;
+  onApproveQrLogin?: (challengeId: string, secret: string) => Promise<void>;
   onLogoutCurrent: () => void;
 }) {
+  const [qrScanOpen, setQrScanOpen] = useState(false);
+  const [qrScanError, setQrScanError] = useState('');
+
   return (
     <ModalShell
       open={open}
@@ -1341,6 +1346,26 @@ export function SessionsModal({
       onClose={onClose}
     >
       <div className="space-y-3">
+        {onApproveQrLogin && (
+          <div className="p-3 rounded-2xl bg-[#FFF9D6] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                setQrScanError('');
+                setQrScanOpen(true);
+              }}
+              className="w-full h-10 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold flex items-center justify-center gap-2 brutal-shadow-sm brutal-press"
+            >
+              <ScanLine className="w-4 h-4" />
+              <span>Tautkan Perangkat (Scan QR Desktop)</span>
+            </button>
+            {qrScanError && (
+              <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 text-center">
+                {qrScanError}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
             Total sesi aktif: <strong className="font-mono text-[#161B26] dark:text-[#F5F7FA]">{sessions.length}</strong>
@@ -1401,6 +1426,28 @@ export function SessionsModal({
           <span>Keluar dari Perangkat Ini</span>
         </button>
       </div>
+
+      {onApproveQrLogin && (
+        <CameraCaptureModal
+          open={qrScanOpen}
+          mode="qr"
+          onClose={() => setQrScanOpen(false)}
+          onScanQr={async (rawValue) => {
+            setQrScanOpen(false);
+            const match = rawValue.trim().match(/^tolk-qr-login:([^:]+):([^:\s]+)$/);
+            if (!match) {
+              setQrScanError('Kode QR bukan QR login desktop Tolk by Lunola.');
+              return;
+            }
+            try {
+              await onApproveQrLogin(match[1], match[2]);
+              onRefresh();
+            } catch (err) {
+              setQrScanError(err instanceof Error ? err.message : 'Gagal menautkan perangkat.');
+            }
+          }}
+        />
+      )}
     </ModalShell>
   );
 }

@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import {
+  MessageSquarePlus,
   MonitorSmartphone,
-  Radio,
   Shield,
   Sliders,
   Star,
-  Users,
 } from 'lucide-react';
 import type { LanguageCode, UserProfile } from '../types/chat';
 import { t } from '../lib/i18n';
@@ -16,8 +15,7 @@ interface HeaderOverflowMenuProps {
   lang: LanguageCode;
   user: UserProfile;
   onClose: () => void;
-  onOpenNewGroup: () => void;
-  onOpenNewChannel: () => void;
+  onOpenNewChat: () => void;
   onOpenStarred: () => void;
   onOpenDevices: () => void;
   onOpenSettings: () => void;
@@ -29,8 +27,7 @@ export function HeaderOverflowMenu({
   lang,
   user,
   onClose,
-  onOpenNewGroup,
-  onOpenNewChannel,
+  onOpenNewChat,
   onOpenStarred,
   onOpenDevices,
   onOpenSettings,
@@ -56,19 +53,11 @@ export function HeaderOverflowMenu({
     accent?: boolean;
   }> = [
     {
-      label: t(lang, 'newGroup'),
-      icon: <Users className="w-4 h-4 text-[#0284C7] dark:text-[#7DD3FC]" />,
+      label: 'Obrolan / Grup Baru',
+      icon: <MessageSquarePlus className="w-4 h-4 text-[#0284C7] dark:text-[#7DD3FC]" />,
       onClick: () => {
         onClose();
-        onOpenNewGroup();
-      },
-    },
-    {
-      label: t(lang, 'newChannel'),
-      icon: <Radio className="w-4 h-4 text-[#D97706] dark:text-[#FBBF24]" />,
-      onClick: () => {
-        onClose();
-        onOpenNewChannel();
+        onOpenNewChat();
       },
     },
     {

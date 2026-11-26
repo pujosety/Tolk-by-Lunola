@@ -88,7 +88,6 @@ interface SidebarProps {
   onOpenDevices: () => void;
   onOpenSettings: () => void;
   onOpenAdminPanel: () => void;
-  onOpenAuth: () => void;
   onLogout: () => void;
   onDeleteChat: (chatId: string) => Promise<void>;
   onTogglePinChat: (chatId: string) => Promise<void>;
@@ -149,7 +148,6 @@ export function Sidebar({
   onOpenDevices,
   onOpenSettings,
   onOpenAdminPanel,
-  onOpenAuth,
   onLogout,
   onDeleteChat,
   onTogglePinChat,
@@ -510,7 +508,6 @@ export function Sidebar({
             onOpenDevices={onOpenDevices}
             onOpenSettings={onOpenSettings}
             onOpenAdminPanel={onOpenAdminPanel}
-            onOpenAuth={onOpenAuth}
             onLogout={onLogout}
           />
         </div>

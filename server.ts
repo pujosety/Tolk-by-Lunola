@@ -1362,6 +1362,66 @@ async function startServer(): Promise<void> {
     res.json({ token, user: toPublicUser(user, true) });
   });
 
+  // Desktop QR Code Login (WhatsApp Web-style)
+  const qrLoginChallenges = new Map<
+    string,
+    {
+      secret: string;
+      expiresAt: number;
+      approvedByUserId?: string;
+    }
+  >();
+
+  app.post('/api/auth/qr/create', (_req, res) => {
+    const now = Date.now();
+    for (const [id, entry] of qrLoginChallenges.entries()) {
+      if (entry.expiresAt < now) qrLoginChallenges.delete(id);
+    }
+    const challengeId = `qr_${crypto.randomBytes(8).toString('hex')}`;
+    const secret = crypto.randomBytes(16).toString('hex');
+    const expiresAt = now + 120_000;
+    qrLoginChallenges.set(challengeId, { secret, expiresAt });
+    res.json({ challengeId, secret, expiresAt });
+  });
+
+  app.get('/api/auth/qr/status', (req, res) => {
+    const challengeId = typeof req.query.challengeId === 'string' ? req.query.challengeId : '';
+    const secret = typeof req.query.secret === 'string' ? req.query.secret : '';
+    const entry = qrLoginChallenges.get(challengeId);
+    if (!entry || entry.secret !== secret || entry.expiresAt < Date.now()) {
+      if (entry && entry.expiresAt < Date.now()) qrLoginChallenges.delete(challengeId);
+      res.json({ status: 'expired' });
+      return;
+    }
+    if (!entry.approvedByUserId) {
+      res.json({ status: 'pending' });
+      return;
+    }
+    const user = store.users[entry.approvedByUserId];
+    qrLoginChallenges.delete(challengeId);
+    if (!user || user.status !== 'active') {
+      res.status(403).json({ error: 'Akun tidak tersedia.' });
+      return;
+    }
+    user.lastSeen = Date.now();
+    ensureDefaultChatsForUser(user.id);
+    const { token } = createSessionForUser(user.id, req);
+    saveStore(store);
+    res.json({ status: 'approved', token, user: toPublicUser(user, true) });
+  });
+
+  app.post('/api/auth/qr/approve', requireAuth, (req: AuthedRequest, res) => {
+    const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId : '';
+    const secret = typeof req.body?.secret === 'string' ? req.body.secret : '';
+    const entry = qrLoginChallenges.get(challengeId);
+    if (!entry || entry.secret !== secret || entry.expiresAt < Date.now()) {
+      res.status(400).json({ error: 'Kode QR kedaluwarsa atau tidak valid. Muat ulang QR di desktop.' });
+      return;
+    }
+    entry.approvedByUserId = req.userId!;
+    res.json({ ok: true });
+  });
+
   // Logout Current Session
   app.post('/api/auth/logout', requireAuth, (req: AuthedRequest, res) => {
     const sid = req.sessionId!;

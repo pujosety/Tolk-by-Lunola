@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   ChevronRight,
   Download,
-  LogIn,
   LogOut,
   MonitorSmartphone,
   Moon,
@@ -30,7 +29,6 @@ interface YouViewProps {
   onOpenDevices: () => void;
   onOpenSettings: () => void;
   onOpenAdminPanel: () => void;
-  onOpenAuth: () => void;
   onLogout: () => void;
 }
 
@@ -45,7 +43,6 @@ export function YouView({
   onOpenDevices,
   onOpenSettings,
   onOpenAdminPanel,
-  onOpenAuth,
   onLogout,
 }: YouViewProps) {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -106,13 +103,6 @@ export function YouView({
           },
         ]
       : []),
-    {
-      icon: <LogIn className="w-5 h-5" />,
-      iconBg: 'bg-[#FFF2A7] text-[#161B26]',
-      label: t(lang, 'switchAccount'),
-      subtitle: 'Masuk atau daftar dengan akun lain',
-      onClick: onOpenAuth,
-    },
   ];
 
   return (

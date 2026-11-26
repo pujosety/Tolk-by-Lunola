@@ -1371,6 +1371,10 @@ export function App() {
           await hydrateFromToken(newToken);
           showToast('Berhasil masuk ke akun Anda.');
         }}
+        onQrLoginSuccess={async (newToken) => {
+          await hydrateFromToken(newToken);
+          showToast('Berhasil masuk lewat QR Desktop.');
+        }}
       />
     );
   }
@@ -1484,7 +1488,6 @@ export function App() {
             }}
             onOpenSettings={() => setSettingsModalOpen(true)}
             onOpenAdminPanel={() => setAdminPanelOpen(true)}
-            onOpenAuth={() => setAuthModalOpen(true)}
             onLogout={() => void handleLogout()}
             onDeleteChat={async (chatId) => {
               await api.deleteChat(token, chatId);
@@ -1695,8 +1698,7 @@ export function App() {
         lang={lang}
         user={currentUser}
         onClose={() => setOverflowMenuOpen(false)}
-        onOpenNewGroup={() => setCreateModalState({ open: true, mode: 'group' })}
-        onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
+        onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
         onOpenStarred={() => {
           setStarredModalOpen(true);
           void loadStarredMessages();
@@ -1813,6 +1815,10 @@ export function App() {
           await api.revokeSession(token, sid);
           setSessionsList((prev) => prev.filter((s) => s.id !== sid));
           showToast('Sesi perangkat dicabut.');
+        }}
+        onApproveQrLogin={async (challengeId, secret) => {
+          await api.approveQrLogin(token, challengeId, secret);
+          showToast('Perangkat desktop berhasil ditautkan!');
         }}
         onLogoutCurrent={() => void handleLogout()}
       />
