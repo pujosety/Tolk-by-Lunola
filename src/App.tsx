@@ -50,6 +50,7 @@ import {
   type ActiveCallSession,
 } from './components/CallOverlay';
 import { AdminPanel } from './components/AdminPanel';
+import { AuthScreen } from './components/AuthScreen';
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -80,8 +81,9 @@ export function App() {
 
   // Auth token kept strictly in React memory (never localStorage/sessionStorage)
   const [token, setToken] = useState<string | null>(null);
-  const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootstrapping, setBootstrapping] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<Record<string, UserProfile>>({});
@@ -292,26 +294,27 @@ export function App() {
     [loadMessagesForChat]
   );
 
-  // Initial guest session bootstrap
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const { token: guestToken } = await api.createGuestSession();
-        if (!active) return;
-        await hydrateFromToken(guestToken);
-      } catch (err) {
-        if (!active) return;
-        setBootError(
-          err instanceof Error ? err.message : 'Server Tolk by Lunola tidak dapat dijangkau.'
-        );
-        setBootstrapping(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [hydrateFromToken]);
+  // Public production mode: require explicit login or registration (no auto-guest bootstrap)
+  const resetToAuthScreen = useCallback((notice?: string) => {
+    socketRef.current?.disconnect();
+    socketRef.current = null;
+    setToken(null);
+    setCurrentUser(null);
+    setUsers({});
+    setChats([]);
+    setStories([]);
+    setCalls([]);
+    setMessagesByChat({});
+    setScheduledByChat({});
+    setActiveChatId(null);
+    setMobileShowChat(false);
+    setDrawerOpen(false);
+    setInfoOpen(false);
+    setAdminPanelOpen(false);
+    setWsConnected(false);
+    setBootError(null);
+    setAuthNotice(notice || null);
+  }, []);
 
   // WebRTC Cleanup Helper
   const cleanupWebRtc = useCallback(() => {
@@ -560,8 +563,8 @@ export function App() {
           break;
 
         case 'session:revoked':
-          showToast('Sesi login Anda dicabut oleh perangkat lain atau admin.');
-          void api.createGuestSession().then(({ token: fresh }) => hydrateFromToken(fresh));
+          cleanupWebRtc();
+          resetToAuthScreen('Sesi login Anda dicabut oleh perangkat lain atau admin. Silakan masuk kembali.');
           break;
 
         case 'presence:update':
@@ -797,7 +800,7 @@ export function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [token, hydrateFromToken, cleanupWebRtc, showToast]);
+  }, [token, resetToAuthScreen, cleanupWebRtc, showToast]);
 
   const activeChat = useMemo(
     () => chats.find((c) => c.id === activeChatId) || null,
@@ -1068,10 +1071,8 @@ export function App() {
       await api.logout(token).catch(() => {});
     }
     cleanupWebRtc();
-    showToast('Anda keluar dari sesi sebelumnya. Memulai sesi tamu baru...');
-    const { token: fresh } = await api.createGuestSession();
-    await hydrateFromToken(fresh);
-  }, [token, cleanupWebRtc, hydrateFromToken, showToast]);
+    resetToAuthScreen('Anda telah keluar dari akun. Silakan masuk kembali.');
+  }, [token, cleanupWebRtc, resetToAuthScreen]);
 
   const handleOpenSaved = () => {
     const saved = chats.find((c) => c.type === 'saved');
@@ -1101,23 +1102,23 @@ export function App() {
     );
   }
 
-  if (bootError || !currentUser || !token) {
+  if (!currentUser || !token) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-[#F6F2EB] dark:bg-[#0D0B0E] text-[#111111] dark:text-[#F4EFE6] px-6 text-center">
-        <div className="p-6 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow max-w-sm">
-          <p className="font-display font-extrabold text-xl">Gagal memuat Tolk by Lunola</p>
-          <p className="mt-1 text-xs text-[#52494D] dark:text-[#B9A7AE]">
-            {bootError || 'Terjadi kesalahan koneksi.'}
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm brutal-press text-xs font-bold"
-          >
-            Muat Ulang
-          </button>
-        </div>
-      </div>
+      <AuthScreen
+        notice={bootError || authNotice}
+        onLogin={async (payload) => {
+          const { token: nextToken } = await api.login(payload);
+          setAuthNotice(null);
+          await hydrateFromToken(nextToken);
+          showToast('Berhasil masuk ke akun Tolk by Lunola.');
+        }}
+        onRegister={async (payload) => {
+          const { token: nextToken } = await api.register(payload);
+          setAuthNotice(null);
+          await hydrateFromToken(nextToken);
+          showToast('Akun Tolk by Lunola berhasil dibuat.');
+        }}
+      />
     );
   }
 

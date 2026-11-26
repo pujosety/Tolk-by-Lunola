@@ -82,10 +82,12 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url ?: return false
                 val allowedHost = Uri.parse(wasmerAppUrl).host
-                if (url.host == allowedHost) {
+                if (url.host == allowedHost && (url.scheme == "https" || url.scheme == "http")) {
                     return false
                 }
-                startActivity(Intent(Intent.ACTION_VIEW, url))
+                if (url.scheme == "https" || url.scheme == "http") {
+                    startActivity(Intent(Intent.ACTION_VIEW, url))
+                }
                 return true
             }
         }
@@ -171,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun setStatusBarTheme(isDark: Boolean) {
             runOnUiThread {
-                window.statusBarColor = if (isDark) Color.parseColor("#17212B") else Color.parseColor("#FFFFFF")
+                window.statusBarColor = if (isDark) Color.parseColor("#0D0B0E") else Color.parseColor("#F6F2EB")
                 val controller = WindowInsetsControllerCompat(window, window.decorView)
                 controller.isAppearanceLightStatusBars = !isDark
             }

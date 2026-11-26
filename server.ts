@@ -7,6 +7,7 @@ import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { WebSocketServer, WebSocket } from 'ws';
+import { sqlDb } from './src/server/db.ts';
 import type {
   AdminOverviewPayload,
   AdminRole,
@@ -294,248 +295,7 @@ function createDefaultAdminConfig(now: number): {
 
 function createSeedStore(): StoreData {
   const now = Date.now();
-  const min = 60 * 1000;
-  const hour = 60 * min;
-
   const { adminUser: pujo, adminPasscodeHash, adminPasscodeSalt } = createDefaultAdminConfig(now);
-
-  const raka: StoredUser = {
-    id: 'usr_raka',
-    username: 'raka_arch',
-    displayName: 'Raka Pratama',
-    email: 'raka@lunolatalk.id',
-    bio: 'Systems Architect · Tinode, Wasmer Edge & WebRTC',
-    statusText: 'Membangun fondasi Tolk by Lunola',
-    avatarUrl: '/src/assets/images/avatar_raka_1795619677845.jpg',
-    avatarColor: '#0284C7',
-    verified: true,
-    role: 'administrator',
-    status: 'active',
-    createdAt: now - 30 * 24 * hour,
-    lastSeen: now - 3 * min,
-    pinnedChatIds: [],
-    archivedChatIds: [],
-    markedUnreadChatIds: [],
-    mutedUntilByChat: {},
-    lastReadByChat: {},
-    blockedUserIds: [],
-    mutedStoryUserIds: [],
-    privacy: { ...DEFAULT_PRIVACY },
-  };
-
-  const nadia: StoredUser = {
-    id: 'usr_nadia',
-    username: 'nadia_ui',
-    displayName: 'Nadia Kusuma',
-    email: 'nadia@lunolatalk.id',
-    bio: 'Product Designer · Cross-Platform Web, PWA & Android WebView',
-    statusText: 'Review desain Stories 24 jam',
-    avatarUrl: '/src/assets/images/avatar_nadia_1795619592146.jpg',
-    avatarColor: '#0D9488',
-    verified: true,
-    role: 'moderator',
-    status: 'active',
-    createdAt: now - 22 * 24 * hour,
-    lastSeen: now - 11 * min,
-    pinnedChatIds: [],
-    archivedChatIds: [],
-    markedUnreadChatIds: [],
-    mutedUntilByChat: {},
-    lastReadByChat: {},
-    blockedUserIds: [],
-    mutedStoryUserIds: [],
-    privacy: { ...DEFAULT_PRIVACY },
-  };
-
-  const dito: StoredUser = {
-    id: 'usr_dito',
-    username: 'dito_wasm',
-    displayName: 'Dito Mahendra',
-    email: 'dito@lunolatalk.id',
-    bio: 'Self-Hosting & Infrastructure Engineer · Docker & Wasmer',
-    statusText: 'Siap deploy Docker Compose',
-    avatarUrl: '/src/assets/images/avatar_dito_1795619656045.jpg',
-    avatarColor: '#2563EB',
-    verified: true,
-    role: 'server_operator',
-    status: 'active',
-    createdAt: now - 18 * 24 * hour,
-    lastSeen: now - 24 * min,
-    pinnedChatIds: [],
-    archivedChatIds: [],
-    markedUnreadChatIds: [],
-    mutedUntilByChat: {},
-    lastReadByChat: {},
-    blockedUserIds: [],
-    mutedStoryUserIds: [],
-    privacy: { ...DEFAULT_PRIVACY },
-  };
-
-  const chats: Record<string, StoredChat> = {
-    chat_wasmer_id: {
-      id: 'chat_wasmer_id',
-      type: 'group',
-      title: 'Komunitas Lunola & Wasmer',
-      handle: 'lunola_wasmer_id',
-      description:
-        'Diskusi backend self-hosted (Tinode/Node.js), deploy Wasmer Edge, Docker Compose, WebSocket real-time, dan Android WebView.',
-      avatarUrl: '/src/assets/images/avatar_wasmer_group_1795619607932.jpg',
-      avatarColor: '#0284C7',
-      memberIds: ['usr_pujo', 'usr_raka', 'usr_nadia', 'usr_dito'],
-      adminIds: ['usr_pujo', 'usr_raka'],
-      moderatorIds: ['usr_dito'],
-      adminOnlyPost: false,
-      pinnedMessageId: 'msg_w_2',
-      selfDestructSec: 0,
-      inviteExpiresAt: now + 7 * 24 * hour,
-      inviteMaxUses: 100,
-      inviteUses: 14,
-      createdAt: now - 48 * hour,
-    },
-    chat_lunolatalk_news: {
-      id: 'chat_lunolatalk_news',
-      type: 'channel',
-      title: 'Channel Resmi Tolk by Lunola',
-      handle: 'lunolatalk_official',
-      description:
-        'Pengumuman resmi pembaruan Tolk by Lunola, fitur lintas platform (Web, PWA, Android), serta rilis server self-hosted.',
-      avatarUrl: '/src/assets/images/avatar_wasmer_group_1795619607932.jpg',
-      avatarColor: '#0369A1',
-      memberIds: ['usr_pujo', 'usr_raka', 'usr_nadia', 'usr_dito'],
-      adminIds: ['usr_pujo', 'usr_raka'],
-      moderatorIds: [],
-      adminOnlyPost: true,
-      pinnedMessageId: 'msg_ch_1',
-      selfDestructSec: 0,
-      subscriberCount: 1428,
-      createdAt: now - 72 * hour,
-    },
-    chat_android_webview: {
-      id: 'chat_android_webview',
-      type: 'group',
-      title: 'Tim Android & PWA',
-      handle: 'lunola_mobile_dev',
-      description:
-        'Sinkronisasi Kotlin WebView, JavaScript Bridge, panggilan suara/video WebRTC, dan pemasangan PWA.',
-      avatarUrl: null,
-      avatarColor: '#0D9488',
-      memberIds: ['usr_nadia', 'usr_raka', 'usr_dito'],
-      adminIds: ['usr_nadia'],
-      moderatorIds: ['usr_raka'],
-      adminOnlyPost: false,
-      pinnedMessageId: 'msg_aw_1',
-      selfDestructSec: 0,
-      createdAt: now - 30 * hour,
-    },
-  };
-
-  const messages: Record<string, Message[]> = {
-    chat_wasmer_id: [
-      {
-        id: 'msg_w_1',
-        chatId: 'chat_wasmer_id',
-        senderId: 'usr_dito',
-        text: 'Halo semua! Konfigurasi `wasmer.toml` dan `docker-compose.yml` (dengan Tinode + PostgreSQL + Caddy Auto-HTTPS) sudah siap dipakai untuk self-hosting.',
-        createdAt: now - 5 * hour,
-        reactions: [{ emoji: '🔥', userIds: ['usr_raka', 'usr_nadia'] }],
-        readBy: ['usr_dito', 'usr_raka', 'usr_nadia'],
-      },
-      {
-        id: 'msg_w_2',
-        chatId: 'chat_wasmer_id',
-        senderId: 'usr_raka',
-        text: 'Coba fitur baru Tolk by Lunola: seret file atau tempel gambar langsung ke kolom chat, gunakan `Ctrl+K` untuk pencarian cepat, jadwalkan pesan, atau klik tombol AI untuk ringkas & terjemahkan percakapan.',
-        createdAt: now - 3 * hour,
-        reactions: [
-          { emoji: '👍', userIds: ['usr_dito', 'usr_nadia'] },
-          { emoji: '🎉', userIds: ['usr_dito'] },
-        ],
-        readBy: ['usr_dito', 'usr_raka', 'usr_nadia'],
-      },
-      {
-        id: 'msg_w_3',
-        chatId: 'chat_wasmer_id',
-        senderId: 'usr_nadia',
-        text: 'Stories 24 jam, QR code undangan grup, dan kontrol kecepatan pesan suara (1x / 1.5x / 2x) juga sudah aktif. @raka_arch silakan cek Admin Panel dari menu samping!',
-        createdAt: now - 36 * min,
-        replyToId: 'msg_w_2',
-        mentions: ['raka_arch'],
-        reactions: [{ emoji: '❤️', userIds: ['usr_raka'] }],
-        readBy: ['usr_nadia', 'usr_raka'],
-      },
-    ],
-    chat_lunolatalk_news: [
-      {
-        id: 'msg_ch_1',
-        chatId: 'chat_lunolatalk_news',
-        senderId: 'usr_raka',
-        text: 'Selamat datang di Tolk by Lunola!\n\nPlatform komunikasi lintas perangkat (Web, PWA, Android WebView) dengan kontrol privasi penuh & backend self-hosted:\n• Chat Pribadi, Grup (Admin/Moderator/Mention/QR), Channel & Pesan Tersimpan\n• Stories 24 jam dengan pengaturan privasi & daftar penonton\n• Panggilan Suara & Video real-time (WebRTC) + Riwayat Panggilan\n• Drag-and-drop file, paste gambar, pesan suara dengan kontrol kecepatan, & pesan terjadwal\n• Terjemahan & ringkasan percakapan AI opsional serta Admin Panel 10 modul lengkap.',
-        createdAt: now - 18 * hour,
-        reactions: [
-          { emoji: '🔥', userIds: ['usr_raka', 'usr_nadia', 'usr_dito'] },
-          { emoji: '👍', userIds: ['usr_nadia', 'usr_dito'] },
-        ],
-        readBy: ['usr_raka', 'usr_nadia', 'usr_dito'],
-        views: 1218,
-      },
-    ],
-    chat_android_webview: [
-      {
-        id: 'msg_aw_1',
-        chatId: 'chat_android_webview',
-        senderId: 'usr_nadia',
-        text: 'Bridge `window.LunolaTalkAndroid` sudah aktif untuk status bar gelap/terang, getaran haptic, tombol Back Android, serta izin kamera & mikrofon WebView.',
-        createdAt: now - 6 * hour,
-        reactions: [{ emoji: '👍', userIds: ['usr_raka'] }],
-        readBy: ['usr_nadia', 'usr_raka', 'usr_dito'],
-      },
-    ],
-  };
-
-  const stories: StoryItem[] = [
-    {
-      id: 'story_raka_1',
-      userId: 'usr_raka',
-      kind: 'text',
-      text: 'Tolk by Lunola kini mendukung WebRTC Call, Stories 24 jam, PWA, dan Admin Panel lengkap!',
-      bgColor: '#0284C7',
-      privacy: 'everyone',
-      allowedUserIds: [],
-      excludedUserIds: [],
-      viewerIds: ['usr_nadia', 'usr_dito'],
-      createdAt: now - 2 * hour,
-      expiresAt: now + 22 * hour,
-    },
-    {
-      id: 'story_nadia_1',
-      userId: 'usr_nadia',
-      kind: 'text',
-      text: 'Coba mode Kontras Tinggi & Bahasa Inggris/Indonesia di menu Privasi & Tampilan.',
-      bgColor: '#0F766E',
-      privacy: 'everyone',
-      allowedUserIds: [],
-      excludedUserIds: [],
-      viewerIds: ['usr_raka'],
-      createdAt: now - 45 * min,
-      expiresAt: now + 23 * hour,
-    },
-  ];
-
-  const reports: ModerationReport[] = [
-    {
-      id: 'rep_seed_1',
-      reporterId: 'usr_nadia',
-      targetType: 'group',
-      targetId: 'chat_wasmer_id',
-      targetLabel: 'Contoh Laporan Tautan Spam (Simulasi Antrean)',
-      category: 'spam',
-      reason: 'Contoh laporan moderasi agar alur antrean Open -> Reviewing -> Resolved bisa langsung diuji di Admin Panel.',
-      status: 'open',
-      moderatorNote: '',
-      createdAt: now - 4 * hour,
-      updatedAt: now - 4 * hour,
-    },
-  ];
 
   const settings: PlatformSettings = {
     appName: 'Tolk by Lunola',
@@ -549,34 +309,18 @@ function createSeedStore(): StoreData {
     pushEnabled: true,
   };
 
-  const auditLogs: AuditLogEntry[] = [
-    {
-      id: `aud_${crypto.randomBytes(4).toString('hex')}`,
-      actorId: 'usr_pujo',
-      actorName: 'Pujo',
-      actorRole: 'super_admin',
-      action: 'platform:initialized',
-      target: 'Tolk by Lunola Server',
-      details: 'Inisialisasi awal server komunikasi real-time & akun Super Admin default.',
-      createdAt: now - 24 * hour,
-    },
-  ];
-
   return {
     users: {
       usr_pujo: pujo,
-      usr_raka: raka,
-      usr_nadia: nadia,
-      usr_dito: dito,
     },
     sessions: {},
-    chats,
-    messages,
+    chats: {},
+    messages: {},
     scheduledMessages: [],
-    stories,
+    stories: [],
     calls: [],
-    reports,
-    auditLogs,
+    reports: [],
+    auditLogs: [],
     settings,
     adminPasscodeHash,
     adminPasscodeSalt,
@@ -584,7 +328,29 @@ function createSeedStore(): StoreData {
   };
 }
 
+function applyAdminBaseline(target: StoreData, base: StoreData): boolean {
+  let mutated = false;
+  const defaultAdmin = base.users.usr_pujo;
+  if (!target.users.usr_pujo && defaultAdmin) {
+    target.users.usr_pujo = defaultAdmin;
+    mutated = true;
+  } else if (target.users.usr_pujo && target.users.usr_pujo.role !== 'super_admin') {
+    target.users.usr_pujo.role = 'super_admin';
+    mutated = true;
+  }
+  if (!target.adminPasscodeHash && base.adminPasscodeHash) {
+    target.adminPasscodeHash = base.adminPasscodeHash;
+    target.adminPasscodeSalt = base.adminPasscodeSalt;
+    mutated = true;
+  }
+  return mutated;
+}
+
 function loadStore(): StoreData {
+  // When a managed SQL database is configured via DB_HOST, initial state is hydrated in startServer()
+  if (process.env.DB_HOST && process.env.DB_NAME && (process.env.DB_USERNAME || process.env.DB_USER)) {
+    return createSeedStore();
+  }
   try {
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, 'utf8');
@@ -597,42 +363,16 @@ function loadStore(): StoreData {
           users: { ...parsed.users },
           sessions: parsed.sessions || {},
           scheduledMessages: parsed.scheduledMessages || [],
-          stories: parsed.stories || base.stories,
+          stories: parsed.stories || [],
           calls: parsed.calls || [],
-          reports: parsed.reports || base.reports,
-          auditLogs: parsed.auditLogs || base.auditLogs,
+          reports: parsed.reports || [],
+          auditLogs: parsed.auditLogs || [],
           settings: { ...base.settings, ...(parsed.settings || {}) },
           adminPasscodeHash: parsed.adminPasscodeHash || base.adminPasscodeHash,
           adminPasscodeSalt: parsed.adminPasscodeSalt || base.adminPasscodeSalt,
           lastBackupAt: parsed.lastBackupAt ?? null,
         };
-
-        let mutated = false;
-        const defaultAdmin = base.users.usr_pujo;
-        if (!merged.users.usr_pujo && defaultAdmin) {
-          merged.users.usr_pujo = defaultAdmin;
-          mutated = true;
-        } else if (merged.users.usr_pujo && merged.users.usr_pujo.role !== 'super_admin') {
-          merged.users.usr_pujo.role = 'super_admin';
-          mutated = true;
-        }
-        if (!parsed.adminPasscodeHash && base.adminPasscodeHash) {
-          mutated = true;
-        }
-        for (const cid of ['chat_wasmer_id', 'chat_lunolatalk_news']) {
-          const ch = merged.chats[cid];
-          if (ch) {
-            if (!ch.memberIds.includes('usr_pujo')) {
-              ch.memberIds.unshift('usr_pujo');
-              mutated = true;
-            }
-            if (!ch.adminIds.includes('usr_pujo')) {
-              ch.adminIds.unshift('usr_pujo');
-              mutated = true;
-            }
-          }
-        }
-        if (mutated) {
+        if (applyAdminBaseline(merged, base)) {
           saveStore(merged);
         }
         return merged;
@@ -647,12 +387,45 @@ function loadStore(): StoreData {
 }
 
 function saveStore(data: StoreData): void {
+  if (sqlDb.isConnected()) {
+    sqlDb.scheduleSync(data);
+    return;
+  }
   const tmpPath = `${STORE_PATH}.${crypto.randomBytes(4).toString('hex')}.tmp`;
   fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
   fs.renameSync(tmpPath, STORE_PATH);
 }
 
 const store: StoreData = loadStore();
+
+async function initPersistence(): Promise<void> {
+  const engine = await sqlDb.init();
+  if (!engine) return;
+
+  const base = createSeedStore();
+  const loaded = await sqlDb.loadSnapshot(base);
+  if (!loaded) return;
+
+  const mutated = applyAdminBaseline(loaded, base);
+  store.users = loaded.users;
+  store.sessions = loaded.sessions;
+  store.chats = loaded.chats;
+  store.messages = loaded.messages;
+  store.scheduledMessages = loaded.scheduledMessages;
+  store.stories = loaded.stories;
+  store.calls = loaded.calls;
+  store.reports = loaded.reports;
+  store.auditLogs = loaded.auditLogs;
+  store.settings = loaded.settings;
+  store.adminPasscodeHash = loaded.adminPasscodeHash;
+  store.adminPasscodeSalt = loaded.adminPasscodeSalt;
+  store.lastBackupAt = loaded.lastBackupAt;
+
+  if (mutated || Object.keys(loaded.users).length <= 1) {
+    sqlDb.scheduleSync(store);
+    await sqlDb.flushSync();
+  }
+}
 
 // Active WebSockets keyed by userId and sessionId
 const activeSockets = new Map<string, Set<WebSocket>>();
@@ -876,59 +649,12 @@ function ensureDefaultChatsForUser(userId: string): void {
       selfDestructSec: 0,
       createdAt: now,
     };
-    store.messages[savedChatId] = [
-      {
-        id: `msg_saved_${crypto.randomBytes(4).toString('hex')}`,
-        chatId: savedChatId,
-        senderId: userId,
-        text: 'Selamat datang di Pesan Tersimpan Tolk by Lunola. Simpan catatan pribadi, file penting, atau teruskan pesan dari percakapan lain ke sini.',
-        createdAt: now,
-        reactions: [],
-        readBy: [userId],
-      },
-    ];
-  }
-
-  const starterGroupIds = ['chat_wasmer_id', 'chat_lunolatalk_news', 'chat_android_webview'];
-  for (const cid of starterGroupIds) {
-    const c = store.chats[cid];
-    if (c && !c.memberIds.includes(userId)) {
-      c.memberIds.push(userId);
-    }
-  }
-
-  const dmId = `dm_${[userId, 'usr_raka'].sort().join('_')}`;
-  if (userId !== 'usr_raka' && !store.chats[dmId] && store.users['usr_raka']) {
-    store.chats[dmId] = {
-      id: dmId,
-      type: 'dm',
-      title: 'Raka Pratama',
-      description: 'Percakapan pribadi',
-      avatarUrl: store.users['usr_raka'].avatarUrl,
-      avatarColor: store.users['usr_raka'].avatarColor,
-      memberIds: [userId, 'usr_raka'],
-      adminIds: [userId, 'usr_raka'],
-      moderatorIds: [],
-      pinnedMessageId: null,
-      selfDestructSec: 0,
-      createdAt: now - 15 * 60 * 1000,
-    };
-    store.messages[dmId] = [
-      {
-        id: `msg_dm_${crypto.randomBytes(4).toString('hex')}`,
-        chatId: dmId,
-        senderId: 'usr_raka',
-        text: 'Halo! Selamat datang di Tolk by Lunola. Kamu bisa langsung coba kirim pesan, seret file/gambar, panggil suara/video, buat Stories 24 jam, atau buka Admin Panel dari menu samping.',
-        createdAt: now - 14 * 60 * 1000,
-        reactions: [],
-        readBy: ['usr_raka'],
-      },
-    ];
+    store.messages[savedChatId] = [];
   }
 
   const u = store.users[userId];
   if (u && (!u.pinnedChatIds || u.pinnedChatIds.length === 0)) {
-    u.pinnedChatIds = [savedChatId, 'chat_wasmer_id'];
+    u.pinnedChatIds = [savedChatId];
   }
 }
 
@@ -1121,8 +847,16 @@ function computeStorageStats(): { filesCount: number; mediaMb: number; storeKb: 
 }
 
 async function startServer(): Promise<void> {
+  await initPersistence();
+
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', 1);
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'same-origin');
+    next();
+  });
   app.use(express.json({ limit: '24mb' }));
 
   // Healthcheck for Wasmer Edge, Docker Compose & Android WebView
@@ -1131,15 +865,24 @@ async function startServer(): Promise<void> {
       ok: true,
       service: 'lunola-talk',
       runtime: process.env.WASMER_RUNTIME || 'node-wasmer-compatible',
+      database: sqlDb.getEngine() || 'local-json',
       tinodeHost: process.env.TINODE_HOST ? 'configured' : 'embedded-realtime-ws',
       maintenanceMode: store.settings.maintenanceMode,
+      allowRegistration: store.settings.allowRegistration,
+      allowGuest: process.env.ALLOW_GUEST === 'true',
       uptimeSec: Math.floor((Date.now() - SERVER_START_MS) / 1000),
       onlineUsers: getOnlineUserIds().length,
     });
   });
 
-  // Guest Session Bootstrap
+  // Guest Session Bootstrap (disabled by default for public production deployments)
   app.post('/api/auth/guest', (req, res) => {
+    if (process.env.ALLOW_GUEST !== 'true') {
+      res.status(403).json({
+        error: 'Akses tamu dinonaktifkan. Silakan masuk atau daftar akun Tolk by Lunola.',
+      });
+      return;
+    }
     const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local');
     if (!checkRateLimit(`auth:${ip}`, 30)) {
       res.status(429).json({ error: 'Terlalu banyak permintaan sesi. Coba sebentar lagi.' });
@@ -1183,7 +926,7 @@ async function startServer(): Promise<void> {
   // Register Real Account
   app.post('/api/auth/register', (req, res) => {
     const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local');
-    if (!checkRateLimit(`auth:${ip}`, 15)) {
+    if (!checkRateLimit(`auth:${ip}`, 10)) {
       res.status(429).json({ error: 'Terlalu banyak percobaan pendaftaran. Coba 1 menit lagi.' });
       return;
     }
@@ -1206,6 +949,10 @@ async function startServer(): Promise<void> {
       res.status(400).json({ error: 'Nama tampilan minimal 2 karakter.' });
       return;
     }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ error: 'Format email tidak valid.' });
+      return;
+    }
     if (password.length < 6 || password.length > 128) {
       res.status(400).json({ error: 'Kata sandi harus antara 6 sampai 128 karakter.' });
       return;
@@ -1217,6 +964,15 @@ async function startServer(): Promise<void> {
     if (exists) {
       res.status(409).json({ error: `Username @${username} sudah digunakan.` });
       return;
+    }
+    if (email) {
+      const emailTaken = Object.values(store.users).some(
+        (u) => u.email && u.email.toLowerCase() === email
+      );
+      if (emailTaken) {
+        res.status(409).json({ error: 'Email tersebut sudah terdaftar di akun lain.' });
+        return;
+      }
     }
 
     const { hash, salt } = hashSecret(password);
