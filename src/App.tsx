@@ -1218,6 +1218,13 @@ export function App() {
       privacy: 'everyone' | 'selected' | 'except';
       allowedUserIds?: string[];
       excludedUserIds?: string[];
+      mentionedUserIds?: string[];
+      resharedFrom?: {
+        storyId: string;
+        userId: string;
+        displayName: string;
+        username: string;
+      } | null;
     }) => {
       if (!token) return;
       const { story } = await api.createStory(token, payload);

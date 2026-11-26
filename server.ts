@@ -2524,6 +2524,21 @@ async function startServer(): Promise<void> {
     const excludedUserIds = Array.isArray(req.body?.excludedUserIds)
       ? req.body.excludedUserIds.filter((id: unknown) => typeof id === 'string')
       : [];
+    const mentionedUserIds = Array.isArray(req.body?.mentionedUserIds)
+      ? req.body.mentionedUserIds.filter((id: unknown) => typeof id === 'string')
+      : [];
+    const rawReshare = req.body?.resharedFrom;
+    const resharedFrom =
+      rawReshare &&
+      typeof rawReshare.storyId === 'string' &&
+      typeof rawReshare.userId === 'string'
+        ? {
+            storyId: sanitizeText(rawReshare.storyId, 64),
+            userId: sanitizeText(rawReshare.userId, 64),
+            displayName: sanitizeText(rawReshare.displayName, 60),
+            username: sanitizeText(rawReshare.username, 32),
+          }
+        : null;
 
     if (!text && !mediaUrl) {
       res.status(400).json({ error: 'Isi status teks atau lampirkan media.' });
@@ -2542,6 +2557,8 @@ async function startServer(): Promise<void> {
       privacy,
       allowedUserIds,
       excludedUserIds,
+      mentionedUserIds,
+      resharedFrom,
       viewerIds: [userId],
       createdAt: now,
       expiresAt: now + expiryMs,

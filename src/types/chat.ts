@@ -171,6 +171,13 @@ export interface StoryItem {
   privacy: 'everyone' | 'selected' | 'except';
   allowedUserIds: string[];
   excludedUserIds: string[];
+  mentionedUserIds?: string[];
+  resharedFrom?: {
+    storyId: string;
+    userId: string;
+    displayName: string;
+    username: string;
+  } | null;
   viewerIds: string[];
   createdAt: number;
   expiresAt: number;

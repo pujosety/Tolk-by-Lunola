@@ -100,6 +100,13 @@ interface SidebarProps {
     privacy: 'everyone' | 'selected' | 'except';
     allowedUserIds?: string[];
     excludedUserIds?: string[];
+    mentionedUserIds?: string[];
+    resharedFrom?: {
+      storyId: string;
+      userId: string;
+      displayName: string;
+      username: string;
+    } | null;
   }) => Promise<void>;
   onUploadStoryMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onViewStory: (storyId: string) => void;

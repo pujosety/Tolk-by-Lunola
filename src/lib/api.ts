@@ -365,6 +365,13 @@ export const api = {
       privacy: 'everyone' | 'selected' | 'except';
       allowedUserIds?: string[];
       excludedUserIds?: string[];
+      mentionedUserIds?: string[];
+      resharedFrom?: {
+        storyId: string;
+        userId: string;
+        displayName: string;
+        username: string;
+      } | null;
     }
   ) =>
     requestJson<{ story: StoryItem }>('/api/stories', {

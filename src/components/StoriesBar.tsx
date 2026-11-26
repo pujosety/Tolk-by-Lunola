@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  AtSign,
   BellOff,
   Camera,
-  ChevronLeft,
-  ChevronRight,
   Edit3,
   Eye,
   Image as ImageIcon,
   Plus,
   Radio,
+  Repeat2,
   SendHorizontal,
   Trash2,
   X,
@@ -37,6 +37,13 @@ interface UpdatesViewProps {
     privacy: 'everyone' | 'selected' | 'except';
     allowedUserIds?: string[];
     excludedUserIds?: string[];
+    mentionedUserIds?: string[];
+    resharedFrom?: {
+      storyId: string;
+      userId: string;
+      displayName: string;
+      username: string;
+    } | null;
   }) => Promise<void>;
   onUploadStoryMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onViewStory: (storyId: string) => void;
@@ -60,6 +67,7 @@ export function UpdatesView({
   onReplyToStory,
 }: UpdatesViewProps) {
   const [creating, setCreating] = useState(false);
+  const [reshareSource, setReshareSource] = useState<StoryItem | null>(null);
   const [activeAuthorId, setActiveAuthorId] = useState<string | null>(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
 
@@ -332,11 +340,17 @@ export function UpdatesView({
         <CreateStoryModal
           closing={createPresence.closing}
           users={Object.values(users).filter((u) => u.id !== currentUser.id)}
-          onClose={() => setCreating(false)}
+          initialReshare={reshareSource}
+          initialAuthor={reshareSource ? users[reshareSource.userId] : undefined}
+          onClose={() => {
+            setCreating(false);
+            setReshareSource(null);
+          }}
           onUploadMedia={onUploadStoryMedia}
           onSubmit={async (payload) => {
             await onCreateStory(payload);
             setCreating(false);
+            setReshareSource(null);
           }}
         />
       )}
@@ -372,6 +386,13 @@ export function UpdatesView({
             await onMuteStoryAuthor(target.userId);
             setActiveAuthorId(null);
           }}
+          onReshare={() => {
+            const target = viewerRetained.renderedValue;
+            if (!target) return;
+            setActiveAuthorId(null);
+            setReshareSource(target);
+            setCreating(true);
+          }}
           onReply={async (text) => {
             const target = viewerRetained.renderedValue;
             if (!target) return;
@@ -387,12 +408,16 @@ export function UpdatesView({
 function CreateStoryModal({
   closing,
   users,
+  initialReshare,
+  initialAuthor,
   onClose,
   onUploadMedia,
   onSubmit,
 }: {
   closing: boolean;
   users: UserProfile[];
+  initialReshare?: StoryItem | null;
+  initialAuthor?: UserProfile;
   onClose: () => void;
   onUploadMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onSubmit: (payload: {
@@ -403,13 +428,35 @@ function CreateStoryModal({
     privacy: 'everyone' | 'selected' | 'except';
     allowedUserIds?: string[];
     excludedUserIds?: string[];
+    mentionedUserIds?: string[];
+    resharedFrom?: {
+      storyId: string;
+      userId: string;
+      displayName: string;
+      username: string;
+    } | null;
   }) => Promise<void>;
 }) {
-  const [text, setText] = useState('');
-  const [bgColor, setBgColor] = useState(STORY_BG_COLORS[0]);
-  const [media, setMedia] = useState<Attachment | null>(null);
+  const [text, setText] = useState(initialReshare?.text || '');
+  const [bgColor, setBgColor] = useState(initialReshare?.bgColor || STORY_BG_COLORS[0]);
+  const [media, setMedia] = useState<Attachment | null>(
+    initialReshare?.mediaUrl
+      ? {
+          id: `reshare_${initialReshare.id}`,
+          url: initialReshare.mediaUrl,
+          name: 'reshare-media',
+          mimeType: initialReshare.kind === 'video' ? 'video/mp4' : 'image/jpeg',
+          size: 0,
+          kind: initialReshare.kind === 'video' ? 'video' : 'image',
+        }
+      : null
+  );
   const [privacy, setPrivacy] = useState<'everyone' | 'selected' | 'except'>('everyone');
   const [pickedUserIds, setPickedUserIds] = useState<string[]>([]);
+  const [mentionPickerOpen, setMentionPickerOpen] = useState(false);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(
+    initialReshare ? [initialReshare.userId] : []
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -450,6 +497,14 @@ function CreateStoryModal({
     try {
       const kind: 'text' | 'image' | 'video' =
         media?.kind === 'video' ? 'video' : media?.kind === 'image' ? 'image' : 'text';
+      const inlineMatches = Array.from(text.matchAll(/@([a-zA-Z0-9_]{3,24})/g)).map((m) =>
+        m[1].toLowerCase()
+      );
+      const autoMentionIds = users
+        .filter((u) => inlineMatches.includes(u.username.toLowerCase()))
+        .map((u) => u.id);
+      const finalMentions = Array.from(new Set([...mentionedUserIds, ...autoMentionIds]));
+
       await onSubmit({
         kind,
         text: text.trim(),
@@ -458,6 +513,15 @@ function CreateStoryModal({
         privacy,
         allowedUserIds: privacy === 'selected' ? pickedUserIds : [],
         excludedUserIds: privacy === 'except' ? pickedUserIds : [],
+        mentionedUserIds: finalMentions,
+        resharedFrom: initialReshare
+          ? {
+              storyId: initialReshare.id,
+              userId: initialReshare.userId,
+              displayName: initialAuthor?.displayName || 'Pengguna',
+              username: initialAuthor?.username || 'user',
+            }
+          : null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menerbitkan status');
@@ -553,7 +617,19 @@ function CreateStoryModal({
               className="hidden"
               onChange={handleFile}
             />
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => setMentionPickerOpen((v) => !v)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold brutal-press ${
+                  mentionedUserIds.length > 0 || mentionPickerOpen
+                    ? 'bg-[#FFF2A7] border-[#F59B00] text-[#161B26]'
+                    : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
+                }`}
+              >
+                <AtSign className="w-3.5 h-3.5" />
+                <span>{mentionedUserIds.length > 0 ? `Mention (${mentionedUserIds.length})` : 'Mention'}</span>
+              </button>
               <button
                 type="button"
                 disabled={uploading}
@@ -576,6 +652,39 @@ function CreateStoryModal({
               </button>
             </div>
           </div>
+          {initialReshare && (
+            <div className="px-3 py-2 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#BEDEFF] dark:border-[#324058] flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F1F5F9]">
+              <Repeat2 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
+              <span>
+                Membagikan ulang status dari <strong>@{initialAuthor?.username || 'user'}</strong>
+              </span>
+            </div>
+          )}
+          {mentionPickerOpen && (
+            <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] max-h-28 overflow-y-auto thin-scrollbar">
+              {users.map((u) => {
+                const tagged = mentionedUserIds.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() =>
+                      setMentionedUserIds((prev) =>
+                        prev.includes(u.id) ? prev.filter((id) => id !== u.id) : [...prev, u.id]
+                      )
+                    }
+                    className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                      tagged
+                        ? 'bg-[#8C0027] text-white'
+                        : 'bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#E2E8F0] border border-[#E6ECF2] dark:border-[#324058]'
+                    }`}
+                  >
+                    @{u.username}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {uploading && (
             <div className="h-2 w-full rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] overflow-hidden">
               <div
@@ -664,6 +773,19 @@ function CreateStoryModal({
   );
 }
 
+function renderStoryCaptionText(text: string): React.ReactNode {
+  const parts = text.split(/(@[a-zA-Z0-9_]{3,24})/g);
+  return parts.map((part, idx) =>
+    /^@[a-zA-Z0-9_]{3,24}$/.test(part) ? (
+      <span key={idx} className="text-[#FFF2A7] underline decoration-[#FFF2A7]/70">
+        {part}
+      </span>
+    ) : (
+      <span key={idx}>{part}</span>
+    )
+  );
+}
+
 function StoryViewerModal({
   closing,
   story,
@@ -677,6 +799,7 @@ function StoryViewerModal({
   onClose,
   onDelete,
   onMuteAuthor,
+  onReshare,
   onReply,
 }: {
   closing: boolean;
@@ -691,6 +814,7 @@ function StoryViewerModal({
   onClose: () => void;
   onDelete: () => Promise<void>;
   onMuteAuthor: () => Promise<void>;
+  onReshare: () => void;
   onReply: (text: string) => Promise<void>;
 }) {
   const [replyText, setReplyText] = useState('');
@@ -727,11 +851,15 @@ function StoryViewerModal({
     .map((id) => users[id])
     .filter(Boolean);
 
+  const mentionedUsers = (story.mentionedUserIds || [])
+    .map((id) => users[id])
+    .filter(Boolean);
+
   return (
     <div
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-50 bg-[#0F141E]/95 flex items-center justify-center p-0 sm:p-3`}
+      } fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-0 sm:p-4`}
     >
       <div
         onPointerDown={() => setPaused(true)}
@@ -739,12 +867,57 @@ function StoryViewerModal({
         onPointerCancel={() => setPaused(false)}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full h-full sm:max-w-md sm:h-[82dvh] sm:max-h-[720px] rounded-none sm:rounded-3xl border-0 sm:border sm:border-white/20 overflow-hidden flex flex-col justify-between brutal-shadow-lg`}
-        style={{ backgroundColor: story.bgColor }}
+        } relative w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex flex-col justify-between bg-black brutal-shadow-lg select-none`}
+        style={{ backgroundColor: story.mediaUrl ? '#000000' : story.bgColor }}
       >
+        {/* Full-Bleed Edge-to-Edge Media (WA / IG Story Style) */}
+        {story.mediaUrl && story.kind === 'image' && (
+          <img
+            src={story.mediaUrl}
+            alt="Status media"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        {story.mediaUrl && story.kind === 'video' && (
+          <video
+            src={story.mediaUrl}
+            autoPlay
+            playsInline
+            loop
+            onEnded={onNext}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+
+        {/* Top & Bottom Scrims */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/75 via-black/35 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-10" />
+
+        {/* Invisible IG/WA Tap Zones (Left 30% = Prev, Right 70% = Next) */}
+        <div className="absolute inset-0 z-10 flex">
+          <button
+            type="button"
+            aria-label="Status sebelumnya"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (index > 0) onPrev();
+            }}
+            className="w-[30%] h-full bg-transparent focus:outline-none"
+          />
+          <button
+            type="button"
+            aria-label="Status berikutnya"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
+            className="w-[70%] h-full bg-transparent focus:outline-none"
+          />
+        </div>
+
         {/* Top Progress Bars & Author Info */}
-        <div className="pt-safe-3 px-4 pb-4 bg-gradient-to-b from-black/75 to-transparent z-10">
-          <div className="flex gap-1.5 mb-3">
+        <div className="relative pt-safe-3 px-3.5 pb-2 z-20">
+          <div className="flex gap-1 mb-3">
             {Array.from({ length: total }).map((_, idx) => {
               const width =
                 idx < index
@@ -755,7 +928,7 @@ function StoryViewerModal({
                       : `${progressPct}%`
                     : '0%';
               return (
-                <div key={idx} className="h-1 flex-1 rounded-full bg-white/30 overflow-hidden">
+                <div key={idx} className="h-[3px] flex-1 rounded-full bg-white/30 overflow-hidden">
                   <div
                     className="h-full bg-white transition-[width] duration-75 linear"
                     style={{ width }}
@@ -774,16 +947,11 @@ function StoryViewerModal({
                 size="sm"
               />
               <div className="min-w-0 text-white">
-                <div className="text-sm font-bold truncate">
+                <div className="text-sm font-bold truncate drop-shadow-sm">
                   {author?.displayName || 'Pengguna'}
                 </div>
                 <div className="text-[11px] text-white/80 font-mono">
-                  {formatTimeShort(story.createdAt)} · Privasi:{' '}
-                  {story.privacy === 'everyone'
-                    ? 'Semua'
-                    : story.privacy === 'selected'
-                    ? 'Tertentu'
-                    : 'Terkecuali'}
+                  {formatTimeShort(story.createdAt)}
                 </div>
               </div>
             </div>
@@ -794,7 +962,7 @@ function StoryViewerModal({
                   type="button"
                   onClick={onDelete}
                   aria-label="Hapus status"
-                  className="h-8 w-8 rounded-xl bg-black/45 border border-white/50 text-white hover:bg-[#8C0027] flex items-center justify-center"
+                  className="h-9 w-9 rounded-full bg-black/35 backdrop-blur-md text-white hover:bg-[#8C0027] flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -804,7 +972,7 @@ function StoryViewerModal({
                   onClick={onMuteAuthor}
                   aria-label="Bisukan status pengguna ini"
                   title="Bisukan status"
-                  className="h-8 w-8 rounded-xl bg-black/45 border border-white/50 text-white hover:bg-[#8C0027] flex items-center justify-center"
+                  className="h-9 w-9 rounded-full bg-black/35 backdrop-blur-md text-white hover:bg-[#8C0027] flex items-center justify-center"
                 >
                   <BellOff className="w-4 h-4" />
                 </button>
@@ -813,75 +981,94 @@ function StoryViewerModal({
                 type="button"
                 onClick={onClose}
                 aria-label="Tutup status"
-                className="h-8 w-8 rounded-xl bg-black/45 border border-white/50 text-white hover:bg-[#8C0027] flex items-center justify-center"
+                className="h-9 w-9 rounded-full bg-black/35 backdrop-blur-md text-white hover:bg-[#8C0027] flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Center Content + Navigation */}
-        <div className="relative flex-1 flex flex-col items-center justify-center px-6 text-center">
-          {index > 0 && (
-            <button
-              type="button"
-              onClick={onPrev}
-              aria-label="Status sebelumnya"
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-black/50 hover:bg-[#8C0027] border border-white/60 text-white flex items-center justify-center"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onNext}
-            aria-label="Status berikutnya"
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-black/50 hover:bg-[#8C0027] border border-white/60 text-white flex items-center justify-center"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {story.mediaUrl && story.kind === 'image' && (
-            <img
-              src={story.mediaUrl}
-              alt="Status media"
-              className="max-h-[45vh] rounded-xl border border-white object-contain mb-4 brutal-shadow-sm"
-            />
-          )}
-          {story.mediaUrl && story.kind === 'video' && (
-            <video
-              src={story.mediaUrl}
-              controls
-              autoPlay
-              className="max-h-[45vh] rounded-xl border border-white mb-4 brutal-shadow-sm"
-            />
-          )}
-          {story.text && (
-            <p className="text-white font-display text-2xl font-bold leading-snug drop-shadow-sm">
-              {story.text}
-            </p>
+          {story.resharedFrom && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white">
+              <Repeat2 className="w-3.5 h-3.5 text-[#FFF2A7]" />
+              <span>Dibagikan ulang dari @{story.resharedFrom.username}</span>
+            </div>
           )}
         </div>
 
-        {/* Bottom Action: Viewers (own) or Reply via Chat (others) */}
-        <div className="p-4 bg-gradient-to-t from-black/80 to-transparent">
+        {/* Center Text-Only Story OR Bottom Caption + Mention Pills */}
+        {!story.mediaUrl ? (
+          <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-6 text-center pointer-events-none gap-3">
+            {story.text && (
+              <p className="text-white font-display text-2xl sm:text-3xl font-extrabold leading-snug drop-shadow-md">
+                {renderStoryCaptionText(story.text)}
+              </p>
+            )}
+            {mentionedUsers.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {mentionedUsers.map((mu) => (
+                  <span
+                    key={mu.id}
+                    className="px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-md border border-white/20 text-xs font-bold text-[#FFF2A7]"
+                  >
+                    @{mu.username}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative z-20 mt-auto px-5 pb-2 text-center pointer-events-none space-y-2">
+            {mentionedUsers.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {mentionedUsers.map((mu) => (
+                  <span
+                    key={mu.id}
+                    className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-xs font-bold text-[#FFF2A7]"
+                  >
+                    @{mu.username}
+                  </span>
+                ))}
+              </div>
+            )}
+            {story.text && (
+              <p className="text-white text-sm sm:text-base font-semibold leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+                {renderStoryCaptionText(story.text)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Bottom Action Bar: Viewers + Reshare (own) OR Capsule Reply + Reshare (others) */}
+        <div className="relative z-20 px-4 pt-2 pb-safe-3">
           {isOwn ? (
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowViewers((p) => !p)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-black/55 hover:bg-[#8C0027] border border-white/70 text-white text-xs font-bold backdrop-blur-sm"
-              >
-                <Eye className="w-4 h-4" />
-                <span className="font-mono tabular-nums">{viewers.length}</span>
-                <span>Penonton</span>
-              </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowViewers((p) => !p)}
+                  className="flex-1 h-11 flex items-center justify-center gap-2 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/30 text-white text-xs font-bold backdrop-blur-md"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="font-mono tabular-nums">{viewers.length}</span>
+                  <span>Penonton</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onReshare}
+                  aria-label="Bagikan ulang status"
+                  title="Bagikan ulang"
+                  className="h-11 px-4 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/30 text-white text-xs font-bold backdrop-blur-md flex items-center gap-1.5"
+                >
+                  <Repeat2 className="w-4 h-4" />
+                  <span>Bagikan</span>
+                </button>
+              </div>
               {viewersPresence.mounted && (
                 <div
                   className={`${
                     viewersPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-                  } mt-2 p-3 rounded-xl bg-[#171E2C] border border-[#F5F7FA] text-white max-h-32 overflow-y-auto space-y-1.5 text-xs`}
+                  } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-36 overflow-y-auto space-y-1.5 text-xs`}
                 >
                   {viewers.length === 0 ? (
                     <div className="text-white/60 text-center">Belum ada penonton lain.</div>
@@ -910,13 +1097,22 @@ function StoryViewerModal({
                 type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                placeholder={`Balas status ${author?.displayName.split(' ')[0] || ''}...`}
-                className="flex-1 h-11 px-4 rounded-xl bg-black/55 border border-white/70 backdrop-blur-md text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-white"
+                placeholder={`Balas ${author?.displayName.split(' ')[0] || ''}...`}
+                className="flex-1 h-11 px-4 rounded-full bg-black/50 border border-white/35 backdrop-blur-md text-sm text-white placeholder:text-white/75 focus:outline-none focus:border-white"
               />
+              <button
+                type="button"
+                onClick={onReshare}
+                aria-label="Bagikan ulang ke status saya"
+                title="Bagikan ulang ke Status"
+                className="w-11 h-11 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/35 backdrop-blur-md text-white flex items-center justify-center shrink-0 brutal-press"
+              >
+                <Repeat2 className="w-4 h-4" />
+              </button>
               <button
                 type="submit"
                 aria-label="Kirim balasan status"
-                className="w-11 h-11 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-white text-white flex items-center justify-center shrink-0 brutal-press"
+                className="w-11 h-11 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/40 text-white flex items-center justify-center shrink-0 brutal-press"
               >
                 <SendHorizontal className="w-4 h-4" />
               </button>
