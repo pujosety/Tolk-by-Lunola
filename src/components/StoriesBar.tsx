@@ -165,7 +165,7 @@ export function UpdatesView({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-24 md:pb-4 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
         {/* Status Section */}
         <section className="space-y-2.5">
           <div className="flex items-center justify-between px-1">

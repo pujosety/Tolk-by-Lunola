@@ -45,7 +45,7 @@ export function CallsView({
   }, [users, currentUser.id, query]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scrollbar">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scrollbar pb-24 md:pb-4">
       {/* Quick Action Banner */}
       <div className="px-4 py-3 border-b border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3 bg-[#FFFFFF] dark:bg-[#171E2C]">
         <div>

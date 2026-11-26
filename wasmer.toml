@@ -4,7 +4,7 @@
 
 [package]
 name = "pujosety/tolk-by-lunola"
-version = "1.0.33"
+version = "1.0.34"
 description = "Tolk by Lunola — Aplikasi komunikasi lintas platform real-time berbasis Web, PWA & Android WebView di Wasmer Edge"
 entrypoint = "run"
 

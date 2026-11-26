@@ -559,7 +559,7 @@ export function Sidebar({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 md:pb-20 space-y-2 bg-[#F5F7FA] dark:bg-[#0F141E]">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-24 md:pb-20 space-y-2 bg-[#F5F7FA] dark:bg-[#0F141E]">
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="font-display font-bold text-base text-[#161B26] dark:text-[#F5F7FA]">
@@ -776,23 +776,23 @@ export function Sidebar({
 
       </div>
 
-      {/* Floating Compose FAB (visible on Obrolan tab) */}
+      {/* Floating Compose FAB (positioned cleanly above floating capsule navbar on mobile) */}
       <button
         type="button"
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="flex absolute bottom-[78px] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
+        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+82px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>
       </div>
       )}
 
-      {/* WhatsApp-Style 5-Tab Mobile Bottom Navigation Bar */}
+      {/* Floating Glassmorphism Capsule Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden pt-1.5 pb-safe-2 px-1 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-5 gap-0.5 shrink-0 z-20"
+        className="md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] py-1.5 px-2 rounded-full bg-[#FFFFFF]/75 dark:bg-[#171E2C]/75 backdrop-blur-xl border border-white/70 dark:border-white/15 shadow-[0_10px_30px_rgba(22,27,38,0.14)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)] grid grid-cols-5 gap-0.5 z-30"
       >
         <button
           type="button"
