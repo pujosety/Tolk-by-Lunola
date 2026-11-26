@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
+import mysql from 'mysql2/promise';
 import { GoogleGenAI } from '@google/genai';
 import { WebSocketServer, WebSocket } from 'ws';
 import type {
@@ -26,7 +27,7 @@ import type {
 } from './src/types/chat.ts';
 
 const PORT = Number(process.env.PORT || 3000);
-const ROOT_DIR = process.cwd();
+const ROOT_DIR = fs.existsSync('/app/dist/index.html') ? '/app' : process.cwd();
 const IS_DEV_SCRIPT =
   process.env.NODE_ENV === 'development' ||
   process.env.npm_lifecycle_event === 'dev' ||
@@ -35,13 +36,31 @@ const IS_PROD =
   process.env.NODE_ENV === 'production' ||
   process.env.npm_lifecycle_event === 'start' ||
   (!IS_DEV_SCRIPT && fs.existsSync(path.resolve(ROOT_DIR, 'dist', 'index.html')));
-const DATA_DIR = path.resolve(ROOT_DIR, 'data');
-const UPLOADS_DIR = path.resolve(ROOT_DIR, 'uploads');
+
+function resolveWritableDir(preferred: string, fallbackName: string): string {
+  try {
+    fs.mkdirSync(preferred, { recursive: true });
+    const probe = path.join(preferred, `.write-probe-${process.pid}`);
+    fs.writeFileSync(probe, 'ok');
+    fs.unlinkSync(probe);
+    return preferred;
+  } catch {
+    const fallback = path.join(os.tmpdir(), fallbackName);
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+}
+
+const DATA_DIR = resolveWritableDir(
+  process.env.DATA_DIR || (fs.existsSync('/storage') ? '/storage/data' : path.resolve(ROOT_DIR, 'data')),
+  'tolk-data'
+);
+const UPLOADS_DIR = resolveWritableDir(
+  process.env.UPLOADS_DIR || (fs.existsSync('/storage') ? '/storage/uploads' : path.resolve(ROOT_DIR, 'uploads')),
+  'tolk-uploads'
+);
 const STORE_PATH = path.resolve(DATA_DIR, 'store.json');
 const SERVER_START_MS = Date.now();
-
-fs.mkdirSync(DATA_DIR, { recursive: true });
-fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Signing key: reads from env if provided, otherwise ephemeral random secret in memory
 const SESSION_SECRET =
@@ -584,54 +603,62 @@ function createSeedStore(): StoreData {
   };
 }
 
+let dbPool: mysql.Pool | null = null;
+let dbWriteQueue: Promise<void> = Promise.resolve();
+
+function mergeAndRepairStore(parsed: Partial<StoreData>): { merged: StoreData; mutated: boolean } {
+  const base = createSeedStore();
+  const merged: StoreData = {
+    ...base,
+    ...parsed,
+    users: { ...parsed.users },
+    sessions: parsed.sessions || {},
+    scheduledMessages: parsed.scheduledMessages || [],
+    stories: parsed.stories || base.stories,
+    calls: parsed.calls || [],
+    reports: parsed.reports || base.reports,
+    auditLogs: parsed.auditLogs || base.auditLogs,
+    settings: { ...base.settings, ...(parsed.settings || {}) },
+    adminPasscodeHash: parsed.adminPasscodeHash || base.adminPasscodeHash,
+    adminPasscodeSalt: parsed.adminPasscodeSalt || base.adminPasscodeSalt,
+    lastBackupAt: parsed.lastBackupAt ?? null,
+  };
+
+  let mutated = false;
+  const defaultAdmin = base.users.usr_pujo;
+  if (!merged.users.usr_pujo && defaultAdmin) {
+    merged.users.usr_pujo = defaultAdmin;
+    mutated = true;
+  } else if (merged.users.usr_pujo && merged.users.usr_pujo.role !== 'super_admin') {
+    merged.users.usr_pujo.role = 'super_admin';
+    mutated = true;
+  }
+  if (!parsed.adminPasscodeHash && base.adminPasscodeHash) {
+    mutated = true;
+  }
+  for (const cid of ['chat_wasmer_id', 'chat_lunolatalk_news']) {
+    const ch = merged.chats[cid];
+    if (ch) {
+      if (!ch.memberIds.includes('usr_pujo')) {
+        ch.memberIds.unshift('usr_pujo');
+        mutated = true;
+      }
+      if (!ch.adminIds.includes('usr_pujo')) {
+        ch.adminIds.unshift('usr_pujo');
+        mutated = true;
+      }
+    }
+  }
+  return { merged, mutated };
+}
+
 function loadStore(): StoreData {
   try {
     if (fs.existsSync(STORE_PATH)) {
       const raw = fs.readFileSync(STORE_PATH, 'utf8');
       const parsed = JSON.parse(raw) as Partial<StoreData>;
       if (parsed && parsed.users && parsed.chats && parsed.messages) {
-        const base = createSeedStore();
-        const merged: StoreData = {
-          ...base,
-          ...parsed,
-          users: { ...parsed.users },
-          sessions: parsed.sessions || {},
-          scheduledMessages: parsed.scheduledMessages || [],
-          stories: parsed.stories || base.stories,
-          calls: parsed.calls || [],
-          reports: parsed.reports || base.reports,
-          auditLogs: parsed.auditLogs || base.auditLogs,
-          settings: { ...base.settings, ...(parsed.settings || {}) },
-          adminPasscodeHash: parsed.adminPasscodeHash || base.adminPasscodeHash,
-          adminPasscodeSalt: parsed.adminPasscodeSalt || base.adminPasscodeSalt,
-          lastBackupAt: parsed.lastBackupAt ?? null,
-        };
-
-        let mutated = false;
-        const defaultAdmin = base.users.usr_pujo;
-        if (!merged.users.usr_pujo && defaultAdmin) {
-          merged.users.usr_pujo = defaultAdmin;
-          mutated = true;
-        } else if (merged.users.usr_pujo && merged.users.usr_pujo.role !== 'super_admin') {
-          merged.users.usr_pujo.role = 'super_admin';
-          mutated = true;
-        }
-        if (!parsed.adminPasscodeHash && base.adminPasscodeHash) {
-          mutated = true;
-        }
-        for (const cid of ['chat_wasmer_id', 'chat_lunolatalk_news']) {
-          const ch = merged.chats[cid];
-          if (ch) {
-            if (!ch.memberIds.includes('usr_pujo')) {
-              ch.memberIds.unshift('usr_pujo');
-              mutated = true;
-            }
-            if (!ch.adminIds.includes('usr_pujo')) {
-              ch.adminIds.unshift('usr_pujo');
-              mutated = true;
-            }
-          }
-        }
+        const { merged, mutated } = mergeAndRepairStore(parsed);
         if (mutated) {
           saveStore(merged);
         }
@@ -646,13 +673,87 @@ function loadStore(): StoreData {
   return seeded;
 }
 
-function saveStore(data: StoreData): void {
-  const tmpPath = `${STORE_PATH}.${crypto.randomBytes(4).toString('hex')}.tmp`;
-  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmpPath, STORE_PATH);
+function persistStoreToMysql(jsonStr: string): void {
+  if (!dbPool) return;
+  const pool = dbPool;
+  dbWriteQueue = dbWriteQueue
+    .then(async () => {
+      await pool.execute(
+        'INSERT INTO tolk_kv (id, data, updated_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)',
+        ['main', jsonStr, Date.now()]
+      );
+    })
+    .catch((err) => {
+      console.error('MySQL saveStore error:', err);
+    });
 }
 
-const store: StoreData = loadStore();
+function saveStore(data: StoreData): void {
+  const jsonStr = JSON.stringify(data, null, 2);
+  const tmpPath = `${STORE_PATH}.${crypto.randomBytes(4).toString('hex')}.tmp`;
+  fs.writeFileSync(tmpPath, jsonStr, 'utf8');
+  fs.renameSync(tmpPath, STORE_PATH);
+  persistStoreToMysql(jsonStr);
+}
+
+async function initDatabaseAndLoadStore(): Promise<StoreData> {
+  const host = process.env.DB_HOST;
+  const database = process.env.DB_NAME;
+  const user = process.env.DB_USERNAME || process.env.DB_USER;
+
+  if (!host || !database || !user) {
+    return loadStore();
+  }
+
+  try {
+    const pool = mysql.createPool({
+      host,
+      port: Number(process.env.DB_PORT || 3306),
+      database,
+      user,
+      password: process.env.DB_PASSWORD || '',
+      waitForConnections: true,
+      connectionLimit: 5,
+    });
+
+    await pool.execute(
+      'CREATE TABLE IF NOT EXISTS tolk_kv (id VARCHAR(64) PRIMARY KEY, data LONGTEXT NOT NULL, updated_at BIGINT NOT NULL)'
+    );
+
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT data FROM tolk_kv WHERE id = ? LIMIT 1',
+      ['main']
+    );
+
+    dbPool = pool;
+
+    if (rows.length > 0 && typeof rows[0].data === 'string') {
+      const parsed = JSON.parse(rows[0].data) as Partial<StoreData>;
+      if (parsed && parsed.users && parsed.chats && parsed.messages) {
+        const { merged, mutated } = mergeAndRepairStore(parsed);
+        if (mutated) {
+          saveStore(merged);
+        } else {
+          const tmpPath = `${STORE_PATH}.${crypto.randomBytes(4).toString('hex')}.tmp`;
+          fs.writeFileSync(tmpPath, JSON.stringify(merged, null, 2), 'utf8');
+          fs.renameSync(tmpPath, STORE_PATH);
+        }
+        return merged;
+      }
+    }
+
+    const initial = loadStore();
+    persistStoreToMysql(JSON.stringify(initial, null, 2));
+    await dbWriteQueue;
+    return initial;
+  } catch (err) {
+    console.error('Failed to initialize Wasmer MySQL, falling back to JSON store:', err);
+    dbPool = null;
+    return loadStore();
+  }
+}
+
+let store: StoreData = createSeedStore();
 
 // Active WebSockets keyed by userId and sessionId
 const activeSockets = new Map<string, Set<WebSocket>>();
@@ -1121,8 +1222,17 @@ function computeStorageStats(): { filesCount: number; mediaMb: number; storeKb: 
 }
 
 async function startServer(): Promise<void> {
+  store = await initDatabaseAndLoadStore();
   const app = express();
+  app.set('trust proxy', 1);
   app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self)');
+    next();
+  });
   app.use(express.json({ limit: '24mb' }));
 
   // Healthcheck for Wasmer Edge, Docker Compose & Android WebView
@@ -1131,6 +1241,7 @@ async function startServer(): Promise<void> {
       ok: true,
       service: 'lunola-talk',
       runtime: process.env.WASMER_RUNTIME || 'node-wasmer-compatible',
+      database: dbPool ? 'mysql' : 'json-file',
       tinodeHost: process.env.TINODE_HOST ? 'configured' : 'embedded-realtime-ws',
       maintenanceMode: store.settings.maintenanceMode,
       uptimeSec: Math.floor((Date.now() - SERVER_START_MS) / 1000),
@@ -1138,46 +1249,9 @@ async function startServer(): Promise<void> {
     });
   });
 
-  // Guest Session Bootstrap
-  app.post('/api/auth/guest', (req, res) => {
-    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local');
-    if (!checkRateLimit(`auth:${ip}`, 30)) {
-      res.status(429).json({ error: 'Terlalu banyak permintaan sesi. Coba sebentar lagi.' });
-      return;
-    }
-    const suffix = crypto.randomBytes(2).toString('hex');
-    const userId = `usr_guest_${crypto.randomBytes(5).toString('hex')}`;
-    const username = `pengguna_${suffix}`;
-    const now = Date.now();
-    const user: StoredUser = {
-      id: userId,
-      username,
-      displayName: `Pengguna ${suffix.toUpperCase()}`,
-      bio: 'Pengguna Tolk by Lunola (Web, PWA & Android)',
-      statusText: 'Tersedia',
-      avatarUrl: null,
-      avatarColor: pickColor(userId),
-      isGuest: true,
-      verified: false,
-      role: 'user',
-      status: 'active',
-      createdAt: now,
-      lastSeen: now,
-      pinnedChatIds: [],
-      archivedChatIds: [],
-      markedUnreadChatIds: [],
-      mutedUntilByChat: {},
-      lastReadByChat: {},
-      blockedUserIds: [],
-      mutedStoryUserIds: [],
-      privacy: { ...DEFAULT_PRIVACY },
-    };
-    store.users[userId] = user;
-    ensureDefaultChatsForUser(userId);
-    const { token } = createSessionForUser(userId, req);
-    saveStore(store);
-
-    res.json({ token, user: toPublicUser(user, true) });
+  // Guest Session Bootstrap (disabled — mandatory login enabled)
+  app.post('/api/auth/guest', (_req, res) => {
+    res.status(403).json({ error: 'Akses tamu dinonaktifkan. Silakan masuk atau daftar akun.' });
   });
 
   // Register Real Account
@@ -1700,6 +1774,46 @@ async function startServer(): Promise<void> {
       patch: { memberIds: chat.memberIds },
     });
     res.json({ ok: true });
+  });
+
+  // Delete Chat (DM by participant, Group/Channel by chat admin or platform admin)
+  app.delete('/api/chats/:chatId', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const actor = store.users[userId];
+    const chat = store.chats[req.params.chatId];
+    if (!chat || !chat.memberIds.includes(userId)) {
+      res.status(404).json({ error: 'Percakapan tidak ditemukan.' });
+      return;
+    }
+    if (chat.type === 'saved') {
+      res.status(400).json({ error: 'Pesan Tersimpan tidak dapat dihapus.' });
+      return;
+    }
+    const isPlatformAdmin = actor?.role === 'super_admin' || actor?.role === 'administrator';
+    if ((chat.type === 'group' || chat.type === 'channel') && !chat.adminIds.includes(userId) && !isPlatformAdmin) {
+      res.status(403).json({
+        error: 'Hanya admin grup/channel yang dapat menghapus percakapan ini. Gunakan Keluar untuk meninggalkan ruang.',
+      });
+      return;
+    }
+
+    const chatSnapshot = { ...chat, memberIds: [...chat.memberIds] };
+    delete store.chats[chat.id];
+    delete store.messages[chat.id];
+    store.scheduledMessages = store.scheduledMessages.filter((m) => m.chatId !== chat.id);
+    for (const memberId of chatSnapshot.memberIds) {
+      const u = store.users[memberId];
+      if (!u) continue;
+      u.pinnedChatIds = u.pinnedChatIds.filter((id) => id !== chat.id);
+      u.archivedChatIds = u.archivedChatIds.filter((id) => id !== chat.id);
+      u.markedUnreadChatIds = u.markedUnreadChatIds.filter((id) => id !== chat.id);
+      delete u.mutedUntilByChat[chat.id];
+      delete u.lastReadByChat[chat.id];
+    }
+
+    saveStore(store);
+    broadcastToChat(chatSnapshot, { type: 'chat:deleted', chatId: chat.id });
+    res.json({ ok: true, chatId: chat.id });
   });
 
   // Get Messages for a Chat
@@ -2612,6 +2726,47 @@ async function startServer(): Promise<void> {
     }
 
     res.json({ user: toPublicUser(target, true) });
+  });
+
+  app.delete('/api/admin/users/:targetId', requireAuth, requireAdminPermission('users:write'), (req: AuthedRequest, res) => {
+    const actor = store.users[req.userId!];
+    const target = store.users[req.params.targetId];
+    if (!target) {
+      res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+      return;
+    }
+    if (target.id === actor.id) {
+      res.status(400).json({ error: 'Tidak dapat menghapus akun Anda sendiri.' });
+      return;
+    }
+    if (target.id === 'usr_pujo' || (target.role === 'super_admin' && actor.role !== 'super_admin')) {
+      res.status(403).json({ error: 'Pengguna Super Admin tidak dapat dihapus.' });
+      return;
+    }
+
+    for (const ses of Object.values(store.sessions)) {
+      if (ses.userId === target.id) {
+        delete store.sessions[ses.id];
+        revokeSessionSockets(ses.id);
+      }
+    }
+
+    store.stories = store.stories.filter((s) => s.userId !== target.id);
+    for (const [chatId, chat] of Object.entries(store.chats)) {
+      chat.memberIds = chat.memberIds.filter((id) => id !== target.id);
+      chat.adminIds = chat.adminIds.filter((id) => id !== target.id);
+      chat.moderatorIds = chat.moderatorIds.filter((id) => id !== target.id);
+      if ((chat.type === 'saved' || chat.type === 'dm') && chat.memberIds.length <= 1) {
+        delete store.chats[chatId];
+        delete store.messages[chatId];
+      }
+    }
+
+    delete store.users[target.id];
+    appendAudit(actor, 'user:deleted', `@${target.username}`, 'Akun pengguna dihapus permanen oleh admin.');
+    saveStore(store);
+    broadcastAll({ type: 'user:deleted', userId: target.id });
+    res.json({ ok: true, deletedUserId: target.id });
   });
 
   // Export User Data (GDPR / Privacy Policy Export — excludes password hashes)

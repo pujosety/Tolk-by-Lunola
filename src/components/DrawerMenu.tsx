@@ -8,7 +8,6 @@ import {
   Moon,
   Phone,
   Radio,
-  Server,
   Shield,
   Sliders,
   Sun,
@@ -38,7 +37,6 @@ interface DrawerMenuProps {
   onOpenAdminPanel: () => void;
   onOpenProfile: () => void;
   onOpenAuth: () => void;
-  onOpenSelfHost: () => void;
   onLogout: () => void;
 }
 
@@ -58,7 +56,6 @@ export function DrawerMenu({
   onOpenAdminPanel,
   onOpenProfile,
   onOpenAuth,
-  onOpenSelfHost,
   onLogout,
 }: DrawerMenuProps) {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -123,25 +120,20 @@ export function DrawerMenu({
         onOpenSettings();
       },
     },
-    {
-      icon: <Shield className="w-5 h-5" />,
-      label: t(lang, 'adminPanel'),
-      subtitle: 'Dashboard, RBAC, Moderasi, Audit Log',
-      accent: true,
-      onClick: () => {
-        onClose();
-        onOpenAdminPanel();
-      },
-    },
-    {
-      icon: <Server className="w-5 h-5" />,
-      label: t(lang, 'selfHost'),
-      subtitle: 'Tinode + Docker Compose + Wasmer + Android',
-      onClick: () => {
-        onClose();
-        onOpenSelfHost();
-      },
-    },
+    ...(user.role !== 'user'
+      ? [
+          {
+            icon: <Shield className="w-5 h-5" />,
+            label: t(lang, 'adminPanel'),
+            subtitle: 'Dashboard, RBAC, Moderasi, Audit Log',
+            accent: true,
+            onClick: () => {
+              onClose();
+              onOpenAdminPanel();
+            },
+          },
+        ]
+      : []),
     {
       icon: <UserCircle2 className="w-5 h-5" />,
       label: t(lang, 'editProfile'),
@@ -298,7 +290,7 @@ export function DrawerMenu({
               className="h-5 w-auto object-contain select-none"
             />
           </div>
-          <span className="font-mono font-bold">v2.0 · PWA</span>
+          <span className="font-mono font-bold">Tolk by Lunola</span>
         </div>
       </div>
     </div>

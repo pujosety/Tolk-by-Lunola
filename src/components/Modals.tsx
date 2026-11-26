@@ -5,6 +5,8 @@ import {
   Camera,
   Check,
   Copy,
+  Eye,
+  EyeOff,
   Flag,
   Globe,
   LogOut,
@@ -48,6 +50,7 @@ function ModalShell({
   title,
   subtitle,
   maxWidth = 'max-w-md',
+  closable = true,
   onClose,
   children,
 }: {
@@ -55,6 +58,7 @@ function ModalShell({
   title: string;
   subtitle?: string;
   maxWidth?: string;
+  closable?: boolean;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -64,7 +68,7 @@ function ModalShell({
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
         className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#111111]/65 backdrop-blur-[2px]`}
-        onClick={onClose}
+        onClick={closable ? onClose : undefined}
       />
       <div
         className={`${
@@ -82,14 +86,16 @@ function ModalShell({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Tutup dialog"
-            className="h-8 w-8 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-press flex items-center justify-center shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {closable && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Tutup dialog"
+              className="h-8 w-8 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-press flex items-center justify-center shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="p-5 overflow-y-auto thin-scrollbar">{children}</div>
       </div>
@@ -99,11 +105,15 @@ function ModalShell({
 
 export function AuthModal({
   open,
+  closable = true,
+  defaultMode = 'register',
   onClose,
   onRegister,
   onLogin,
 }: {
   open: boolean;
+  closable?: boolean;
+  defaultMode?: 'login' | 'register';
   onClose: () => void;
   onRegister: (payload: {
     username: string;
@@ -114,14 +124,22 @@ export function AuthModal({
   }) => Promise<void>;
   onLogin: (payload: { username: string; password: string }) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<'login' | 'register'>('register');
+  const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [bio, setBio] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMode(defaultMode);
+      setError('');
+    }
+  }, [open, defaultMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,8 +162,9 @@ export function AuthModal({
   return (
     <ModalShell
       open={open}
+      closable={closable}
       title={mode === 'register' ? 'Daftar Akun Tolk by Lunola' : 'Masuk ke Tolk by Lunola'}
-      subtitle="Satu akun tersinkronisasi lintas Web, PWA, dan Android WebView."
+      subtitle="Satu akun untuk semua perangkat Anda."
       onClose={onClose}
     >
       <div className="flex items-center justify-center mb-4">
@@ -204,6 +223,7 @@ export function AuthModal({
               <input
                 type="text"
                 required
+                autoComplete="name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Contoh: Bima Pratama"
@@ -216,6 +236,7 @@ export function AuthModal({
               </label>
               <input
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@domain.com"
@@ -232,6 +253,7 @@ export function AuthModal({
           <input
             type="text"
             required
+            autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={mode === 'login' ? 'username atau nama@domain.com' : 'bima_dev'}
@@ -243,15 +265,26 @@ export function AuthModal({
           <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
             Kata Sandi
           </label>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Minimal 6 karakter"
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={6}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimal 6 karakter"
+              className="w-full h-10 pl-3 pr-10 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#52494D] dark:text-[#B9A7AE] hover:text-[#8B112B] dark:hover:text-[#FF5C7A]"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         {mode === 'register' && (

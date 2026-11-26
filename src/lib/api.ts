@@ -28,6 +28,7 @@ export type ServerWsEvent =
   | { type: 'message:deleted'; chatId: string; messageId: string }
   | { type: 'chat:created'; chat: ChatRoom }
   | { type: 'chat:updated'; chatId: string; patch: Partial<ChatRoom> }
+  | { type: 'chat:deleted'; chatId: string }
   | { type: 'chat:read'; chatId: string; userId: string; readAt: number }
   | { type: 'user:updated'; user: UserProfile }
   | { type: 'story:created'; story: StoryItem }
@@ -175,6 +176,12 @@ export const api = {
   leaveChat: (token: string, chatId: string) =>
     requestJson<{ ok: boolean }>(`/api/chats/${encodeURIComponent(chatId)}/leave`, {
       method: 'POST',
+      token,
+    }),
+
+  deleteChat: (token: string, chatId: string) =>
+    requestJson<{ ok: boolean; chatId: string }>(`/api/chats/${encodeURIComponent(chatId)}`, {
+      method: 'DELETE',
       token,
     }),
 
@@ -423,6 +430,12 @@ export const api = {
     requestJson<Record<string, unknown>>(
       `/api/admin/users/${encodeURIComponent(userId)}/export`,
       { token }
+    ),
+
+  adminDeleteUser: (token: string, userId: string) =>
+    requestJson<{ ok: boolean; deletedUserId: string }>(
+      `/api/admin/users/${encodeURIComponent(userId)}`,
+      { method: 'DELETE', token }
     ),
 
   adminReports: (token: string) =>

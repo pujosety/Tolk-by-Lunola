@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Archive,
   Ban,
@@ -16,6 +16,7 @@ import {
   QrCode,
   Shield,
   Timer,
+  Trash2,
   X,
 } from 'lucide-react';
 import type { ChatRoom, Message, UserProfile } from '../types/chat';
@@ -45,6 +46,7 @@ interface ChatInfoDrawerProps {
   }) => Promise<void>;
   onToggleModerator: (userId: string, makeMod: boolean) => Promise<void>;
   onLeaveChat: () => Promise<void>;
+  onDeleteChat: () => Promise<void>;
   onToggleBlockUser: (userId: string, block: boolean) => Promise<void>;
   onReportTarget: (payload: {
     targetType: 'user' | 'group';
@@ -78,17 +80,31 @@ export function ChatInfoDrawer({
   onUpdateChatDetails,
   onToggleModerator,
   onLeaveChat,
+  onDeleteChat,
   onToggleBlockUser,
   onReportTarget,
 }: ChatInfoDrawerProps) {
-  const [tab, setTab] = useState<'members' | 'media' | 'files' | 'voice'>('media');
+  const [tab, setTab] = useState<'members' | 'media' | 'files' | 'voice'>(
+    chat.type === 'dm' ? 'media' : 'members'
+  );
   const [copiedHandle, setCopiedHandle] = useState(false);
   const [showInviteQr, setShowInviteQr] = useState(false);
   const [editingGroup, setEditingGroup] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [editDesc, setEditDesc] = useState(chat.description);
   const [editAdminOnly, setEditAdminOnly] = useState(Boolean(chat.adminOnlyPost));
   const [savingGroup, setSavingGroup] = useState(false);
+
+  useEffect(() => {
+    setConfirmDelete(false);
+    setEditingGroup(false);
+    setShowInviteQr(false);
+    setEditTitle(chat.title);
+    setEditDesc(chat.description);
+    setEditAdminOnly(Boolean(chat.adminOnlyPost));
+    setTab(chat.type === 'dm' ? 'media' : 'members');
+  }, [chat.id, chat.title, chat.description, chat.adminOnlyPost, chat.type, open]);
 
   const mediaMessages = useMemo(
     () =>
@@ -707,6 +723,46 @@ export function ChatInfoDrawer({
                   <span>Keluar dari {chat.type === 'channel' ? 'Channel' : 'Grup'}</span>
                 </button>
               </>
+            )}
+            {(chat.type === 'dm' ||
+              isGroupAdmin ||
+              currentUser.role === 'super_admin' ||
+              currentUser.role === 'administrator') && (
+              confirmDelete ? (
+                <div className="p-2.5 rounded-[4px] border-2 border-[#B91C1C] bg-[#FEF2F2] dark:bg-[#2B1217] space-y-2">
+                  <p className="text-[11px] font-bold text-[#B91C1C] dark:text-[#FF8DA6]">
+                    Hapus permanen percakapan ini beserta semua pesannya?
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmDelete(false);
+                        void onDeleteChat();
+                      }}
+                      className="flex-1 py-1.5 rounded-[4px] bg-[#B91C1C] text-white text-xs font-bold"
+                    >
+                      Ya, Hapus
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="flex-1 py-1.5 rounded-[4px] border border-[#111111] dark:border-[#4A313C] text-xs font-bold"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full px-3 py-2 rounded-[4px] flex items-center gap-2.5 text-xs font-bold text-[#B91C1C] dark:text-[#FF6B81] hover:bg-[#FEF2F2] dark:hover:bg-[#2B1217]"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Hapus Percakapan</span>
+                </button>
+              )
             )}
           </div>
         )}

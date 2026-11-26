@@ -371,12 +371,6 @@ export function Sidebar({
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto thin-scrollbar p-2 pb-20 space-y-1.5">
-        {!wsConnected && (
-          <div className="p5-panel-reveal px-3 py-1.5 rounded-[4px] bg-[#FEF3C7] dark:bg-[#3A1E08] border-2 border-[#111111] dark:border-amber-500 text-[11px] text-[#111111] dark:text-amber-200 font-semibold">
-            {t(lang, 'connecting')}
-          </div>
-        )}
-
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="font-display font-bold text-base text-[#111111] dark:text-[#F4EFE6]">

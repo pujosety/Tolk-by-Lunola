@@ -15,7 +15,7 @@ android {
         versionName = "1.0.0"
 
         // Ganti URL ini dengan URL Wasmer Edge atau domain self-hosted Tolk by Lunola Anda
-        buildConfigField("String", "WASMER_APP_URL", "\"https://lunola-talk.wasmer.app\"")
+        buildConfigField("String", "WASMER_APP_URL", "\"https://tolks.wasmer.app\"")
     }
 
     buildFeatures {

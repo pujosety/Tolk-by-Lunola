@@ -287,6 +287,7 @@ export function ChatWindow({
   const [scheduledFor, setScheduledFor] = useState<number | null>(null);
   const [customScheduleInput, setCustomScheduleInput] = useState('');
 
+  const [mobileHeaderMenuOpen, setMobileHeaderMenuOpen] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [summaryText, setSummaryText] = useState<string | null>(null);
@@ -371,6 +372,7 @@ export function ChatWindow({
     setScheduleOpen(false);
     setScheduledFor(null);
     setSummaryText(null);
+    setMobileHeaderMenuOpen(false);
     clearPendingFile();
   }, [chat.id]);
 
@@ -401,6 +403,13 @@ export function ChatWindow({
       setPendingPreviewUrl(null);
     }
   };
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [draftText]);
 
   const handleInputChange = (val: string) => {
     onDraftChange(val);
@@ -741,7 +750,7 @@ export function ChatWindow({
             disabled={summarizing}
             aria-label={t(lang, 'aiSummarize')}
             title={t(lang, 'aiSummarize')}
-            className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center disabled:opacity-50"
+            className="hidden sm:flex h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
           >
             <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#8B112B]' : ''}`} />
           </button>
@@ -752,7 +761,7 @@ export function ChatWindow({
               setSearchTerm('');
             }}
             aria-label="Cari di percakapan"
-            className={`h-9 w-9 rounded-[4px] border-2 brutal-shadow-sm brutal-press flex items-center justify-center ${
+            className={`hidden sm:flex h-9 w-9 rounded-[4px] border-2 brutal-shadow-sm brutal-press items-center justify-center ${
               searchOpen
                 ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6]'
                 : 'border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white'
@@ -768,6 +777,44 @@ export function ChatWindow({
           >
             <Info className="w-4 h-4" />
           </button>
+          <div className="relative sm:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileHeaderMenuOpen((v) => !v)}
+              aria-label="Menu percakapan"
+              className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            {mobileHeaderMenuOpen && (
+              <div className="p5-menu-pop absolute right-0 top-11 z-30 w-48 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow py-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileHeaderMenuOpen(false);
+                    setSearchOpen((v) => !v);
+                    setSearchTerm('');
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#26161E] flex items-center gap-2"
+                >
+                  <Search className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+                  <span>{searchOpen ? 'Tutup Pencarian' : 'Cari di Percakapan'}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={summarizing}
+                  onClick={() => {
+                    setMobileHeaderMenuOpen(false);
+                    void handleTriggerSummarize();
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#26161E] flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Sparkles className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+                  <span>{t(lang, 'aiSummarize')}</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

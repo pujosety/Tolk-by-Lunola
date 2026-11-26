@@ -40,7 +40,6 @@ import {
   ForwardModal,
   ProfileModal,
   ReportModal,
-  SelfHostModal,
   SessionsModal,
   SettingsModal,
 } from './components/Modals';
@@ -80,7 +79,7 @@ export function App() {
 
   // Auth token kept strictly in React memory (never localStorage/sessionStorage)
   const [token, setToken] = useState<string | null>(null);
-  const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootstrapping, setBootstrapping] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -126,7 +125,6 @@ export function App() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [selfHostModalOpen, setSelfHostModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsList, setSessionsList] = useState<DeviceSession[]>([]);
@@ -292,26 +290,7 @@ export function App() {
     [loadMessagesForChat]
   );
 
-  // Initial guest session bootstrap
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const { token: guestToken } = await api.createGuestSession();
-        if (!active) return;
-        await hydrateFromToken(guestToken);
-      } catch (err) {
-        if (!active) return;
-        setBootError(
-          err instanceof Error ? err.message : 'Server Tolk by Lunola tidak dapat dijangkau.'
-        );
-        setBootstrapping(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [hydrateFromToken]);
+  // Mandatory authentication: user must sign in or register before accessing chat
 
   // WebRTC Cleanup Helper
   const cleanupWebRtc = useCallback(() => {
@@ -678,6 +657,16 @@ export function App() {
               prev.map((c) => (c.id === evt.chatId ? { ...c, ...evt.patch } : c))
             )
           );
+          break;
+
+        case 'chat:deleted':
+          setChats((prev) => prev.filter((c) => c.id !== evt.chatId));
+          setMessagesByChat((prev) => {
+            const next = { ...prev };
+            delete next[evt.chatId];
+            return next;
+          });
+          setActiveChatId((prev) => (prev === evt.chatId ? null : prev));
           break;
 
         case 'chat:read':
@@ -1068,10 +1057,14 @@ export function App() {
       await api.logout(token).catch(() => {});
     }
     cleanupWebRtc();
-    showToast('Anda keluar dari sesi sebelumnya. Memulai sesi tamu baru...');
-    const { token: fresh } = await api.createGuestSession();
-    await hydrateFromToken(fresh);
-  }, [token, cleanupWebRtc, hydrateFromToken, showToast]);
+    setToken(null);
+    setCurrentUser(null);
+    setChats([]);
+    setMessagesByChat({});
+    setActiveChatId(null);
+    setAuthModalOpen(false);
+    showToast('Anda telah keluar. Silakan masuk kembali.');
+  }, [token, cleanupWebRtc, showToast]);
 
   const handleOpenSaved = () => {
     const saved = chats.find((c) => c.type === 'saved');
@@ -1101,13 +1094,13 @@ export function App() {
     );
   }
 
-  if (bootError || !currentUser || !token) {
+  if (bootError) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-[#F6F2EB] dark:bg-[#0D0B0E] text-[#111111] dark:text-[#F4EFE6] px-6 text-center">
         <div className="p-6 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow max-w-sm">
           <p className="font-display font-extrabold text-xl">Gagal memuat Tolk by Lunola</p>
           <p className="mt-1 text-xs text-[#52494D] dark:text-[#B9A7AE]">
-            {bootError || 'Terjadi kesalahan koneksi.'}
+            {bootError}
           </p>
           <button
             type="button"
@@ -1117,6 +1110,29 @@ export function App() {
             Muat Ulang
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (!currentUser || !token) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#111111] dark:text-[#F4EFE6]">
+        <AuthModal
+          open={true}
+          closable={false}
+          defaultMode="login"
+          onClose={() => {}}
+          onRegister={async (payload) => {
+            const { token: newToken } = await api.register(payload);
+            await hydrateFromToken(newToken);
+            showToast('Akun Tolk by Lunola berhasil dibuat.');
+          }}
+          onLogin={async (payload) => {
+            const { token: newToken } = await api.login(payload);
+            await hydrateFromToken(newToken);
+            showToast('Berhasil masuk ke akun Anda.');
+          }}
+        />
       </div>
     );
   }
@@ -1336,6 +1352,19 @@ export function App() {
                 setMobileShowChat(false);
                 showToast('Anda keluar dari ruang percakapan.');
               }}
+              onDeleteChat={async () => {
+                await api.deleteChat(token, activeChat.id);
+                setChats((prev) => prev.filter((c) => c.id !== activeChat.id));
+                setMessagesByChat((prev) => {
+                  const next = { ...prev };
+                  delete next[activeChat.id];
+                  return next;
+                });
+                setActiveChatId(null);
+                setInfoOpen(false);
+                setMobileShowChat(false);
+                showToast('Percakapan telah dihapus.');
+              }}
               onToggleBlockUser={async (uid, block) => {
                 const { blockedUserIds } = await api.toggleBlockUser(token, uid, block);
                 setCurrentUser((prev) => (prev ? { ...prev, blockedUserIds } : prev));
@@ -1367,7 +1396,6 @@ export function App() {
         onOpenAdminPanel={() => setAdminPanelOpen(true)}
         onOpenProfile={() => setProfileModalOpen(true)}
         onOpenAuth={() => setAuthModalOpen(true)}
-        onOpenSelfHost={() => setSelfHostModalOpen(true)}
         onLogout={() => void handleLogout()}
       />
 
@@ -1476,8 +1504,6 @@ export function App() {
         }}
       />
 
-      <SelfHostModal open={selfHostModalOpen} onClose={() => setSelfHostModalOpen(false)} />
-
       <CallHistoryModal
         open={callHistoryOpen}
         calls={calls}
@@ -1522,7 +1548,7 @@ export function App() {
           key={toastRetained.renderedValue}
           className={`${
             toastRetained.closing ? 'p5-toast-out pointer-events-none' : 'p5-toast-impact'
-          } fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] px-4 py-2 rounded-[4px] bg-[#111111] dark:bg-[#8B112B] border-2 border-[#8B112B] dark:border-[#F4EFE6] text-[#F4EFE6] text-xs font-bold brutal-shadow-sm`}
+          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-[4px] bg-[#111111] dark:bg-[#8B112B] border-2 border-[#8B112B] dark:border-[#F4EFE6] text-[#F4EFE6] text-xs font-bold brutal-shadow-sm`}
         >
           {toastRetained.renderedValue}
         </div>

@@ -544,6 +544,24 @@ export function AdminPanel({
                               >
                                 Ekspor
                               </button>
+                              {u.id !== currentUser.id && u.id !== 'usr_pujo' && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setConfirmAction({
+                                      label: `Hapus permanen akun @${u.username}? Semua sesi dan data milik pengguna ini akan dihapus.`,
+                                      onConfirm: async () => {
+                                        await api.adminDeleteUser(token, u.id);
+                                        onNotify(`Akun @${u.username} telah dihapus`);
+                                        refreshSection();
+                                      },
+                                    })
+                                  }
+                                  className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold text-[#8B112B] dark:text-[#FF8DA6] hover:bg-[#8B112B] hover:text-white"
+                                >
+                                  Hapus
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

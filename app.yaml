@@ -1,0 +1,9 @@
+kind: wasmer.io/App.v0
+app_id: da_nVEIoteUj3y9
+name: Tolk
+owner: pujosety
+package: .
+
+volumes:
+  - name: tolk-storage
+    mount: /storage
