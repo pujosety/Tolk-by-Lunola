@@ -9,15 +9,16 @@ import {
   FileText,
   Film,
   Image as ImageIcon,
-  LayoutGrid,
   Menu,
   MessageCircle,
   Mic,
   PanelLeftClose,
   PanelLeftOpen,
+  Phone,
   Pin,
   Radio,
   Search,
+  Sparkles,
   Timer,
   Trash2,
   Users,
@@ -60,6 +61,7 @@ interface SidebarProps {
   onOpenDrawer: () => void;
   onOpenNewChat: () => void;
   onOpenNotifications: () => void;
+  onOpenCalls: () => void;
   onDeleteChat: (chatId: string) => Promise<void>;
   onTogglePinChat: (chatId: string) => Promise<void>;
   onToggleArchiveChat: (chatId: string) => Promise<void>;
@@ -103,6 +105,7 @@ export function Sidebar({
   onOpenDrawer,
   onOpenNewChat,
   onOpenNotifications,
+  onOpenCalls,
   onDeleteChat,
   onTogglePinChat,
   onToggleArchiveChat,
@@ -115,6 +118,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<'chats' | 'status'>('chats');
   const longPressTimerRef = useRef<number | null>(null);
 
   const startLongPress = (chat: ChatRoom) => {
@@ -303,25 +307,16 @@ export function Sidebar({
       {/* Top Neo-Brutalist Brand & Search Header */}
       <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C]">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              type="button"
-              onClick={onOpenDrawer}
-              aria-label="Buka menu navigasi"
-              className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#F5F7FA] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            <div className="h-10 px-1 flex items-center min-w-0">
-              <img
-                src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-                alt="Tolk by Lunola"
-                className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
-              />
-            </div>
+          {/* Clean Left Logo Only */}
+          <div className="h-10 px-1 flex items-center min-w-0">
+            <img
+              src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
+              alt="Tolk by Lunola"
+              className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
+            />
           </div>
 
+          {/* Right Actions: Notifications, Hamburger Menu (on right), Minimize (desktop) */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
@@ -332,10 +327,19 @@ export function Sidebar({
             >
               <Bell className="w-4 h-4" />
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#8C0027] text-white text-[10px] font-mono font-bold flex items-center justify-center border border-white dark:border-[#171E2C]">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F59B00] text-white text-[10px] font-mono font-bold flex items-center justify-center border border-white dark:border-[#171E2C]">
                   {notificationCount > 9 ? '9+' : notificationCount}
                 </span>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={onOpenDrawer}
+              aria-label="Buka menu"
+              title="Menu"
+              className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Menu className="w-5 h-5" />
             </button>
             <button
               type="button"
@@ -638,61 +642,99 @@ export function Sidebar({
 
       </div>
 
-      {/* Desktop Floating Compose Button */}
+      {/* Floating Compose FAB (positioned above bottom nav on mobile, bottom-right on desktop) */}
       <button
         type="button"
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="hidden md:flex absolute bottom-6 right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
+        className="flex absolute bottom-[78px] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>
 
-      {/* Mobile Native-Style Bottom Tab Bar (Apple HIG) */}
+      {/* WhatsApp-Style Mobile Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden pt-2 pb-safe-2 px-3 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-4 gap-1.5 shrink-0 z-20"
+        className="md:hidden pt-1.5 pb-safe-2 px-2 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-4 gap-1 shrink-0 z-20"
       >
         <button
           type="button"
-          onClick={() => onSelectFolder('all')}
-          className="h-11 rounded-2xl bg-[#EAF4FF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+          onClick={() => {
+            setMobileTab('chats');
+            onSelectFolder('all');
+          }}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
-          <MessageCircle className="w-4 h-4" />
-          <span>Obrolan</span>
+          <span
+            className={`relative px-4 py-1 rounded-full transition-colors ${
+              mobileTab === 'chats'
+                ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
+                : 'text-[#5A6578] dark:text-[#94A3B8]'
+            }`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            {unreadByFolder.all > 0 && (
+              <span className="absolute -top-0.5 right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8C0027] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                {unreadByFolder.all > 99 ? '99+' : unreadByFolder.all}
+              </span>
+            )}
+          </span>
+          <span className={mobileTab === 'chats' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+            Obrolan
+          </span>
         </button>
 
         <button
           type="button"
-          onClick={onOpenNewChat}
-          className="h-11 rounded-2xl bg-[#8C0027] text-white flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-shadow-sm brutal-press"
+          onClick={() => {
+            setMobileTab('status');
+            onSelectFolder('channel');
+          }}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
-          <Edit3 className="w-4 h-4" />
-          <span>Mulai</span>
+          <span
+            className={`relative px-4 py-1 rounded-full transition-colors ${
+              mobileTab === 'status'
+                ? 'bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7]'
+                : 'text-[#5A6578] dark:text-[#94A3B8]'
+            }`}
+          >
+            <Sparkles className="w-5 h-5" />
+            {stories.length > 0 && (
+              <span className="absolute top-0.5 right-3 w-2 h-2 rounded-full bg-[#F59B00]" />
+            )}
+          </span>
+          <span className={mobileTab === 'status' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+            Update
+          </span>
         </button>
 
         <button
           type="button"
-          onClick={onOpenNotifications}
-          className="relative h-11 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+          onClick={onOpenCalls}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8]"
         >
-          <Bell className="w-4 h-4" />
-          <span>Notif</span>
-          {notificationCount > 0 && (
-            <span className="absolute top-1 right-4 min-w-[16px] h-[16px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono font-bold flex items-center justify-center">
-              {notificationCount > 9 ? '9+' : notificationCount}
-            </span>
-          )}
+          <span className="px-4 py-1 rounded-full">
+            <Phone className="w-5 h-5" />
+          </span>
+          <span>Panggilan</span>
         </button>
 
         <button
           type="button"
           onClick={onOpenDrawer}
-          className="h-11 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold brutal-press"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8]"
         >
-          <LayoutGrid className="w-4 h-4" />
-          <span>Menu</span>
+          <span className="px-3 py-0.5 rounded-full flex items-center justify-center">
+            <Avatar
+              name={currentUser.displayName}
+              imageUrl={currentUser.avatarUrl}
+              color={currentUser.avatarColor}
+              size="xs"
+            />
+          </span>
+          <span>Kamu</span>
         </button>
       </nav>
 

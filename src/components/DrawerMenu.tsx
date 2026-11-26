@@ -8,7 +8,6 @@ import {
   LogOut,
   MonitorSmartphone,
   Moon,
-  Phone,
   Radio,
   Shield,
   Sliders,
@@ -33,7 +32,6 @@ interface DrawerMenuProps {
   onOpenNewGroup: () => void;
   onOpenNewChannel: () => void;
   onOpenSaved: () => void;
-  onOpenCalls: () => void;
   onOpenDevices: () => void;
   onOpenSettings: () => void;
   onOpenAdminPanel: () => void;
@@ -52,7 +50,6 @@ export function DrawerMenu({
   onOpenNewGroup,
   onOpenNewChannel,
   onOpenSaved,
-  onOpenCalls,
   onOpenDevices,
   onOpenSettings,
   onOpenAdminPanel,
@@ -102,16 +99,6 @@ export function DrawerMenu({
       onClick: () => {
         onClose();
         onOpenSaved();
-      },
-    },
-    {
-      icon: <Phone className="w-5 h-5" />,
-      iconBg: 'bg-[#BEDEFF] text-[#161B26]',
-      label: t(lang, 'calls'),
-      subtitle: 'Cek panggilan suara & video',
-      onClick: () => {
-        onClose();
-        onOpenCalls();
       },
     },
     {
@@ -183,8 +170,8 @@ export function DrawerMenu({
           closing ? 'p5-drawer-left-out' : 'p5-drawer-left'
         } relative z-10 w-full md:w-[332px] h-full bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border-r md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg flex flex-col`}
       >
-        {/* Mobile Full-Page Top Bar + Profile Hero */}
-        <div className="pt-safe-3 px-4 pb-4 p5-maroon-banner text-white shrink-0">
+        {/* WhatsApp "You / Kamu" Style Header */}
+        <div className="pt-safe-3 px-4 pb-5 p5-maroon-banner text-white shrink-0">
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
@@ -197,7 +184,7 @@ export function DrawerMenu({
               <span className="md:hidden">Kembali</span>
             </button>
             <span className="font-display font-extrabold text-base tracking-wide md:hidden">
-              Menu
+              Kamu
             </span>
             <button
               type="button"
@@ -209,7 +196,12 @@ export function DrawerMenu({
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-3.5">
+          <div className="mt-4 flex flex-col items-center text-center">
+            {user.statusText && (
+              <div className="mb-2 px-3 py-1 rounded-full bg-white text-[#161B26] text-[11px] font-bold brutal-shadow-sm max-w-[220px] truncate">
+                {user.statusText}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -217,7 +209,7 @@ export function DrawerMenu({
                 onOpenProfile();
               }}
               aria-label="Ubah foto profil"
-              className="rounded-2xl focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform shrink-0"
+              className="rounded-2xl focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform"
             >
               <Avatar
                 name={user.displayName}
@@ -226,14 +218,12 @@ export function DrawerMenu({
                 size="lg"
               />
             </button>
-            <div className="min-w-0 flex-1">
-              <div className="font-display font-extrabold text-xl leading-tight truncate text-white">
-                {user.displayName}
-              </div>
-              <div className="mt-0.5 text-xs text-[#FFF2A7] font-mono truncate">
-                @{user.username}
-                {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
-              </div>
+            <div className="mt-2.5 font-display font-extrabold text-xl leading-tight truncate text-white max-w-full">
+              {user.displayName}
+            </div>
+            <div className="mt-0.5 text-xs text-[#FFF2A7] font-mono truncate">
+              @{user.username}
+              {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
             </div>
           </div>
         </div>

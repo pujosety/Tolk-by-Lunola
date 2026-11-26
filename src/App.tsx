@@ -1320,6 +1320,7 @@ export function App() {
             onOpenDrawer={() => setDrawerOpen(true)}
             onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
             onOpenNotifications={() => setNotificationsOpen(true)}
+            onOpenCalls={() => setCallHistoryOpen(true)}
             onDeleteChat={async (chatId) => {
               await api.deleteChat(token, chatId);
               setChats((prev) => prev.filter((c) => c.id !== chatId));
@@ -1533,7 +1534,6 @@ export function App() {
         onOpenNewGroup={() => setCreateModalState({ open: true, mode: 'group' })}
         onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
         onOpenSaved={handleOpenSaved}
-        onOpenCalls={() => setCallHistoryOpen(true)}
         onOpenDevices={() => {
           setSessionsModalOpen(true);
           void loadSessions();
