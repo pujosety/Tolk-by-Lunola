@@ -421,13 +421,8 @@ export function App() {
         setMaxUploadMb(data.serverInfo.maxUploadMb || 25);
         setOnlineUserIds(new Set(data.onlineUserIds));
 
-        if (data.chats.length > 0) {
-          const initialChat = data.chats[0];
-          setActiveChatId(initialChat.id);
-          await loadMessagesForChat(authToken, initialChat.id);
-        } else {
-          setActiveChatId(null);
-        }
+        setActiveChatId(null);
+        setMobileShowChat(false);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Gagal menyambung ke server Tolk by Lunola.';
         const isAuthFailure = /401|403|sesi|token|unauthorized|login/i.test(msg);
@@ -1594,8 +1589,8 @@ export function App() {
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
-              <div className="p5-impact-slam px-6 py-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg max-w-sm flex flex-col items-center">
-                <div className="mb-3 flex items-center justify-center">
+              <div className="p5-impact-slam px-7 py-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg max-w-sm flex flex-col items-center">
+                <div className="mb-3.5 flex items-center justify-center">
                   <img
                     src="/assets/aistudio/tolk-stacked_d5d93707.svg"
                     alt="Tolk by Lunola"
@@ -1603,10 +1598,20 @@ export function App() {
                   />
                 </div>
                 <h2 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
-                  Pilih percakapan untuk mulai
+                  Selamat datang di Tolk by Lunola
                 </h2>
                 <p className="mt-1.5 text-xs text-[#5A6578] dark:text-[#94A3B8] leading-relaxed">
-                  Gunakan <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + K</span> untuk mencari cepat, <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + B</span> untuk memperkecil sidebar, atau mulai panggilan WebRTC.
+                  Pilih obrolan di sebelah kiri untuk mulai ngobrol, atau buat percakapan baru.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCreateModalState({ open: true, mode: 'dm' })}
+                  className="mt-4 px-4 py-2.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold brutal-shadow-sm brutal-press"
+                >
+                  Mulai Obrolan Baru
+                </button>
+                <p className="mt-3 text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
+                  Pintasan: <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + K</span> cari cepat · <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + B</span> lipat sidebar
                 </p>
               </div>
             </div>
