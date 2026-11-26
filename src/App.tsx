@@ -74,12 +74,19 @@ function sortChats(list: ChatRoom[]): ChatRoom[] {
   });
 }
 
+const AUTH_TOKEN_KEY = 'tolk_auth_token';
+
 export function App() {
   const isOnline = useOnlineStatus();
 
-  // Auth token kept strictly in React memory (never localStorage/sessionStorage)
   const [token, setToken] = useState<string | null>(null);
-  const [bootstrapping, setBootstrapping] = useState(false);
+  const [bootstrapping, setBootstrapping] = useState(() => {
+    try {
+      return Boolean(window.localStorage.getItem(AUTH_TOKEN_KEY));
+    } catch {
+      return false;
+    }
+  });
   const [bootError, setBootError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -261,6 +268,11 @@ export function App() {
       setBootError(null);
       try {
         const data = await api.bootstrap(authToken);
+        try {
+          window.localStorage.setItem(AUTH_TOKEN_KEY, authToken);
+        } catch {
+          // Ignore storage quota errors
+        }
         setToken(authToken);
         setCurrentUser(data.user);
         setUsers(data.users);
@@ -280,9 +292,19 @@ export function App() {
           setActiveChatId(null);
         }
       } catch (err) {
-        setBootError(
-          err instanceof Error ? err.message : 'Gagal menyambung ke server Tolk by Lunola.'
-        );
+        const msg = err instanceof Error ? err.message : 'Gagal menyambung ke server Tolk by Lunola.';
+        const isAuthFailure = /401|403|sesi|token|unauthorized|login/i.test(msg);
+        if (isAuthFailure) {
+          try {
+            window.localStorage.removeItem(AUTH_TOKEN_KEY);
+          } catch {
+            // Ignore
+          }
+          setToken(null);
+          setCurrentUser(null);
+        } else {
+          setBootError(msg);
+        }
       } finally {
         setBootstrapping(false);
       }
@@ -290,7 +312,20 @@ export function App() {
     [loadMessagesForChat]
   );
 
-  // Mandatory authentication: user must sign in or register before accessing chat
+  // Restore saved session on mount / refresh
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    } catch {
+      saved = null;
+    }
+    if (saved) {
+      void hydrateFromToken(saved);
+    } else {
+      setBootstrapping(false);
+    }
+  }, [hydrateFromToken]);
 
   // WebRTC Cleanup Helper
   const cleanupWebRtc = useCallback(() => {
@@ -539,8 +574,18 @@ export function App() {
           break;
 
         case 'session:revoked':
+          try {
+            window.localStorage.removeItem(AUTH_TOKEN_KEY);
+          } catch {
+            // Ignore
+          }
+          cleanupWebRtc();
+          setToken(null);
+          setCurrentUser(null);
+          setChats([]);
+          setMessagesByChat({});
+          setActiveChatId(null);
           showToast('Sesi login Anda dicabut oleh perangkat lain atau admin.');
-          void api.createGuestSession().then(({ token: fresh }) => hydrateFromToken(fresh));
           break;
 
         case 'presence:update':
@@ -1055,6 +1100,11 @@ export function App() {
   const handleLogout = useCallback(async () => {
     if (token) {
       await api.logout(token).catch(() => {});
+    }
+    try {
+      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    } catch {
+      // Ignore
     }
     cleanupWebRtc();
     setToken(null);
