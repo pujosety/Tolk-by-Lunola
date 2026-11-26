@@ -287,6 +287,7 @@ export function ChatWindow({
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
   const [sendKick, setSendKick] = useState(0);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -1652,25 +1653,29 @@ export function ChatWindow({
               }}
               className="hidden"
             />
-            <button
-              type="button"
-              onClick={() => setScheduleOpen((v) => !v)}
-              disabled={sending || Boolean(editingMsg)}
-              aria-label={t(lang, 'scheduleMessage')}
-              title={t(lang, 'scheduleMessage')}
-              className={`h-11 w-10 rounded-xl border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 ${
-                scheduledFor
-                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
-                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
-              }`}
-            >
-              <CalendarClock className="w-4 h-4" />
-            </button>
+            {!composerFocused && (
+              <button
+                type="button"
+                onClick={() => setScheduleOpen((v) => !v)}
+                disabled={sending || Boolean(editingMsg)}
+                aria-label={t(lang, 'scheduleMessage')}
+                title={t(lang, 'scheduleMessage')}
+                className={`h-11 w-10 rounded-full border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 transition-all ${
+                  scheduledFor
+                    ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
+                    : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
+                }`}
+              >
+                <CalendarClock className="w-4 h-4" />
+              </button>
+            )}
 
             <textarea
               ref={inputRef}
               rows={1}
               value={draftText}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
               onChange={(e) => handleInputChange(e.target.value)}
               onPaste={handlePaste}
               onKeyDown={(e) => {
@@ -1680,38 +1685,43 @@ export function ChatWindow({
                 }
               }}
               placeholder={t(lang, 'writeMessage')}
-              className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027]"
+              className="flex-1 h-11 max-h-32 min-h-[44px] py-[11px] px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm leading-[20px] text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none overflow-y-auto focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-all"
             />
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={sending}
-              aria-label="Lampirkan file atau media"
-              title="Lampirkan foto, video, atau dokumen"
-              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <Paperclip className="w-4 h-4" />
-            </button>
+            {!composerFocused && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sending}
+                  aria-label="Lampirkan file atau media"
+                  title="Lampirkan foto, video, atau dokumen"
+                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              disabled={sending}
-              aria-label="Buka kamera"
-              title="Ambil foto dari kamera"
-              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setCameraOpen(true)}
+                  disabled={sending}
+                  aria-label="Buka kamera"
+                  title="Ambil foto dari kamera"
+                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              </>
+            )}
 
-            {draftText.trim() || pendingFile ? (
+            {composerFocused || draftText.trim() || pendingFile ? (
               <button
                 key={`send-${sendKick}`}
                 type="submit"
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={sending}
                 aria-label="Kirim pesan"
-                className={`h-11 px-4 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
+                className={`h-11 px-4 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
                   sendKick > 0 ? 'p5-send-recoil p5-impact-ring' : ''
                 }`}
               >
@@ -1725,7 +1735,7 @@ export function ChatWindow({
                 disabled={sending}
                 aria-label="Rekam pesan suara"
                 title="Rekam pesan suara"
-                className="h-11 w-11 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
+                className="h-11 w-11 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
               >
                 <Mic className="w-5 h-5" />
               </button>
