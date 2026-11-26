@@ -789,7 +789,9 @@ export function ChatWindow({
             type="button"
             onClick={onOpenInfo}
             aria-label="Detail percakapan"
-            className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+            className={`h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press ${
+              chat.type === 'dm' ? 'hidden md:flex' : 'flex'
+            } items-center justify-center`}
           >
             <Info className="w-4 h-4" />
           </button>

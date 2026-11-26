@@ -179,6 +179,7 @@ export interface StoryItem {
     username: string;
   } | null;
   viewerIds: string[];
+  viewerTimes?: Record<string, number>;
   createdAt: number;
   expiresAt: number;
 }

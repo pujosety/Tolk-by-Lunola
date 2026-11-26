@@ -2560,6 +2560,7 @@ async function startServer(): Promise<void> {
       mentionedUserIds,
       resharedFrom,
       viewerIds: [userId],
+      viewerTimes: { [userId]: now },
       createdAt: now,
       expiresAt: now + expiryMs,
     };
@@ -2577,8 +2578,17 @@ async function startServer(): Promise<void> {
       res.status(404).json({ error: 'Status tidak ditemukan.' });
       return;
     }
+    let changed = false;
     if (!story.viewerIds.includes(userId)) {
       story.viewerIds.push(userId);
+      changed = true;
+    }
+    story.viewerTimes = story.viewerTimes || {};
+    if (!story.viewerTimes[userId]) {
+      story.viewerTimes[userId] = Date.now();
+      changed = true;
+    }
+    if (changed) {
       saveStore(store);
       sendWsToUser(story.userId, { type: 'story:updated', story });
     }

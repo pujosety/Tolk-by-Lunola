@@ -855,7 +855,8 @@ function StoryViewerModal({
   const viewers = story.viewerIds
     .filter((id) => id !== story.userId)
     .map((id) => users[id])
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => (story.viewerTimes?.[b.id] || 0) - (story.viewerTimes?.[a.id] || 0));
 
   const mentionedUsers = (story.mentionedUserIds || [])
     .map((id) => users[id])
@@ -1074,17 +1075,37 @@ function StoryViewerModal({
                 <div
                   className={`${
                     viewersPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-                  } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-36 overflow-y-auto space-y-1.5 text-xs`}
+                  } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-48 overflow-y-auto thin-scrollbar space-y-2 text-xs`}
                 >
                   {viewers.length === 0 ? (
-                    <div className="text-white/60 text-center">Belum ada penonton lain.</div>
+                    <div className="text-white/60 text-center py-1">Belum ada penonton lain.</div>
                   ) : (
-                    viewers.map((v) => (
-                      <div key={v.id} className="flex items-center justify-between">
-                        <span>{v.displayName}</span>
-                        <span className="font-mono text-[#F47296]">@{v.username}</span>
-                      </div>
-                    ))
+                    viewers.map((v) => {
+                      const viewedAt = story.viewerTimes?.[v.id];
+                      return (
+                        <div key={v.id} className="flex items-center justify-between gap-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar
+                              name={v.displayName}
+                              imageUrl={v.avatarUrl}
+                              color={v.avatarColor}
+                              size="sm"
+                            />
+                            <div className="min-w-0">
+                              <div className="font-semibold text-white truncate leading-tight">
+                                {v.displayName}
+                              </div>
+                              <div className="text-[10px] font-mono text-white/60 truncate">
+                                @{v.username}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-mono text-[11px] text-white/75 tabular-nums shrink-0">
+                            {viewedAt ? formatTimeShort(viewedAt) : 'Dilihat'}
+                          </span>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}
