@@ -214,7 +214,7 @@ export function YouView({
             <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
               {section.title}
             </div>
-            <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] overflow-hidden divide-y divide-[#F1F5F9] dark:divide-[#232D40]">
+            <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] overflow-hidden">
               {section.items.map((item) => (
                 <button
                   key={item.label}

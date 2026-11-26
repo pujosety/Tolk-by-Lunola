@@ -267,7 +267,7 @@ export function AuthModal({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Masukkan nama tampilan"
-                className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+                className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
               />
             </div>
             <div>
@@ -280,7 +280,7 @@ export function AuthModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Masukkan alamat email"
-                className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+                className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
               />
             </div>
           </>
@@ -297,7 +297,7 @@ export function AuthModal({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
 
@@ -314,7 +314,7 @@ export function AuthModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full h-10 pl-3 pr-10 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-10 pl-4 pr-10 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
             <button
               type="button"
@@ -337,7 +337,7 @@ export function AuthModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tulis bio singkat"
-              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
         )}
@@ -741,7 +741,7 @@ export function ProfileModal({
             required
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
@@ -753,7 +753,7 @@ export function ProfileModal({
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
@@ -765,7 +765,7 @@ export function ProfileModal({
             value={statusText}
             onChange={(e) => setStatusText(e.target.value)}
             placeholder="Masukkan status singkat"
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
@@ -777,7 +777,7 @@ export function ProfileModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Masukkan alamat email (opsional)"
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
@@ -1040,7 +1040,7 @@ export function CreateChatModal({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau @username..."
-              className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-10 pl-9 pr-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-2">
@@ -1161,7 +1161,7 @@ export function CreateChatModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={mode === 'group' ? 'Masukkan nama grup' : 'Masukkan nama channel'}
-              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div>
@@ -1173,7 +1173,7 @@ export function CreateChatModal({
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               placeholder="Masukkan username handle"
-              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div>
@@ -1903,7 +1903,7 @@ export function ReportModal({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as ModerationReport['category'])}
-            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA]"
+            className="w-full h-10 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA]"
           >
             <option value="spam">Spam atau Promosi Berlebihan</option>
             <option value="scam">Penipuan / Phishing</option>

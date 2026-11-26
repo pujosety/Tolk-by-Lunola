@@ -772,22 +772,12 @@ export function ChatWindow({
           )}
           <button
             type="button"
-            onClick={() => void handleTriggerSummarize()}
-            disabled={summarizing}
-            aria-label={t(lang, 'aiSummarize')}
-            title={t(lang, 'aiSummarize')}
-            className="hidden sm:flex h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
-          >
-            <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#8C0027]' : ''}`} />
-          </button>
-          <button
-            type="button"
             onClick={() => {
               setSearchOpen((v) => !v);
               setSearchTerm('');
             }}
             aria-label="Cari di percakapan"
-            className={`hidden sm:flex h-9 w-9 rounded-full border brutal-shadow-sm brutal-press items-center justify-center ${
+            className={`flex h-9 w-9 rounded-full border brutal-shadow-sm brutal-press items-center justify-center ${
               searchOpen
                 ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
                 : 'border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
@@ -803,44 +793,6 @@ export function ChatWindow({
           >
             <Info className="w-4 h-4" />
           </button>
-          <div className="relative sm:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileHeaderMenuOpen((v) => !v)}
-              aria-label="Menu percakapan"
-              className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-            {mobileHeaderMenuOpen && (
-              <div className="p5-menu-pop absolute right-0 top-11 z-30 w-48 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileHeaderMenuOpen(false);
-                    setSearchOpen((v) => !v);
-                    setSearchTerm('');
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738] flex items-center gap-2"
-                >
-                  <Search className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
-                  <span>{searchOpen ? 'Tutup Pencarian' : 'Cari di Percakapan'}</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={summarizing}
-                  onClick={() => {
-                    setMobileHeaderMenuOpen(false);
-                    void handleTriggerSummarize();
-                  }}
-                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738] flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Sparkles className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
-                  <span>{t(lang, 'aiSummarize')}</span>
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </header>
 
@@ -1684,7 +1636,7 @@ export function ChatWindow({
                   void handleSend();
                 }
               }}
-              placeholder={t(lang, 'writeMessage')}
+              placeholder="..."
               className="flex-1 h-11 max-h-32 min-h-[44px] py-[11px] px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm leading-[20px] text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none overflow-y-auto focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-all"
             />
 

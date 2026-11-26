@@ -76,7 +76,7 @@ export function CallsView({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari kontak untuk ditelepon..."
-              className="w-full h-9 pl-9 pr-3 rounded-xl bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2E3B52] text-xs text-[#161B26] dark:text-[#F1F5F9] focus:outline-none focus:border-[#8C0027]"
+              className="w-full h-9 pl-9 pr-3 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2E3B52] text-xs text-[#161B26] dark:text-[#F1F5F9] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div className="max-h-52 overflow-y-auto thin-scrollbar space-y-1">

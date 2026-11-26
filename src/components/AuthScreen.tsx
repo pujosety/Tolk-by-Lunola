@@ -365,7 +365,7 @@ export function AuthScreen({
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Masukkan nama tampilan"
-                          className="w-full h-11 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
+                          className="w-full h-11 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
                         />
                       </div>
                       <div>
@@ -378,7 +378,7 @@ export function AuthScreen({
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="Masukkan alamat email"
-                          className="w-full h-11 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
+                          className="w-full h-11 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
                         />
                       </div>
                     </div>
@@ -446,7 +446,7 @@ export function AuthScreen({
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         placeholder="Tulis bio singkat"
-                        className="w-full h-11 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
+                        className="w-full h-11 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
                       />
                     </div>
                   </motion.div>

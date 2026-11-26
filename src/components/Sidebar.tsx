@@ -171,17 +171,18 @@ export function Sidebar({
   const longPressTimerRef = useRef<number | null>(null);
 
   const navOrder: MainNavTab[] = ['chats', 'status', 'updates', 'calls', 'you'];
-  const currentTabIdx = navOrder.indexOf(activeTab);
-  const prevTabIdxRef = useRef(currentTabIdx);
-  const tabAnimClass =
-    currentTabIdx > prevTabIdxRef.current
-      ? 'p5-tab-from-right'
-      : currentTabIdx < prevTabIdxRef.current
-        ? 'p5-tab-from-left'
-        : 'p5-tab-enter';
-  prevTabIdxRef.current = currentTabIdx;
+  const currentTabIdx = Math.max(0, navOrder.indexOf(activeTab));
 
-  const swipeRef = useRef<{ x: number; y: number; ignore: boolean } | null>(null);
+  const pagerViewportRef = useRef<HTMLDivElement | null>(null);
+  const [dragOffsetPx, setDragOffsetPx] = useState(0);
+  const [isDraggingTab, setIsDraggingTab] = useState(false);
+
+  const swipeRef = useRef<{
+    x: number;
+    y: number;
+    ignore: boolean;
+    lockedHorizontal: boolean;
+  } | null>(null);
 
   const handleTabTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length !== 1) return;
@@ -193,22 +194,72 @@ export function Sidebar({
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
       ignore,
+      lockedHorizontal: false,
     };
+  };
+
+  const handleTabTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = swipeRef.current;
+    if (!start || start.ignore || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - start.x;
+    const dy = e.touches[0].clientY - start.y;
+
+    if (!start.lockedHorizontal) {
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        start.lockedHorizontal = true;
+        setIsDraggingTab(true);
+      } else if (Math.abs(dy) > 12) {
+        start.ignore = true;
+        return;
+      } else {
+        return;
+      }
+    }
+
+    const atStartEdge = currentTabIdx === 0 && dx > 0;
+    const atEndEdge = currentTabIdx === navOrder.length - 1 && dx < 0;
+    const dampedDx = atStartEdge || atEndEdge ? dx * 0.28 : dx;
+    setDragOffsetPx(dampedDx);
   };
 
   const handleTabTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     const start = swipeRef.current;
     swipeRef.current = null;
-    if (!start || start.ignore || e.changedTouches.length !== 1) return;
-    const dx = e.changedTouches[0].clientX - start.x;
-    const dy = e.changedTouches[0].clientY - start.y;
-    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    if (dx < 0 && currentTabIdx < navOrder.length - 1) {
+    if (!start || start.ignore || !start.lockedHorizontal) {
+      setDragOffsetPx(0);
+      setIsDraggingTab(false);
+      return;
+    }
+
+    const dx =
+      e.changedTouches.length === 1
+        ? e.changedTouches[0].clientX - start.x
+        : dragOffsetPx;
+    const vw = pagerViewportRef.current?.clientWidth || window.innerWidth || 360;
+    const threshold = Math.min(72, vw * 0.22);
+
+    if (dx < -threshold && currentTabIdx < navOrder.length - 1) {
       onSelectTab(navOrder[currentTabIdx + 1]);
-    } else if (dx > 0 && currentTabIdx > 0) {
+    } else if (dx > threshold && currentTabIdx > 0) {
       onSelectTab(navOrder[currentTabIdx - 1]);
     }
+
+    setDragOffsetPx(0);
+    setIsDraggingTab(false);
   };
+
+  const handleTabTouchCancel = () => {
+    swipeRef.current = null;
+    setDragOffsetPx(0);
+    setIsDraggingTab(false);
+  };
+
+  const viewportWidth = pagerViewportRef.current?.clientWidth || 360;
+  const dragFraction = isDraggingTab ? -dragOffsetPx / viewportWidth : 0;
+  const visualTabIdx = Math.max(
+    0,
+    Math.min(navOrder.length - 1, currentTabIdx + dragFraction)
+  );
 
   const startLongPress = (chat: ChatRoom) => {
     if (longPressTimerRef.current !== null) {
@@ -500,7 +551,7 @@ export function Sidebar({
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={t(lang, 'searchPlaceholder')}
               aria-label={t(lang, 'searchPlaceholder')}
-              className="w-full h-10 pl-9 pr-8 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-colors"
+              className="w-full h-10 pl-9 pr-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border-0 text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:ring-2 focus:ring-[#8C0027]/25 transition-all"
             />
             {searchQuery && (
               <button
@@ -517,65 +568,24 @@ export function Sidebar({
       </div>
 
       <div
-        className="flex-1 flex flex-col min-h-0"
+        ref={pagerViewportRef}
+        className="flex-1 overflow-hidden min-h-0"
         onTouchStart={handleTabTouchStart}
+        onTouchMove={handleTabTouchMove}
         onTouchEnd={handleTabTouchEnd}
+        onTouchCancel={handleTabTouchCancel}
       >
-      {activeTab === 'status' ? (
-        <div key="tab-status" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
-          <UpdatesView
-            stories={stories}
-            channels={chats.filter((c) => c.type === 'channel')}
-            currentUser={currentUser}
-            users={users}
-            onSelectChat={onSelectChat}
-            onOpenNewChannel={onOpenNewChannel}
-            onCreateStory={onCreateStory}
-            onUploadStoryMedia={onUploadStoryMedia}
-            onViewStory={onViewStory}
-            onDeleteStory={onDeleteStory}
-            onMuteStoryAuthor={onMuteStoryAuthor}
-            onReplyToStory={onReplyToStory}
-          />
-        </div>
-      ) : activeTab === 'updates' ? (
-        <div key="tab-updates" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
-          <NotificationsUpdatesView
-            currentUserId={currentUser.id}
-            users={users}
-            friendRequests={friendRequests}
-            settings={settings}
-            onRespondRequest={onRespondRequest}
-          />
-        </div>
-      ) : activeTab === 'calls' ? (
-        <div key="tab-calls" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
-          <CallsView
-            calls={calls}
-            currentUser={currentUser}
-            users={users}
-            onlineUserIds={onlineUserIds}
-            onStartCall={onStartCall}
-          />
-        </div>
-      ) : activeTab === 'you' ? (
-        <div key="tab-you" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
-          <YouView
-            lang={lang}
-            user={currentUser}
-            darkMode={darkMode}
-            onToggleDarkMode={onToggleDarkMode}
-            onOpenProfile={onOpenProfile}
-            onOpenQrCard={onOpenQrCard}
-            onOpenStarred={onOpenStarred}
-            onOpenDevices={onOpenDevices}
-            onOpenSettings={onOpenSettings}
-            onOpenAdminPanel={onOpenAdminPanel}
-            onLogout={onLogout}
-          />
-        </div>
-      ) : (
-        <div key="tab-chats" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
+        <div
+          style={{
+            transform: `translate3d(calc(-${currentTabIdx * 20}% + ${dragOffsetPx}px), 0, 0)`,
+          }}
+          className={`flex w-[500%] h-full will-change-transform ${
+            isDraggingTab
+              ? ''
+              : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+          }`}
+        >
+        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0 relative">
           {/* Folder Tabs */}
           <div
             data-no-tab-swipe="true"
@@ -690,10 +700,10 @@ export function Sidebar({
                   setConfirmDeleteId(null);
                   setPreviewChat(chat);
                 }}
-                className={`p5-row-motion w-full px-2.5 py-2.5 rounded-xl flex items-center gap-3 text-left border select-none ${
+                className={`p5-row-motion w-full px-3 py-2.5 rounded-2xl flex items-center gap-3 text-left select-none transition-colors ${
                   isSelected
-                    ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm'
-                    : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] border-transparent hover:border-[#E6ECF2] dark:hover:border-[#8C0027] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]'
+                    ? 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#8C0027] md:text-[#FFFFFF] md:dark:bg-[#8C0027] md:shadow-sm'
+                    : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#232D40]'
                 }`}
               >
                 <Avatar
@@ -711,14 +721,18 @@ export function Sidebar({
                       {chat.type === 'channel' && (
                         <Radio
                           className={`w-3.5 h-3.5 shrink-0 ${
-                            isSelected ? 'text-[#FFF2A7]' : 'text-[#8C0027] dark:text-[#F47296]'
+                            isSelected
+                              ? 'text-[#8C0027] dark:text-[#F47296] md:text-[#FFF2A7] md:dark:text-[#FFF2A7]'
+                              : 'text-[#8C0027] dark:text-[#F47296]'
                           }`}
                         />
                       )}
                       {chat.type === 'group' && (
                         <Users
                           className={`w-3.5 h-3.5 shrink-0 ${
-                            isSelected ? 'text-[#FFF2A7]' : 'text-[#5A6578] dark:text-[#CBD5E1]'
+                            isSelected
+                              ? 'text-[#5A6578] dark:text-[#CBD5E1] md:text-[#FFF2A7] md:dark:text-[#FFF2A7]'
+                              : 'text-[#5A6578] dark:text-[#CBD5E1]'
                           }`}
                         />
                       )}
@@ -728,14 +742,14 @@ export function Sidebar({
                       {chat.isMutedByUser && (
                         <BellOff
                           className={`w-3 h-3 shrink-0 ${
-                            isSelected ? 'text-[#FFF2A7]/80' : 'text-[#6B768A]'
+                            isSelected ? 'text-[#6B768A] md:text-[#FFF2A7]/80' : 'text-[#6B768A]'
                           }`}
                         />
                       )}
                       {chat.selfDestructSec > 0 && (
                         <Timer
                           className={`w-3 h-3 shrink-0 ${
-                            isSelected ? 'text-[#FDE68A]' : 'text-amber-600'
+                            isSelected ? 'text-amber-600 md:text-[#FDE68A]' : 'text-amber-600'
                           }`}
                         />
                       )}
@@ -746,13 +760,15 @@ export function Sidebar({
                         isReadByPeer ? (
                           <CheckCheck
                             className={`w-3.5 h-3.5 ${
-                              isSelected ? 'text-[#FFFFFF]' : 'text-[#F59B00] dark:text-[#BEDEFF]'
+                              isSelected
+                                ? 'text-[#F59B00] dark:text-[#BEDEFF] md:text-[#FFFFFF] md:dark:text-[#FFFFFF]'
+                                : 'text-[#F59B00] dark:text-[#BEDEFF]'
                             }`}
                           />
                         ) : (
                           <Check
                             className={`w-3.5 h-3.5 ${
-                              isSelected ? 'text-[#FFF2A7]/80' : 'text-[#6B768A]'
+                              isSelected ? 'text-[#6B768A] md:text-[#FFF2A7]/80' : 'text-[#6B768A]'
                             }`}
                           />
                         )
@@ -761,7 +777,7 @@ export function Sidebar({
                         <span
                           className={`font-mono text-[11px] tabular-nums ${
                             isSelected
-                              ? 'text-[#FFF2A7]'
+                              ? 'text-[#6B768A] dark:text-[#7E8DA4] md:text-[#FFF2A7] md:dark:text-[#FFF2A7]'
                               : 'text-[#6B768A] dark:text-[#7E8DA4]'
                           }`}
                         >
@@ -776,14 +792,14 @@ export function Sidebar({
                       className={`flex items-center gap-1 text-xs truncate ${
                         typingIds.length > 0
                           ? isSelected
-                            ? 'text-[#FFFFFF] font-semibold'
+                            ? 'text-[#F59B00] dark:text-[#BEDEFF] md:text-[#FFFFFF] md:dark:text-[#FFFFFF] font-semibold'
                             : 'text-[#F59B00] dark:text-[#BEDEFF] font-semibold'
                           : isSelected
-                            ? 'text-[#FFF2A7]'
+                            ? 'text-[#5A6578] dark:text-[#94A3B8] md:text-[#FFF2A7] md:dark:text-[#FFF2A7]'
                             : 'text-[#5A6578] dark:text-[#94A3B8]'
                       }`}
                     >
-                      {draftText && !isSelected && typingIds.length === 0 ? (
+                      {draftText && typingIds.length === 0 ? (
                         <span className="truncate">
                           <span className="text-[#8C0027] dark:text-[#F47296] font-bold">
                             {t(lang, 'draft')}:{' '}
@@ -802,15 +818,17 @@ export function Sidebar({
                       {chat.isPinnedByUser && !showUnread && (
                         <Pin
                           className={`w-3 h-3 rotate-45 ${
-                            isSelected ? 'text-[#FFF2A7]' : 'text-[#6B768A]'
+                            isSelected ? 'text-[#6B768A] md:text-[#FFF2A7]' : 'text-[#6B768A]'
                           }`}
                         />
                       )}
                       {showUnread && (
                         <span
-                          className={`p5-skew p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center border border-[#E6ECF2] ${
+                          className={`p5-skew p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center ${
                             isSelected
-                              ? 'bg-[#FFFFFF] text-[#8C0027]'
+                              ? chat.isMutedByUser
+                                ? 'bg-[#E7E0D8] dark:bg-[#3A2F36] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#FFFFFF] md:text-[#8C0027]'
+                                : 'bg-[#8C0027] text-[#FFFFFF] md:bg-[#FFFFFF] md:text-[#8C0027]'
                               : chat.isMutedByUser
                                 ? 'bg-[#E7E0D8] dark:bg-[#3A2F36] text-[#161B26] dark:text-[#F5F7FA]'
                                 : 'bg-[#8C0027] text-[#FFFFFF]'
@@ -841,8 +859,61 @@ export function Sidebar({
       >
         <Edit3 className="w-5 h-5" />
       </button>
-      </div>
-      )}
+        </div>
+
+        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+          <UpdatesView
+            stories={stories}
+            channels={chats.filter((c) => c.type === 'channel')}
+            currentUser={currentUser}
+            users={users}
+            onSelectChat={onSelectChat}
+            onOpenNewChannel={onOpenNewChannel}
+            onCreateStory={onCreateStory}
+            onUploadStoryMedia={onUploadStoryMedia}
+            onViewStory={onViewStory}
+            onDeleteStory={onDeleteStory}
+            onMuteStoryAuthor={onMuteStoryAuthor}
+            onReplyToStory={onReplyToStory}
+          />
+        </div>
+
+        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+          <NotificationsUpdatesView
+            currentUserId={currentUser.id}
+            users={users}
+            friendRequests={friendRequests}
+            settings={settings}
+            onRespondRequest={onRespondRequest}
+          />
+        </div>
+
+        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+          <CallsView
+            calls={calls}
+            currentUser={currentUser}
+            users={users}
+            onlineUserIds={onlineUserIds}
+            onStartCall={onStartCall}
+          />
+        </div>
+
+        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+          <YouView
+            lang={lang}
+            user={currentUser}
+            darkMode={darkMode}
+            onToggleDarkMode={onToggleDarkMode}
+            onOpenProfile={onOpenProfile}
+            onOpenQrCard={onOpenQrCard}
+            onOpenStarred={onOpenStarred}
+            onOpenDevices={onOpenDevices}
+            onOpenSettings={onOpenSettings}
+            onOpenAdminPanel={onOpenAdminPanel}
+            onLogout={onLogout}
+          />
+        </div>
+        </div>
       </div>
 
       {/* Floating Liquid-Glass Capsule Bottom Navigation Bar */}
@@ -855,9 +926,13 @@ export function Sidebar({
           aria-hidden="true"
           style={{
             width: 'calc((100% - 12px) / 5)',
-            transform: `translate3d(${Math.max(0, currentTabIdx) * 100}%, 0, 0)`,
+            transform: `translate3d(${visualTabIdx * 100}%, 0, 0)`,
           }}
-          className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 rounded-full bg-gradient-to-b from-white/95 via-white/75 to-white/50 dark:from-[#8C0027]/75 dark:via-[#8C0027]/55 dark:to-[#8C0027]/35 backdrop-blur-md border border-white/90 dark:border-white/25 shadow-[0_4px_14px_rgba(140,0,39,0.16),inset_0_1px_1px_rgba(255,255,255,0.95)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+          className={`pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 rounded-full bg-gradient-to-b from-white/95 via-white/75 to-white/50 dark:from-[#8C0027]/75 dark:via-[#8C0027]/55 dark:to-[#8C0027]/35 backdrop-blur-md border border-white/90 dark:border-white/25 shadow-[0_4px_14px_rgba(140,0,39,0.16),inset_0_1px_1px_rgba(255,255,255,0.95)] will-change-transform ${
+            isDraggingTab
+              ? ''
+              : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+          }`}
         />
 
         <button
