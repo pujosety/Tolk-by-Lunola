@@ -5,14 +5,16 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Edit3,
   Eye,
   Image as ImageIcon,
   Plus,
+  Radio,
   SendHorizontal,
   Trash2,
   X,
 } from 'lucide-react';
-import type { Attachment, StoryItem, UserProfile } from '../types/chat';
+import type { Attachment, ChatRoom, StoryItem, UserProfile } from '../types/chat';
 import { formatTimeShort } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
@@ -20,10 +22,13 @@ import { CameraCaptureModal } from './CameraCaptureModal';
 
 const STORY_BG_COLORS = ['#8C0027', '#F59B00', '#0284C7', '#161B26', '#0F766E', '#6D28D9'];
 
-interface StoriesBarProps {
+interface UpdatesViewProps {
   stories: StoryItem[];
+  channels: ChatRoom[];
   currentUser: UserProfile;
   users: Record<string, UserProfile>;
+  onSelectChat: (chatId: string) => void;
+  onOpenNewChannel: () => void;
   onCreateStory: (payload: {
     kind: 'text' | 'image' | 'video';
     text: string;
@@ -40,17 +45,20 @@ interface StoriesBarProps {
   onReplyToStory: (story: StoryItem, text: string) => Promise<void>;
 }
 
-export function StoriesBar({
+export function UpdatesView({
   stories,
+  channels,
   currentUser,
   users,
+  onSelectChat,
+  onOpenNewChannel,
   onCreateStory,
   onUploadStoryMedia,
   onViewStory,
   onDeleteStory,
   onMuteStoryAuthor,
   onReplyToStory,
-}: StoriesBarProps) {
+}: UpdatesViewProps) {
   const [creating, setCreating] = useState(false);
   const [activeAuthorId, setActiveAuthorId] = useState<string | null>(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
@@ -88,60 +96,235 @@ export function StoriesBar({
     }
   }, [activeStory, currentUser.id, onViewStory]);
 
+  const myStories = useMemo(
+    () => groupedByAuthor.find(([uid]) => uid === currentUser.id)?.[1] || [],
+    [groupedByAuthor, currentUser.id]
+  );
+  const peerStoryGroups = useMemo(
+    () => groupedByAuthor.filter(([uid]) => uid !== currentUser.id),
+    [groupedByAuthor, currentUser.id]
+  );
+  const unseenGroups = useMemo(
+    () =>
+      peerStoryGroups.filter(([, items]) =>
+        items.some((s) => !s.viewerIds.includes(currentUser.id))
+      ),
+    [peerStoryGroups, currentUser.id]
+  );
+  const seenGroups = useMemo(
+    () =>
+      peerStoryGroups.filter(([, items]) =>
+        items.every((s) => s.viewerIds.includes(currentUser.id))
+      ),
+    [peerStoryGroups, currentUser.id]
+  );
+
+  const renderStoryRow = (uid: string, items: StoryItem[], isUnseen: boolean) => {
+    const author = users[uid];
+    if (!author) return null;
+    const latest = items[items.length - 1];
+    return (
+      <button
+        key={uid}
+        type="button"
+        onClick={() => {
+          setActiveAuthorId(uid);
+          setActiveStoryIndex(0);
+        }}
+        className="w-full px-3 py-2.5 rounded-2xl hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738] flex items-center justify-between gap-3 text-left transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={`p-[2.5px] rounded-2xl shrink-0 ${
+              isUnseen
+                ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
+                : 'bg-[#E6ECF2] dark:bg-[#324058]'
+            }`}
+          >
+            <div className="p-[1.5px] rounded-[14px] bg-[#FFFFFF] dark:bg-[#171E2C]">
+              <Avatar
+                name={author.displayName}
+                imageUrl={author.avatarUrl}
+                color={author.avatarColor}
+                size="sm"
+              />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9] truncate">
+              {author.displayName}
+            </div>
+            <div className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
+              {formatTimeShort(latest.createdAt)} · {items.length} pembaruan
+            </div>
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <>
-      <div className="px-3 py-2.5 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] flex items-center gap-3 overflow-x-auto thin-scrollbar shrink-0">
-        {/* Create Story Button */}
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="flex flex-col items-center gap-1 shrink-0 group focus-visible:outline-none"
-        >
-          <div className="relative w-11 h-11 rounded-xl border border-dashed border-[#8C0027] dark:border-[#F47296] flex items-center justify-center bg-[#EAF4FF] dark:bg-[#1B2436] group-hover:bg-[#8C0027] group-hover:text-white brutal-shadow-sm brutal-press">
-            <Plus className="w-5 h-5 text-[#8C0027] dark:text-[#F47296] group-hover:text-white" />
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
+        {/* Status Section */}
+        <section className="space-y-2.5">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F1F5F9]">
+              Status
+            </h2>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCreating(true)}
+                aria-label="Buat status baru"
+                className="px-3 py-1.5 rounded-xl bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7] text-xs font-bold flex items-center gap-1.5 brutal-press"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Tambah Status</span>
+              </button>
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-[#161B26] dark:text-[#E2E8F0] max-w-[56px] truncate">
-            Statusku
-          </span>
-        </button>
 
-        {/* Authors with Active 24h Stories */}
-        {groupedByAuthor.map(([uid, items]) => {
-          const author = users[uid];
-          if (!author) return null;
-          const hasUnseen = items.some((s) => !s.viewerIds.includes(currentUser.id));
-          return (
+          {/* My Status Row */}
+          <div className="p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3">
             <button
-              key={uid}
               type="button"
               onClick={() => {
-                setActiveAuthorId(uid);
-                setActiveStoryIndex(0);
+                if (myStories.length > 0) {
+                  setActiveAuthorId(currentUser.id);
+                  setActiveStoryIndex(0);
+                } else {
+                  setCreating(true);
+                }
               }}
-              className="flex flex-col items-center gap-1 shrink-0 focus-visible:outline-none group"
+              className="flex items-center gap-3 min-w-0 flex-1 text-left"
             >
-              <div
-                className={`p-[2.5px] rounded-2xl brutal-press ${
-                  hasUnseen
-                    ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
-                    : 'bg-[#E6ECF2] dark:bg-[#324058]'
-                }`}
-              >
-                <div className="p-[1.5px] rounded-[14px] bg-[#FFFFFF] dark:bg-[#171E2C]">
-                  <Avatar
-                    name={author.displayName}
-                    imageUrl={author.avatarUrl}
-                    color={author.avatarColor}
-                    size="sm"
-                  />
+              <div className="relative shrink-0">
+                <div
+                  className={`p-[2.5px] rounded-2xl ${
+                    myStories.length > 0
+                      ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
+                      : 'bg-transparent'
+                  }`}
+                >
+                  <div className="p-[1px] rounded-[14px] bg-[#F5F7FA] dark:bg-[#1E2738]">
+                    <Avatar
+                      name={currentUser.displayName}
+                      imageUrl={currentUser.avatarUrl}
+                      color={currentUser.avatarColor}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+                {myStories.length === 0 && (
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#8C0027] text-white border-2 border-[#F5F7FA] dark:border-[#1E2738] flex items-center justify-center">
+                    <Plus className="w-3 h-3" />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9]">
+                  Status saya
+                </div>
+                <div className="text-xs text-[#5A6578] dark:text-[#94A3B8] truncate">
+                  {myStories.length > 0
+                    ? `${myStories.length} aktif · ${formatTimeShort(myStories[myStories.length - 1].createdAt)}`
+                    : 'Ketuk untuk tambah pembaruan 24 jam'}
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-[#161B26] dark:text-[#E2E8F0] max-w-[58px] truncate">
-                {uid === currentUser.id ? 'Anda' : author.displayName.split(' ')[0]}
-              </span>
             </button>
-          );
-        })}
+
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              aria-label="Tulis status baru"
+              className="h-9 w-9 rounded-xl bg-[#FFFFFF] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#8C0027] dark:text-[#F47296] hover:bg-[#8C0027] hover:text-white flex items-center justify-center brutal-press shrink-0"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {unseenGroups.length > 0 && (
+            <div className="space-y-1 pt-1">
+              <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+                Pembaruan terbaru
+              </div>
+              {unseenGroups.map(([uid, items]) => renderStoryRow(uid, items, true))}
+            </div>
+          )}
+
+          {seenGroups.length > 0 && (
+            <div className="space-y-1 pt-1">
+              <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+                Telah dilihat
+              </div>
+              {seenGroups.map(([uid, items]) => renderStoryRow(uid, items, false))}
+            </div>
+          )}
+
+          {peerStoryGroups.length === 0 && (
+            <p className="px-1 py-2 text-xs text-[#5A6578] dark:text-[#94A3B8]">
+              Belum ada pembaruan status dari kontakmu.
+            </p>
+          )}
+        </section>
+
+        {/* Channels Section */}
+        <section className="space-y-2.5 pt-2 border-t border-[#E6ECF2] dark:border-[#2A364B]">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F1F5F9]">
+              Saluran
+            </h2>
+            <button
+              type="button"
+              onClick={onOpenNewChannel}
+              className="px-3 py-1.5 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#BEDEFF] text-xs font-bold flex items-center gap-1.5 brutal-press"
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Buat Saluran</span>
+            </button>
+          </div>
+
+          {channels.length === 0 ? (
+            <p className="px-1 py-2 text-xs text-[#5A6578] dark:text-[#94A3B8]">
+              Belum ada saluran yang diikuti.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {channels.map((ch) => (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => onSelectChat(ch.id)}
+                  className="w-full px-3 py-2.5 rounded-2xl hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738] flex items-center justify-between gap-3 text-left transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar
+                      name={ch.title}
+                      imageUrl={ch.avatarUrl}
+                      color={ch.avatarColor}
+                      chatType="channel"
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9] truncate">
+                        {ch.title}
+                      </div>
+                      <div className="text-xs text-[#5A6578] dark:text-[#94A3B8] truncate">
+                        {ch.lastMessage?.text || ch.description || `${ch.memberIds.length} pengikut`}
+                      </div>
+                    </div>
+                  </div>
+                  {ch.unreadCount > 0 && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#8C0027] text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                      {ch.unreadCount > 99 ? '99+' : ch.unreadCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Create Story Modal */}

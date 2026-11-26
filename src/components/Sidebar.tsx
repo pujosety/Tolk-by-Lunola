@@ -12,6 +12,7 @@ import {
   Menu,
   MessageCircle,
   Mic,
+  MoreVertical,
   PanelLeftClose,
   PanelLeftOpen,
   Phone,
@@ -26,6 +27,7 @@ import {
 } from 'lucide-react';
 import type {
   Attachment,
+  CallRecord,
   ChatRoom,
   FolderKey,
   LanguageCode,
@@ -35,11 +37,18 @@ import type {
 import { formatChatListTime } from '../lib/androidBridge';
 import { t } from '../lib/i18n';
 import { Avatar } from './Avatar';
-import { StoriesBar } from './StoriesBar';
+import { CallsView } from './CallsView';
+import { UpdatesView } from './StoriesBar';
+import { YouView } from './YouView';
+
+export type MainNavTab = 'chats' | 'updates' | 'calls' | 'you';
 
 interface SidebarProps {
   lang: LanguageCode;
+  activeTab: MainNavTab;
+  onSelectTab: (tab: MainNavTab) => void;
   chats: ChatRoom[];
+  calls: CallRecord[];
   users: Record<string, UserProfile>;
   currentUser: UserProfile;
   stories: StoryItem[];
@@ -52,16 +61,27 @@ interface SidebarProps {
   searchInputRef: RefObject<HTMLInputElement | null>;
   wsConnected: boolean;
   minimized: boolean;
+  darkMode: boolean;
   notificationCount: number;
   onToggleMinimize: () => void;
+  onToggleDarkMode: () => void;
   onQuickSearch: () => void;
   onSelectFolder: (folder: FolderKey) => void;
   onSearchChange: (q: string) => void;
   onSelectChat: (chatId: string) => void;
-  onOpenDrawer: () => void;
+  onOpenOverflowMenu: () => void;
   onOpenNewChat: () => void;
+  onOpenNewChannel: () => void;
   onOpenNotifications: () => void;
-  onOpenCalls: () => void;
+  onStartCall: (peerId: string, kind: 'voice' | 'video') => void;
+  onOpenProfile: () => void;
+  onOpenQrCard: () => void;
+  onOpenStarred: () => void;
+  onOpenDevices: () => void;
+  onOpenSettings: () => void;
+  onOpenAdminPanel: () => void;
+  onOpenAuth: () => void;
+  onLogout: () => void;
   onDeleteChat: (chatId: string) => Promise<void>;
   onTogglePinChat: (chatId: string) => Promise<void>;
   onToggleArchiveChat: (chatId: string) => Promise<void>;
@@ -83,7 +103,10 @@ interface SidebarProps {
 
 export function Sidebar({
   lang,
+  activeTab,
+  onSelectTab,
   chats,
+  calls,
   users,
   currentUser,
   stories,
@@ -96,16 +119,27 @@ export function Sidebar({
   searchInputRef,
   wsConnected,
   minimized,
+  darkMode,
   notificationCount,
   onToggleMinimize,
+  onToggleDarkMode,
   onQuickSearch,
   onSelectFolder,
   onSearchChange,
   onSelectChat,
-  onOpenDrawer,
+  onOpenOverflowMenu,
   onOpenNewChat,
+  onOpenNewChannel,
   onOpenNotifications,
-  onOpenCalls,
+  onStartCall,
+  onOpenProfile,
+  onOpenQrCard,
+  onOpenStarred,
+  onOpenDevices,
+  onOpenSettings,
+  onOpenAdminPanel,
+  onOpenAuth,
+  onLogout,
   onDeleteChat,
   onTogglePinChat,
   onToggleArchiveChat,
@@ -118,7 +152,6 @@ export function Sidebar({
 }: SidebarProps) {
   const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [mobileTab, setMobileTab] = useState<'chats' | 'status'>('chats');
   const longPressTimerRef = useRef<number | null>(null);
 
   const startLongPress = (chat: ChatRoom) => {
@@ -212,7 +245,7 @@ export function Sidebar({
 
           <button
             type="button"
-            onClick={onOpenDrawer}
+            onClick={onOpenOverflowMenu}
             aria-label="Buka menu navigasi"
             title="Menu Tolk by Lunola"
             className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#2B364B] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
@@ -303,19 +336,29 @@ export function Sidebar({
       key="sidebar-full"
       className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFFFF] dark:bg-[#171E2C] border-r-2 border-[#E6ECF2] dark:border-[#2A364B] select-none overflow-hidden"
     >
-      {/* Top Neo-Brutalist Brand & Search Header */}
-      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C]">
+      {/* Top Header */}
+      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
         <div className="flex items-center justify-between gap-2">
-          {/* Clean Left Logo Only */}
+          {/* Clean Left Logo (Chats) or Tab Title */}
           <div className="h-10 px-1 flex items-center min-w-0">
-            <img
-              src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-              alt="Tolk by Lunola"
-              className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
-            />
+            {activeTab === 'chats' ? (
+              <img
+                src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
+                alt="Tolk by Lunola"
+                className="tolk-logo-adaptive h-8 w-auto object-contain select-none"
+              />
+            ) : (
+              <h1 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA] truncate">
+                {activeTab === 'updates'
+                  ? 'Update'
+                  : activeTab === 'calls'
+                    ? 'Panggilan'
+                    : 'Kamu'}
+              </h1>
+            )}
           </div>
 
-          {/* Right Actions: Notifications, Hamburger Menu (on right), Minimize (desktop) */}
+          {/* Right Actions: Notifications, Overflow Menu (top-right dropdown), Minimize (desktop) */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
@@ -333,12 +376,12 @@ export function Sidebar({
             </button>
             <button
               type="button"
-              onClick={onOpenDrawer}
-              aria-label="Buka menu"
+              onClick={onOpenOverflowMenu}
+              aria-label="Menu opsi"
               title="Menu"
               className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
-              <Menu className="w-5 h-5" />
+              <MoreVertical className="w-5 h-5" />
             </button>
             <button
               type="button"
@@ -352,45 +395,105 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="w-4 h-4 text-[#5A6578] dark:text-[#CBD5E1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={t(lang, 'searchPlaceholder')}
-            aria-label={t(lang, 'searchPlaceholder')}
-            className="w-full h-10 pl-9 pr-8 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-colors"
-          />
-          {searchQuery && (
+        {/* Desktop 4-Tab Switcher */}
+        <div className="hidden md:grid grid-cols-4 gap-1 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
+          {(
+            [
+              { key: 'chats', label: 'Obrolan' },
+              { key: 'updates', label: 'Update' },
+              { key: 'calls', label: 'Panggilan' },
+              { key: 'you', label: 'Kamu' },
+            ] as const
+          ).map((tab) => (
             <button
+              key={tab.key}
               type="button"
-              onClick={() => onSearchChange('')}
-              aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A6578] hover:text-[#8C0027]"
+              onClick={() => onSelectTab(tab.key)}
+              className={`py-1.5 rounded-xl text-[11px] font-bold transition-all ${
+                activeTab === tab.key
+                  ? 'bg-[#8C0027] text-white brutal-shadow-sm'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-white'
+              }`}
             >
-              <X className="w-4 h-4" />
+              {tab.label}
             </button>
-          )}
+          ))}
         </div>
+
+        {activeTab === 'chats' && (
+          <div className="relative">
+            <Search className="w-4 h-4 text-[#5A6578] dark:text-[#CBD5E1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={t(lang, 'searchPlaceholder')}
+              aria-label={t(lang, 'searchPlaceholder')}
+              className="w-full h-10 pl-9 pr-8 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Hapus pencarian"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A6578] hover:text-[#8C0027]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Stories 24h Strip */}
-      <StoriesBar
-        stories={stories}
-        currentUser={currentUser}
-        users={users}
-        onCreateStory={onCreateStory}
-        onUploadStoryMedia={onUploadStoryMedia}
-        onViewStory={onViewStory}
-        onDeleteStory={onDeleteStory}
-        onMuteStoryAuthor={onMuteStoryAuthor}
-        onReplyToStory={onReplyToStory}
-      />
-
-      {/* Persona 5 Skewed Folder Tabs */}
-      <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
+      {activeTab === 'updates' ? (
+        <div key="tab-updates" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+          <UpdatesView
+            stories={stories}
+            channels={chats.filter((c) => c.type === 'channel')}
+            currentUser={currentUser}
+            users={users}
+            onSelectChat={onSelectChat}
+            onOpenNewChannel={onOpenNewChannel}
+            onCreateStory={onCreateStory}
+            onUploadStoryMedia={onUploadStoryMedia}
+            onViewStory={onViewStory}
+            onDeleteStory={onDeleteStory}
+            onMuteStoryAuthor={onMuteStoryAuthor}
+            onReplyToStory={onReplyToStory}
+          />
+        </div>
+      ) : activeTab === 'calls' ? (
+        <div key="tab-calls" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+          <CallsView
+            calls={calls}
+            currentUser={currentUser}
+            users={users}
+            onlineUserIds={onlineUserIds}
+            onStartCall={onStartCall}
+          />
+        </div>
+      ) : activeTab === 'you' ? (
+        <div key="tab-you" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+          <YouView
+            lang={lang}
+            user={currentUser}
+            darkMode={darkMode}
+            onToggleDarkMode={onToggleDarkMode}
+            onOpenProfile={onOpenProfile}
+            onOpenQrCard={onOpenQrCard}
+            onOpenStarred={onOpenStarred}
+            onOpenDevices={onOpenDevices}
+            onOpenSettings={onOpenSettings}
+            onOpenAdminPanel={onOpenAdminPanel}
+            onOpenAuth={onOpenAuth}
+            onLogout={onLogout}
+          />
+        </div>
+      ) : (
+        <div key="tab-chats" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+          {/* Folder Tabs */}
+          <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] shrink-0">
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
           const badge = unreadByFolder[folder.key];
@@ -641,7 +744,7 @@ export function Sidebar({
 
       </div>
 
-      {/* Floating Compose FAB (positioned above bottom nav on mobile, bottom-right on desktop) */}
+      {/* Floating Compose FAB (visible on Obrolan tab) */}
       <button
         type="button"
         onClick={onOpenNewChat}
@@ -651,6 +754,8 @@ export function Sidebar({
       >
         <Edit3 className="w-5 h-5" />
       </button>
+      </div>
+      )}
 
       {/* WhatsApp-Style Mobile Bottom Navigation Bar */}
       <nav
@@ -659,15 +764,12 @@ export function Sidebar({
       >
         <button
           type="button"
-          onClick={() => {
-            setMobileTab('chats');
-            onSelectFolder('all');
-          }}
+          onClick={() => onSelectTab('chats')}
           className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
           <span
             className={`relative px-4 py-1 rounded-full transition-colors ${
-              mobileTab === 'chats'
+              activeTab === 'chats'
                 ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
@@ -679,22 +781,19 @@ export function Sidebar({
               </span>
             )}
           </span>
-          <span className={mobileTab === 'chats' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'chats' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Obrolan
           </span>
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            setMobileTab('status');
-            onSelectFolder('channel');
-          }}
+          onClick={() => onSelectTab('updates')}
           className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
           <span
             className={`relative px-4 py-1 rounded-full transition-colors ${
-              mobileTab === 'status'
+              activeTab === 'updates'
                 ? 'bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
@@ -704,28 +803,42 @@ export function Sidebar({
               <span className="absolute top-0.5 right-3 w-2 h-2 rounded-full bg-[#F59B00]" />
             )}
           </span>
-          <span className={mobileTab === 'status' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'updates' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Update
           </span>
         </button>
 
         <button
           type="button"
-          onClick={onOpenCalls}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8]"
+          onClick={() => onSelectTab('calls')}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
-          <span className="px-4 py-1 rounded-full">
+          <span
+            className={`px-4 py-1 rounded-full transition-colors ${
+              activeTab === 'calls'
+                ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
+                : 'text-[#5A6578] dark:text-[#94A3B8]'
+            }`}
+          >
             <Phone className="w-5 h-5" />
           </span>
-          <span>Panggilan</span>
+          <span className={activeTab === 'calls' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+            Panggilan
+          </span>
         </button>
 
         <button
           type="button"
-          onClick={onOpenDrawer}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8]"
+          onClick={() => onSelectTab('you')}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
         >
-          <span className="px-3 py-0.5 rounded-full flex items-center justify-center">
+          <span
+            className={`px-3 py-0.5 rounded-full flex items-center justify-center transition-colors ${
+              activeTab === 'you'
+                ? 'ring-2 ring-[#8C0027] dark:ring-[#F47296]'
+                : ''
+            }`}
+          >
             <Avatar
               name={currentUser.displayName}
               imageUrl={currentUser.avatarUrl}
@@ -733,7 +846,9 @@ export function Sidebar({
               size="xs"
             />
           </span>
-          <span>Kamu</span>
+          <span className={activeTab === 'you' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+            Kamu
+          </span>
         </button>
       </nav>
 

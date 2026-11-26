@@ -34,10 +34,10 @@ import {
 import { useAnimatedPresence, useRetainedValue } from './lib/useAnimatedPresence';
 import { DEFAULT_CHAT_APPEARANCE } from './lib/appearance';
 import { compressImageFile } from './lib/imageCompression';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar, type MainNavTab } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInfoDrawer } from './components/ChatInfoDrawer';
-import { DrawerMenu } from './components/DrawerMenu';
+import { HeaderOverflowMenu } from './components/HeaderOverflowMenu';
 import {
   AuthModal,
   CreateChatModal,
@@ -50,7 +50,6 @@ import {
   StarredMessagesModal,
 } from './components/Modals';
 import {
-  CallHistoryModal,
   CallOverlay,
   type ActiveCallSession,
 } from './components/CallOverlay';
@@ -153,7 +152,8 @@ export function App() {
   }, []);
 
   // Panels & Modals
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeMainTab, setActiveMainTab] = useState<MainNavTab>('chats');
+  const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -162,7 +162,6 @@ export function App() {
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsList, setSessionsList] = useState<DeviceSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
-  const [callHistoryOpen, setCallHistoryOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [starredModalOpen, setStarredModalOpen] = useState(false);
   const [starredItems, setStarredItems] = useState<
@@ -261,12 +260,16 @@ export function App() {
         setInfoOpen(false);
         return true;
       }
-      if (drawerOpen) {
-        setDrawerOpen(false);
+      if (overflowMenuOpen) {
+        setOverflowMenuOpen(false);
         return true;
       }
       if (mobileShowChat) {
         setMobileShowChat(false);
+        return true;
+      }
+      if (activeMainTab !== 'chats') {
+        setActiveMainTab('chats');
         return true;
       }
       return false;
@@ -274,7 +277,7 @@ export function App() {
     return () => {
       delete window.__lunolaTalkHandleBack;
     };
-  }, [adminPanelOpen, infoOpen, drawerOpen, mobileShowChat]);
+  }, [adminPanelOpen, infoOpen, overflowMenuOpen, mobileShowChat, activeMainTab]);
 
   const loadMessagesForChat = useCallback(async (authToken: string, chatId: string) => {
     setLoadingChatId(chatId);
@@ -1323,7 +1326,10 @@ export function App() {
         >
           <Sidebar
             lang={lang}
+            activeTab={activeMainTab}
+            onSelectTab={setActiveMainTab}
             chats={chats}
+            calls={calls}
             users={users}
             currentUser={currentUser}
             stories={stories}
@@ -1336,23 +1342,41 @@ export function App() {
             searchInputRef={searchInputRef}
             wsConnected={wsConnected}
             minimized={sidebarMinimized}
+            darkMode={darkMode}
             notificationCount={
               friendRequests.filter(
                 (r) => r.toUserId === currentUser.id && r.status === 'pending'
               ).length + (settings?.globalAnnouncement?.trim() ? 1 : 0)
             }
             onToggleMinimize={() => setSidebarMinimized((v) => !v)}
+            onToggleDarkMode={() => setDarkMode((v) => !v)}
             onQuickSearch={() => {
               setSidebarMinimized(false);
+              setActiveMainTab('chats');
               window.setTimeout(() => searchInputRef.current?.focus(), 60);
             }}
             onSelectFolder={setActiveFolder}
             onSearchChange={setSearchQuery}
             onSelectChat={handleSelectChat}
-            onOpenDrawer={() => setDrawerOpen(true)}
+            onOpenOverflowMenu={() => setOverflowMenuOpen((v) => !v)}
             onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
+            onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
             onOpenNotifications={() => setNotificationsOpen(true)}
-            onOpenCalls={() => setCallHistoryOpen(true)}
+            onStartCall={(peerId, kind) => void handleStartCall(peerId, kind)}
+            onOpenProfile={() => setProfileModalOpen(true)}
+            onOpenQrCard={() => setCreateModalState({ open: true, mode: 'dm' })}
+            onOpenStarred={() => {
+              setStarredModalOpen(true);
+              void loadStarredMessages();
+            }}
+            onOpenDevices={() => {
+              setSessionsModalOpen(true);
+              void loadSessions();
+            }}
+            onOpenSettings={() => setSettingsModalOpen(true)}
+            onOpenAdminPanel={() => setAdminPanelOpen(true)}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onLogout={() => void handleLogout()}
             onDeleteChat={async (chatId) => {
               await api.deleteChat(token, chatId);
               setChats((prev) => prev.filter((c) => c.id !== chatId));
@@ -1556,14 +1580,12 @@ export function App() {
         </main>
       </div>
 
-      {/* Navigation Drawer */}
-      <DrawerMenu
-        open={drawerOpen}
+      {/* Top-Right Overflow Menu List (WhatsApp-style) */}
+      <HeaderOverflowMenu
+        open={overflowMenuOpen}
         lang={lang}
         user={currentUser}
-        darkMode={darkMode}
-        onClose={() => setDrawerOpen(false)}
-        onToggleDarkMode={() => setDarkMode((v) => !v)}
+        onClose={() => setOverflowMenuOpen(false)}
         onOpenNewGroup={() => setCreateModalState({ open: true, mode: 'group' })}
         onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
         onOpenStarred={() => {
@@ -1576,9 +1598,6 @@ export function App() {
         }}
         onOpenSettings={() => setSettingsModalOpen(true)}
         onOpenAdminPanel={() => setAdminPanelOpen(true)}
-        onOpenProfile={() => setProfileModalOpen(true)}
-        onOpenAuth={() => setAuthModalOpen(true)}
-        onLogout={() => void handleLogout()}
       />
 
       {/* Modals & Overlays */}
@@ -1735,15 +1754,6 @@ export function App() {
           });
           showToast('Laporan telah dikirim ke antrean moderasi.');
         }}
-      />
-
-      <CallHistoryModal
-        open={callHistoryOpen}
-        calls={calls}
-        currentUserId={currentUser.id}
-        users={users}
-        onClose={() => setCallHistoryOpen(false)}
-        onStartCall={(peerId, kind) => void handleStartCall(peerId, kind)}
       />
 
       <CallOverlay

@@ -566,6 +566,59 @@
   transform-origin: top center;
 }
 
+@keyframes p5MenuRightIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes p5MenuRightOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.94);
+    filter: blur(3px);
+  }
+}
+
+@keyframes p5TabEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.p5-menu-right-in {
+  animation: p5MenuRightIn 200ms var(--ease-p5-smooth) both;
+  transform-origin: top right;
+}
+
+.p5-menu-right-out {
+  animation: p5MenuRightOut 165ms var(--ease-p5-smooth) both;
+  transform-origin: top right;
+}
+
+.p5-tab-enter {
+  animation: p5TabEnter 240ms var(--ease-p5-smooth) both;
+}
+
 .p5-sidebar-swap {
   animation: p5SidebarSwap 220ms var(--ease-p5-smooth) both;
 }
