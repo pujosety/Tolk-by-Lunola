@@ -35,11 +35,12 @@
   body,
   #root {
     height: 100%;
-    height: calc(100dvh - var(--keyboard-inset, 0px));
+    height: var(--app-height, 100dvh);
     width: 100%;
     overflow: hidden;
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
+    transition: height 240ms var(--ease-p5-smooth);
   }
 
   h1,
@@ -622,26 +623,30 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 .pt-safe-2 {
-  padding-top: max(2.5rem, calc(0.75rem + env(safe-area-inset-top, 0px)));
+  padding-top: max(3rem, calc(0.875rem + env(safe-area-inset-top, 0px)));
 }
 .pt-safe-3 {
-  padding-top: max(2.75rem, calc(1rem + env(safe-area-inset-top, 0px)));
+  padding-top: max(3.25rem, calc(1.125rem + env(safe-area-inset-top, 0px)));
 }
 .pt-safe-5 {
-  padding-top: max(3rem, calc(1.375rem + env(safe-area-inset-top, 0px)));
+  padding-top: max(3.5rem, calc(1.5rem + env(safe-area-inset-top, 0px)));
 }
 @media (max-width: 767px) {
   html.is-standalone-app .pt-safe {
-    padding-top: max(2.75rem, env(safe-area-inset-top, 0px));
+    padding-top: max(3.25rem, env(safe-area-inset-top, 0px));
   }
   html.is-standalone-app .pt-safe-2 {
-    padding-top: max(3.25rem, calc(0.75rem + env(safe-area-inset-top, 0px)));
+    padding-top: max(3.75rem, calc(1rem + env(safe-area-inset-top, 0px)));
   }
   html.is-standalone-app .pt-safe-3 {
-    padding-top: max(3.5rem, calc(1rem + env(safe-area-inset-top, 0px)));
+    padding-top: max(4rem, calc(1.25rem + env(safe-area-inset-top, 0px)));
   }
   html.is-standalone-app .pt-safe-5 {
-    padding-top: max(3.75rem, calc(1.375rem + env(safe-area-inset-top, 0px)));
+    padding-top: max(4.25rem, calc(1.5rem + env(safe-area-inset-top, 0px)));
+  }
+  html[data-keyboard-open="true"] .pb-safe-3 {
+    padding-bottom: 0.5rem;
+    transition: padding-bottom 220ms var(--ease-p5-smooth);
   }
 }
 @media (min-width: 768px) {

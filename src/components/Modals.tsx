@@ -89,8 +89,11 @@ function ModalShell({
   if (!mounted) return null;
   return (
     <div
-      style={{ paddingBottom: 'var(--keyboard-inset, 0px)' }}
-      className={`fixed inset-0 z-50 flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
+      className={`fixed inset-x-0 z-50 flex items-stretch md:items-center justify-center p-0 md:p-4 transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] ${closing ? 'pointer-events-none' : ''}`}
     >
       <div
         className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/55 backdrop-blur-[2px]`}

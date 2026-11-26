@@ -1327,10 +1327,13 @@ function StoryViewerModal({
 
   return (
     <div
-      style={{ paddingBottom: 'var(--keyboard-inset, 0px)' }}
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4`}
+      } fixed inset-x-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4 transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
     >
       <div
         onPointerDown={() => setPaused(true)}

@@ -100,7 +100,7 @@ export function AuthScreen({
     const vv = window.visualViewport;
     if (!vv) return;
     const syncViewport = () => {
-      const inset = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
+      const inset = Math.max(0, Math.round(window.innerHeight - vv.height));
       setKeyboardInset(inset > 90 ? inset : 0);
     };
     syncViewport();
@@ -154,7 +154,7 @@ export function AuthScreen({
   return (
     <div
       style={keyboardInset > 0 ? { paddingBottom: `${keyboardInset + 20}px` } : undefined}
-      className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col px-safe"
+      className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col px-safe transition-[padding-bottom] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]"
     >
       {/* Top-Right Theme Toggle */}
       <div className="pt-safe-3 px-4 sm:px-6 flex justify-end shrink-0 z-10">
