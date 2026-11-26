@@ -78,6 +78,7 @@ export function DrawerMenu({
       icon: <Users className="w-5 h-5" />,
       iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'newGroup'),
+      subtitle: 'Kumpul bareng circle atau tim',
       onClick: () => {
         onClose();
         onOpenNewGroup();
@@ -87,6 +88,7 @@ export function DrawerMenu({
       icon: <Radio className="w-5 h-5" />,
       iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'newChannel'),
+      subtitle: 'Siaran info ke banyak orang',
       onClick: () => {
         onClose();
         onOpenNewChannel();
@@ -96,6 +98,7 @@ export function DrawerMenu({
       icon: <Bookmark className="w-5 h-5" />,
       iconBg: 'bg-[#F59B00] text-white',
       label: t(lang, 'savedMessages'),
+      subtitle: 'Simpan link, foto & catatan penting',
       onClick: () => {
         onClose();
         onOpenSaved();
@@ -105,6 +108,7 @@ export function DrawerMenu({
       icon: <Phone className="w-5 h-5" />,
       iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'calls'),
+      subtitle: 'Cek panggilan suara & video',
       onClick: () => {
         onClose();
         onOpenCalls();
@@ -114,6 +118,7 @@ export function DrawerMenu({
       icon: <MonitorSmartphone className="w-5 h-5" />,
       iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'devices'),
+      subtitle: 'Lihat HP & browser yang lagi aktif',
       onClick: () => {
         onClose();
         onOpenDevices();
@@ -123,7 +128,7 @@ export function DrawerMenu({
       icon: <Sliders className="w-5 h-5" />,
       iconBg: 'bg-[#E6ECF2] dark:bg-[#2B364B] text-[#161B26] dark:text-[#F1F5F9]',
       label: t(lang, 'settings'),
-      subtitle: 'Bahasa, Aksesibilitas, Privasi, Notifikasi',
+      subtitle: 'Tema, bahasa, ukuran teks & privasi',
       onClick: () => {
         onClose();
         onOpenSettings();
@@ -135,7 +140,7 @@ export function DrawerMenu({
             icon: <Shield className="w-5 h-5" />,
             iconBg: 'bg-[#8C0027] text-white',
             label: t(lang, 'adminPanel'),
-            subtitle: 'Dashboard, RBAC, Moderasi, Audit Log',
+            subtitle: 'Dashboard, user, moderasi & log',
             accent: true,
             onClick: () => {
               onClose();
@@ -148,6 +153,7 @@ export function DrawerMenu({
       icon: <UserCircle2 className="w-5 h-5" />,
       iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'editProfile'),
+      subtitle: 'Foto, bio, dan status kamu',
       onClick: () => {
         onClose();
         onOpenProfile();
@@ -157,6 +163,7 @@ export function DrawerMenu({
       icon: <LogIn className="w-5 h-5" />,
       iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'switchAccount'),
+      subtitle: 'Masuk atau daftar akun lain',
       onClick: () => {
         onClose();
         onOpenAuth();

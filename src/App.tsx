@@ -1701,15 +1701,17 @@ export function App() {
         onNotify={showToast}
       />
 
-      {/* Toast Feedback */}
+      {/* Toast Feedback (wrapper handles horizontal centering so animation transform never shifts it) */}
       {toastRetained.renderedValue && (
-        <div
-          key={toastRetained.renderedValue}
-          className={`${
-            toastRetained.closing ? 'p5-toast-out pointer-events-none' : 'p5-toast-impact'
-          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-xl bg-[#161B26] dark:bg-[#8C0027] border border-[#8C0027] dark:border-[#F5F7FA] text-[#F5F7FA] text-xs font-bold brutal-shadow-sm`}
-        >
-          {toastRetained.renderedValue}
+        <div className="fixed inset-x-0 top-3 pt-safe z-[70] flex justify-center px-4 pointer-events-none">
+          <div
+            key={toastRetained.renderedValue}
+            className={`${
+              toastRetained.closing ? 'p5-toast-out' : 'p5-toast-impact'
+            } max-w-[90vw] text-center px-4 py-2.5 rounded-2xl bg-[#161B26] dark:bg-[#8C0027] border border-white/20 text-white text-xs font-bold brutal-shadow pointer-events-auto`}
+          >
+            {toastRetained.renderedValue}
+          </div>
         </div>
       )}
     </div>

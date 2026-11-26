@@ -93,10 +93,10 @@ export function AuthScreen({
               </div>
 
               <h1 className="mt-5 font-display font-extrabold text-2xl sm:text-3xl leading-tight tracking-tight text-white">
-                Ngobrol Lebih Seru, Cepat &amp; Dekat.
+                Tempat Ngumpul &amp; Ngobrol Tanpa Ribet.
               </h1>
               <p className="mt-2 text-xs sm:text-sm text-white/90 leading-relaxed">
-                Ruang obrolan hangat untuk chat personal, grup seru, panggilan suara/video, dan Stories 24 jam.
+                DM temen, bikin grup circle, call suara/video, sampai update Story 24 jam dalam satu tempat.
               </p>
             </div>
 
@@ -110,7 +110,7 @@ export function AuthScreen({
               </div>
               <div className="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF2A7] text-[#161B26] text-[11px] font-bold">
                 <span className="w-2 h-2 rounded-full bg-[#F59B00] animate-pulse" />
-                <span>Sedang mengetik...</span>
+                <span>lagi ngetik...</span>
               </div>
             </div>
 
@@ -118,15 +118,15 @@ export function AuthScreen({
             <div className="relative z-10 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
                 <MessageCircleHeart className="w-3.5 h-3.5" />
-                Chat Real-Time
+                Chat Instan
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
                 <PhoneCall className="w-3.5 h-3.5" />
-                Panggilan HD
+                Call Jernih
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
                 <Sparkles className="w-3.5 h-3.5" />
-                Stories 24 Jam
+                Story 24 Jam
               </span>
             </div>
           </div>
@@ -175,12 +175,12 @@ export function AuthScreen({
 
             <div className="mb-4">
               <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#161B26] dark:text-[#F5F7FA]">
-                {mode === 'login' ? 'Selamat Datang Kembali!' : 'Gabung ke Tolk by Lunola'}
+                {mode === 'login' ? 'Balik Lagi, Gas Ngobrol!' : 'Bikin Akun Tolk'}
               </h2>
               <p className="mt-1 text-xs text-[#5A6578] dark:text-[#94A3B8]">
                 {mode === 'login'
-                  ? 'Masuk dengan akun Anda untuk melanjutkan obrolan.'
-                  : 'Buat akun baru dan mulai terhubung dalam hitungan detik.'}
+                  ? 'Masuk pakai username atau email kamu.'
+                  : 'Bikin akun dulu biar bisa add temen dan mulai chat.'}
               </p>
             </div>
 
@@ -286,10 +286,10 @@ export function AuthScreen({
               >
                 <span>
                   {busy
-                    ? 'Memproses...'
+                    ? 'Lagi proses...'
                     : mode === 'register'
-                      ? 'Buat Akun Sekarang'
-                      : 'Masuk ke Tolk'}
+                      ? 'Gabung Sekarang'
+                      : 'Masuk Sekarang'}
                 </span>
                 {!busy && <ArrowRight className="w-4 h-4" />}
               </button>
