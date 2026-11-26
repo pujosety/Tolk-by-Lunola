@@ -124,15 +124,61 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState('');
 
-  // UX & Accessibility preferences
-  const [darkMode, setDarkMode] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-  const [lang, setLang] = useState<LanguageCode>('id');
-  const [textScale, setTextScale] = useState<TextScale>('md');
-  const [highContrast, setHighContrast] = useState(false);
-  const [notificationTone, setNotificationTone] = useState<NotificationTone>('lunola');
-  const [vibrateEnabled, setVibrateEnabled] = useState(true);
+  // UX & Accessibility preferences (persisted in localStorage)
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = window.localStorage.getItem('tolk_dark_mode');
+      if (saved === 'true') return true;
+      if (saved === 'false') return false;
+    } catch {
+      // Ignore storage errors
+    }
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  const [lang, setLang] = useState<LanguageCode>(() => {
+    try {
+      const saved = window.localStorage.getItem('tolk_lang');
+      if (saved === 'id' || saved === 'en') return saved;
+    } catch {
+      // Ignore
+    }
+    return 'id';
+  });
+  const [textScale, setTextScale] = useState<TextScale>(() => {
+    try {
+      const saved = window.localStorage.getItem('tolk_text_scale');
+      if (saved === 'sm' || saved === 'md' || saved === 'lg') return saved;
+    } catch {
+      // Ignore
+    }
+    return 'md';
+  });
+  const [highContrast, setHighContrast] = useState(() => {
+    try {
+      return window.localStorage.getItem('tolk_high_contrast') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [notificationTone, setNotificationTone] = useState<NotificationTone>(() => {
+    try {
+      const saved = window.localStorage.getItem('tolk_notification_tone');
+      if (saved === 'lunola' || saved === 'crystal' || saved === 'soft' || saved === 'mute') {
+        return saved;
+      }
+    } catch {
+      // Ignore
+    }
+    return 'lunola';
+  });
+  const [vibrateEnabled, setVibrateEnabled] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('tolk_vibrate');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [appearance, setAppearance] = useState<ChatAppearancePrefs>(() => {
     try {
       const raw = window.localStorage.getItem('tolk_chat_appearance');
@@ -224,7 +270,24 @@ export function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
     syncAndroidStatusBar(darkMode);
+    try {
+      window.localStorage.setItem('tolk_dark_mode', String(darkMode));
+    } catch {
+      // Ignore storage errors
+    }
   }, [darkMode]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('tolk_lang', lang);
+      window.localStorage.setItem('tolk_text_scale', textScale);
+      window.localStorage.setItem('tolk_high_contrast', String(highContrast));
+      window.localStorage.setItem('tolk_notification_tone', notificationTone);
+      window.localStorage.setItem('tolk_vibrate', String(vibrateEnabled));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [lang, textScale, highContrast, notificationTone, vibrateEnabled]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-text-scale', textScale);
