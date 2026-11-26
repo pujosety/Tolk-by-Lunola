@@ -93,6 +93,46 @@ export function AuthScreen({
   const [bio, setBio] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const syncViewport = () => {
+      const inset = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
+      setKeyboardInset(inset > 90 ? inset : 0);
+    };
+    syncViewport();
+    vv.addEventListener('resize', syncViewport);
+    vv.addEventListener('scroll', syncViewport);
+    return () => {
+      vv.removeEventListener('resize', syncViewport);
+      vv.removeEventListener('scroll', syncViewport);
+    };
+  }, []);
+
+  const isMobileKeyboardOpen = keyboardInset > 90 || isInputFocused;
+
+  const handleFormFocusCapture = (e: React.FocusEvent<HTMLFormElement>) => {
+    const target = e.target as HTMLElement | null;
+    if (!target || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA')) return;
+    setIsInputFocused(true);
+    window.setTimeout(() => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 150);
+  };
+
+  const handleFormBlurCapture = (e: React.FocusEvent<HTMLFormElement>) => {
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next && e.currentTarget.contains(next)) return;
+    window.setTimeout(() => {
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) {
+        setIsInputFocused(false);
+      }
+    }, 120);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +152,10 @@ export function AuthScreen({
   };
 
   return (
-    <div className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col">
+    <div
+      style={keyboardInset > 0 ? { paddingBottom: `${keyboardInset + 20}px` } : undefined}
+      className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col px-safe"
+    >
       {/* Top-Right Theme Toggle */}
       <div className="pt-safe-3 px-4 sm:px-6 flex justify-end shrink-0 z-10">
         <motion.button
@@ -128,7 +171,11 @@ export function AuthScreen({
       </div>
 
       {/* Centered Split Morphing Card */}
-      <div className="flex-1 flex items-center justify-center px-4 pt-2 pb-safe-3 sm:p-6">
+      <div
+        className={`flex-1 flex justify-center px-4 pb-safe-3 sm:p-6 md:items-center ${
+          isMobileKeyboardOpen ? 'items-start pt-1' : 'items-center pt-2'
+        }`}
+      >
         <motion.div
           layout
           transition={SPRING_MORPH}
@@ -136,8 +183,12 @@ export function AuthScreen({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="w-full max-w-[880px] grid grid-cols-1 md:grid-cols-12 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-white/80 dark:border-[#2A364B] brutal-shadow-lg overflow-hidden"
         >
-          {/* Left Panel: Strong Branding & Fun Animated Chat Showcase */}
-          <div className="md:col-span-5 p-6 sm:p-7 p5-maroon-banner text-white flex flex-col justify-between gap-6 relative overflow-hidden">
+          {/* Left Panel: Strong Branding & Fun Animated Chat Showcase (collapses on mobile when keyboard opens so form moves up) */}
+          <div
+            className={`md:col-span-5 p-5 sm:p-7 p5-maroon-banner text-white flex-col justify-between gap-5 relative overflow-hidden ${
+              isMobileKeyboardOpen ? 'hidden md:flex' : 'flex'
+            }`}
+          >
             <motion.div
               animate={{ y: [0, -10, 0], x: [0, 6, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
@@ -342,7 +393,14 @@ export function AuthScreen({
               </div>
             ) : (
 
-            <motion.form layout transition={SPRING_MORPH} onSubmit={handleSubmit} className="space-y-3.5">
+            <motion.form
+              layout
+              transition={SPRING_MORPH}
+              onSubmit={handleSubmit}
+              onFocusCapture={handleFormFocusCapture}
+              onBlurCapture={handleFormBlurCapture}
+              className="space-y-3.5"
+            >
               <AnimatePresence initial={false}>
                 {mode === 'register' && (
                   <motion.div
@@ -397,7 +455,7 @@ export function AuthScreen({
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
-                  className="w-full h-11 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
+                  className="w-full h-11 px-4 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
                 />
               </motion.div>
 
@@ -414,7 +472,7 @@ export function AuthScreen({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimal 6 karakter"
-                    className="w-full h-11 pl-3.5 pr-11 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
+                    className="w-full h-11 pl-4 pr-11 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027] transition-colors"
                   />
                   <button
                     type="button"

@@ -124,7 +124,7 @@ export function YouView({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-24 md:pb-4 space-y-3 bg-[#F5F7FA] dark:bg-[#0F141E]">
+    <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] md:pb-4 space-y-3 bg-[#F5F7FA] dark:bg-[#0F141E]">
       {/* WhatsApp "You" Profile Card */}
       <div className="rounded-3xl p5-maroon-banner text-white p-4 brutal-shadow-sm">
         <div className="flex items-start justify-between gap-2">
