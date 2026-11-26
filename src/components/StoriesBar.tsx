@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   BellOff,
+  Camera,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -15,6 +16,7 @@ import type { Attachment, StoryItem, UserProfile } from '../types/chat';
 import { formatTimeShort } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
+import { CameraCaptureModal } from './CameraCaptureModal';
 
 const STORY_BG_COLORS = ['#8C0027', '#F59B00', '#0284C7', '#161B26', '#0F766E', '#6D28D9'];
 
@@ -228,13 +230,11 @@ function CreateStoryModal({
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const uploadPickedFile = async (file: File) => {
     setUploading(true);
     setUploadPct(5);
     setError('');
@@ -247,6 +247,13 @@ function CreateStoryModal({
       setUploading(false);
       setUploadPct(0);
     }
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    await uploadPickedFile(file);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -363,17 +370,28 @@ function CreateStoryModal({
               className="hidden"
               onChange={handleFile}
             />
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => fileRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>
-                {uploading ? `Mengunggah ${uploadPct}%` : media ? 'Ganti Media' : 'Foto / Video'}
-              </span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => setCameraOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#BEDEFF] dark:border-[#324058] bg-[#EAF4FF] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Kamera</span>
+              </button>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>
+                  {uploading ? `${uploadPct}%` : media ? 'Ganti' : 'Galeri'}
+                </span>
+              </button>
+            </div>
           </div>
           {uploading && (
             <div className="h-2 w-full rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] overflow-hidden">
@@ -452,6 +470,13 @@ function CreateStoryModal({
           </button>
         </div>
       </form>
+
+      <CameraCaptureModal
+        open={cameraOpen}
+        mode="photo"
+        onClose={() => setCameraOpen(false)}
+        onCapturePhoto={(file) => void uploadPickedFile(file)}
+      />
     </div>
   );
 }

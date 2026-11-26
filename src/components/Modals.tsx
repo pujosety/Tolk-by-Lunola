@@ -17,6 +17,7 @@ import {
   QrCode,
   Radio,
   RotateCcw,
+  ScanLine,
   Search,
   Server,
   Shield,
@@ -60,7 +61,8 @@ import {
   getBubbleClasses,
   getWallpaperStyle,
 } from '../lib/appearance';
-import { QrCodeBox } from './QrCodeBox';
+import { DigitalProfileQrCard, QrCodeBox } from './QrCodeBox';
+import { CameraCaptureModal } from './CameraCaptureModal';
 
 function ModalShell({
   open,
@@ -828,6 +830,8 @@ export function CreateChatModal({
   }) => Promise<void>;
 }) {
   const [mode, setMode] = useState<'dm' | 'group' | 'channel'>(initialMode);
+  const [showMyQr, setShowMyQr] = useState(false);
+  const [scanQrOpen, setScanQrOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<UserProfile[]>([]);
   const [lookingUp, setLookingUp] = useState(false);
@@ -963,7 +967,56 @@ export function CreateChatModal({
       </div>
 
       {mode === 'dm' ? (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
+          {/* 2 Bento Action Boxes: Kartu QR Saya & Scan QR */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => setShowMyQr((v) => !v)}
+              className={`p-3 rounded-2xl border text-left transition-all brutal-press flex items-center gap-2.5 ${
+                showMyQr
+                  ? 'bg-[#8C0027] border-[#8C0027] text-white brutal-shadow-sm'
+                  : 'bg-[#EAF4FF] dark:bg-[#1E2738] border-[#BEDEFF] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]'
+              }`}
+            >
+              <span
+                className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  showMyQr ? 'bg-white/20 text-white' : 'bg-[#BEDEFF] text-[#161B26]'
+                }`}
+              >
+                <QrCode className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-xs font-extrabold leading-tight truncate">Kartu QR Saya</div>
+                <div className={`text-[10px] truncate ${showMyQr ? 'text-white/80' : 'text-[#5A6578] dark:text-[#94A3B8]'}`}>
+                  Bagikan ID profil
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScanQrOpen(true)}
+              className="p-3 rounded-2xl border border-[#FFF2A7] dark:border-[#324058] bg-[#FFF9D6] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] text-left brutal-press flex items-center gap-2.5"
+            >
+              <span className="h-9 w-9 rounded-xl bg-[#F59B00] text-white flex items-center justify-center shrink-0">
+                <ScanLine className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-xs font-extrabold leading-tight truncate">Scan QR</div>
+                <div className="text-[10px] text-[#5A6578] dark:text-[#94A3B8] truncate">
+                  Tambah teman cepat
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {showMyQr && users[currentUserId] && (
+            <div className="p5-panel-reveal py-1">
+              <DigitalProfileQrCard user={users[currentUserId]} />
+            </div>
+          )}
+
           <div className="relative">
             <Search className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -1174,6 +1227,25 @@ export function CreateChatModal({
           </button>
         </form>
       )}
+
+      <CameraCaptureModal
+        open={scanQrOpen}
+        mode="qr"
+        onClose={() => setScanQrOpen(false)}
+        onScanQr={(raw) => {
+          let extracted = raw.trim();
+          try {
+            const url = new URL(extracted);
+            const addParam = url.searchParams.get('add');
+            if (addParam) extracted = addParam;
+          } catch {
+            // Raw username / text
+          }
+          setMode('dm');
+          setShowMyQr(false);
+          setQuery(extracted.replace(/^@/, ''));
+        }}
+      />
     </ModalShell>
   );
 }

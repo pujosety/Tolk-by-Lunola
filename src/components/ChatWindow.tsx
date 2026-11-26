@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   CalendarClock,
+  Camera,
   Check,
   CheckCheck,
   Clock,
@@ -53,6 +54,7 @@ import {
 import { t } from '../lib/i18n';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
+import { CameraCaptureModal } from './CameraCaptureModal';
 
 const QUICK_REACTIONS = ['👍', '❤️', '🔥', '😂', '👏', '😮'];
 
@@ -278,6 +280,7 @@ export function ChatWindow({
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -1634,6 +1637,17 @@ export function ChatWindow({
 
             <button
               type="button"
+              onClick={() => setCameraOpen(true)}
+              disabled={sending}
+              aria-label="Buka kamera"
+              title="Ambil foto dari kamera"
+              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
               onClick={() => setScheduleOpen((v) => !v)}
               disabled={sending || Boolean(editingMsg)}
               aria-label={t(lang, 'scheduleMessage')}
@@ -1717,6 +1731,13 @@ export function ChatWindow({
           />
         </div>
       )}
+
+      <CameraCaptureModal
+        open={cameraOpen}
+        mode="photo"
+        onClose={() => setCameraOpen(false)}
+        onCapturePhoto={(file) => stageFileForPreview(file)}
+      />
     </section>
   );
 }
