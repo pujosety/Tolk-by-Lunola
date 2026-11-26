@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Activity,
+  ArrowLeft,
   BarChart3,
   Bell,
   CheckCircle2,
@@ -47,17 +48,62 @@ type AdminMenu =
   | 'settings'
   | 'audit';
 
-const ADMIN_MENUS: Array<{ key: AdminMenu; label: string; icon: React.ReactNode }> = [
-  { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { key: 'users', label: 'Users & Roles', icon: <Users className="w-4 h-4" /> },
-  { key: 'moderation', label: 'Moderation & Reports', icon: <Flag className="w-4 h-4" /> },
-  { key: 'groups', label: 'Groups & Channels', icon: <Shield className="w-4 h-4" /> },
-  { key: 'stories', label: 'Stories & Media', icon: <Film className="w-4 h-4" /> },
-  { key: 'announcements', label: 'Notifications & Announcements', icon: <Bell className="w-4 h-4" /> },
-  { key: 'server', label: 'Server & Storage', icon: <Server className="w-4 h-4" /> },
-  { key: 'analytics', label: 'Analytics & Reports', icon: <BarChart3 className="w-4 h-4" /> },
-  { key: 'settings', label: 'Platform Settings', icon: <Settings className="w-4 h-4" /> },
-  { key: 'audit', label: 'Audit Logs', icon: <FileText className="w-4 h-4" /> },
+type AdminCategory = 'overview' | 'people' | 'moderation' | 'system';
+
+const ADMIN_CATEGORIES: Array<{
+  key: AdminCategory;
+  shortLabel: string;
+  label: string;
+  icon: React.ReactNode;
+  menus: AdminMenu[];
+}> = [
+  {
+    key: 'overview',
+    shortLabel: 'Ringkas',
+    label: 'Ringkasan & Analitik',
+    icon: <LayoutDashboard className="w-4 h-4" />,
+    menus: ['dashboard', 'analytics'],
+  },
+  {
+    key: 'people',
+    shortLabel: 'Pengguna',
+    label: 'Pengguna & Komunitas',
+    icon: <Users className="w-4 h-4" />,
+    menus: ['users', 'groups'],
+  },
+  {
+    key: 'moderation',
+    shortLabel: 'Moderasi',
+    label: 'Moderasi & Konten',
+    icon: <Flag className="w-4 h-4" />,
+    menus: ['moderation', 'stories', 'announcements'],
+  },
+  {
+    key: 'system',
+    shortLabel: 'Sistem',
+    label: 'Server, Pengaturan & Log',
+    icon: <Server className="w-4 h-4" />,
+    menus: ['server', 'settings', 'audit'],
+  },
+];
+
+const ADMIN_MENUS: Array<{
+  key: AdminMenu;
+  category: AdminCategory;
+  label: string;
+  shortLabel: string;
+  icon: React.ReactNode;
+}> = [
+  { key: 'dashboard', category: 'overview', label: 'Dashboard', shortLabel: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+  { key: 'analytics', category: 'overview', label: 'Analytics & Reports', shortLabel: 'Analitik', icon: <BarChart3 className="w-4 h-4" /> },
+  { key: 'users', category: 'people', label: 'Users & Roles', shortLabel: 'Pengguna', icon: <Users className="w-4 h-4" /> },
+  { key: 'groups', category: 'people', label: 'Groups & Channels', shortLabel: 'Grup & Saluran', icon: <Shield className="w-4 h-4" /> },
+  { key: 'moderation', category: 'moderation', label: 'Moderation & Reports', shortLabel: 'Laporan', icon: <Flag className="w-4 h-4" /> },
+  { key: 'stories', category: 'moderation', label: 'Stories & Media', shortLabel: 'Status & Media', icon: <Film className="w-4 h-4" /> },
+  { key: 'announcements', category: 'moderation', label: 'Notifications & Announcements', shortLabel: 'Pengumuman', icon: <Bell className="w-4 h-4" /> },
+  { key: 'server', category: 'system', label: 'Server & Storage', shortLabel: 'Server', icon: <Server className="w-4 h-4" /> },
+  { key: 'settings', category: 'system', label: 'Platform Settings', shortLabel: 'Pengaturan', icon: <Settings className="w-4 h-4" /> },
+  { key: 'audit', category: 'system', label: 'Audit Logs', shortLabel: 'Audit Log', icon: <FileText className="w-4 h-4" /> },
 ];
 
 const ROLE_LABELS: Record<AdminRole, string> = {
@@ -277,6 +323,10 @@ export function AdminPanel({
     );
   }
 
+  const activeCategory: AdminCategory =
+    ADMIN_MENUS.find((m) => m.key === menu)?.category || 'overview';
+  const categorySubMenus = ADMIN_MENUS.filter((m) => m.category === activeCategory);
+
   return (
     <div
       className={`${
@@ -318,24 +368,58 @@ export function AdminPanel({
           </button>
         </div>
 
-        <nav className="flex md:flex-col overflow-x-auto md:overflow-y-auto px-2 pt-2 pb-safe-2 md:p-2.5 gap-1.5 thin-scrollbar justify-start">
-          {ADMIN_MENUS.map((item) => {
-            const active = menu === item.key;
+        {/* Desktop Classified Menu */}
+        <nav className="hidden md:flex flex-col overflow-y-auto p-3 gap-4 thin-scrollbar flex-1">
+          {ADMIN_CATEGORIES.map((cat) => (
+            <div key={cat.key} className="space-y-1">
+              <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+                {cat.label}
+              </div>
+              {ADMIN_MENUS.filter((m) => m.category === cat.key).map((item) => {
+                const active = menu === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setMenu(item.key)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-bold transition-colors text-left brutal-press ${
+                      active
+                        ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white brutal-shadow-sm'
+                        : 'border-transparent text-[#5A6578] dark:text-[#CBBBC2] hover:border-[#E6ECF2] dark:hover:border-[#324058] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Mobile 4-Category Labeled Bottom Tab Bar */}
+        <nav className="md:hidden grid grid-cols-4 gap-1 px-2 pt-1.5 pb-safe-2 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95">
+          {ADMIN_CATEGORIES.map((cat) => {
+            const active = activeCategory === cat.key;
             return (
               <button
-                key={item.key}
+                key={cat.key}
                 type="button"
-                onClick={() => setMenu(item.key)}
-                title={item.label}
-                aria-label={item.label}
-                className={`flex items-center justify-center md:justify-start gap-2.5 h-11 w-11 md:w-auto md:h-auto md:px-3 md:py-2.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 transition-colors text-left brutal-press ${
-                  active
-                    ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white brutal-shadow-sm'
-                    : 'border-transparent text-[#5A6578] dark:text-[#CBBBC2] hover:border-[#E6ECF2] dark:hover:border-[#324058] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]'
-                }`}
+                onClick={() => setMenu(cat.menus[0])}
+                className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
               >
-                {item.icon}
-                <span className="hidden md:inline">{item.label}</span>
+                <span
+                  className={`px-3.5 py-1 rounded-full transition-colors ${
+                    active
+                      ? 'bg-[#8C0027] text-white brutal-shadow-sm'
+                      : 'text-[#5A6578] dark:text-[#94A3B8]'
+                  }`}
+                >
+                  {cat.icon}
+                </span>
+                <span className={active ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+                  {cat.shortLabel}
+                </span>
               </button>
             );
           })}
@@ -345,8 +429,23 @@ export function AdminPanel({
       {/* Main Admin Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="pt-safe-2 pb-2 min-h-16 px-4 sm:px-6 bg-[#FFFFFF] dark:bg-[#171E2C] border-b border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3 shrink-0">
-          <div className="font-display font-extrabold text-base sm:text-lg text-[#161B26] dark:text-[#F5F7FA] truncate">
-            Admin Panel / <span className="text-[#8C0027] dark:text-[#F47296]">{ADMIN_MENUS.find((m) => m.key === menu)?.label}</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Kembali"
+              className="md:hidden h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center shrink-0 brutal-press"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="min-w-0">
+              <div className="font-display font-extrabold text-base sm:text-lg text-[#161B26] dark:text-[#F5F7FA] truncate">
+                Admin <span className="text-[#8C0027] dark:text-[#F47296]">· {ADMIN_MENUS.find((m) => m.key === menu)?.shortLabel}</span>
+              </div>
+              <div className="md:hidden text-[10px] font-mono text-[#5A6578] dark:text-[#94A3B8] truncate">
+                {ROLE_LABELS[currentUser.role]}
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -358,16 +457,32 @@ export function AdminPanel({
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Segarkan</span>
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Tutup Admin Panel"
-              className="md:hidden h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </header>
+
+        {/* Mobile Sub-Section Pills */}
+        {categorySubMenus.length > 1 && (
+          <div className="md:hidden px-4 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar bg-[#FFFFFF] dark:bg-[#171E2C] border-b border-[#E6ECF2] dark:border-[#2A364B] shrink-0">
+            {categorySubMenus.map((sub) => {
+              const active = menu === sub.key;
+              return (
+                <button
+                  key={sub.key}
+                  type="button"
+                  onClick={() => setMenu(sub.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-colors shrink-0 ${
+                    active
+                      ? 'bg-[#FFF2A7] text-[#161B26] border border-[#F59B00]'
+                      : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#5A6578] dark:text-[#CBD5E1] border border-transparent'
+                  }`}
+                >
+                  {sub.icon}
+                  <span>{sub.shortLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto thin-scrollbar p-6">
           <div key={menu} className="p5-panel-reveal max-w-6xl mx-auto space-y-6">

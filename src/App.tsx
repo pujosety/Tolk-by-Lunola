@@ -55,6 +55,7 @@ import {
 } from './components/CallOverlay';
 import { AdminPanel } from './components/AdminPanel';
 import { AuthScreen } from './components/AuthScreen';
+import { CameraCaptureModal } from './components/CameraCaptureModal';
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -163,6 +164,7 @@ export function App() {
   const [sessionsList, setSessionsList] = useState<DeviceSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [quickCameraOpen, setQuickCameraOpen] = useState(false);
   const [starredModalOpen, setStarredModalOpen] = useState(false);
   const [starredItems, setStarredItems] = useState<
     Array<{ message: Message; chatTitle: string; senderName: string }>
@@ -250,34 +252,133 @@ export function App() {
   }, []);
 
   // Register Android WebView back button handler
+  const hasSubViewOpen =
+    quickCameraOpen ||
+    adminPanelOpen ||
+    starredModalOpen ||
+    notificationsOpen ||
+    sessionsModalOpen ||
+    settingsModalOpen ||
+    profileModalOpen ||
+    authModalOpen ||
+    createModalState.open ||
+    forwardMsg !== null ||
+    reportTarget !== null ||
+    infoOpen ||
+    overflowMenuOpen ||
+    mobileShowChat ||
+    activeMainTab !== 'chats';
+
+  const handleBackNavigation = useCallback((): boolean => {
+    if (quickCameraOpen) {
+      setQuickCameraOpen(false);
+      return true;
+    }
+    if (adminPanelOpen) {
+      setAdminPanelOpen(false);
+      return true;
+    }
+    if (starredModalOpen) {
+      setStarredModalOpen(false);
+      return true;
+    }
+    if (notificationsOpen) {
+      setNotificationsOpen(false);
+      return true;
+    }
+    if (sessionsModalOpen) {
+      setSessionsModalOpen(false);
+      return true;
+    }
+    if (settingsModalOpen) {
+      setSettingsModalOpen(false);
+      return true;
+    }
+    if (profileModalOpen) {
+      setProfileModalOpen(false);
+      return true;
+    }
+    if (authModalOpen) {
+      setAuthModalOpen(false);
+      return true;
+    }
+    if (createModalState.open) {
+      setCreateModalState((s) => ({ ...s, open: false }));
+      return true;
+    }
+    if (forwardMsg !== null) {
+      setForwardMsg(null);
+      return true;
+    }
+    if (reportTarget !== null) {
+      setReportTarget(null);
+      return true;
+    }
+    if (infoOpen) {
+      setInfoOpen(false);
+      return true;
+    }
+    if (overflowMenuOpen) {
+      setOverflowMenuOpen(false);
+      return true;
+    }
+    if (mobileShowChat) {
+      setMobileShowChat(false);
+      return true;
+    }
+    if (activeMainTab !== 'chats') {
+      setActiveMainTab('chats');
+      return true;
+    }
+    return false;
+  }, [
+    quickCameraOpen,
+    adminPanelOpen,
+    starredModalOpen,
+    notificationsOpen,
+    sessionsModalOpen,
+    settingsModalOpen,
+    profileModalOpen,
+    authModalOpen,
+    createModalState.open,
+    forwardMsg,
+    reportTarget,
+    infoOpen,
+    overflowMenuOpen,
+    mobileShowChat,
+    activeMainTab,
+  ]);
+
+  const pushedHistoryGuardRef = useRef(false);
+  const [popTick, setPopTick] = useState(0);
+
   useEffect(() => {
-    window.__lunolaTalkHandleBack = () => {
-      if (adminPanelOpen) {
-        setAdminPanelOpen(false);
-        return true;
-      }
-      if (infoOpen) {
-        setInfoOpen(false);
-        return true;
-      }
-      if (overflowMenuOpen) {
-        setOverflowMenuOpen(false);
-        return true;
-      }
-      if (mobileShowChat) {
-        setMobileShowChat(false);
-        return true;
-      }
-      if (activeMainTab !== 'chats') {
-        setActiveMainTab('chats');
-        return true;
-      }
-      return false;
-    };
+    window.__lunolaTalkHandleBack = handleBackNavigation;
     return () => {
       delete window.__lunolaTalkHandleBack;
     };
-  }, [adminPanelOpen, infoOpen, overflowMenuOpen, mobileShowChat, activeMainTab]);
+  }, [handleBackNavigation]);
+
+  useEffect(() => {
+    if (hasSubViewOpen && !pushedHistoryGuardRef.current) {
+      window.history.pushState({ tolkNavGuard: true }, '');
+      pushedHistoryGuardRef.current = true;
+    } else if (!hasSubViewOpen) {
+      pushedHistoryGuardRef.current = false;
+    }
+  }, [hasSubViewOpen, popTick]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      pushedHistoryGuardRef.current = false;
+      const handled = handleBackNavigation();
+      if (handled) {
+        setPopTick((v) => v + 1);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [handleBackNavigation]);
 
   const loadMessagesForChat = useCallback(async (authToken: string, chatId: string) => {
     setLoadingChatId(chatId);
@@ -1333,6 +1434,8 @@ export function App() {
             users={users}
             currentUser={currentUser}
             stories={stories}
+            friendRequests={friendRequests}
+            settings={settings}
             onlineUserIds={onlineUserIds}
             typingByChat={typingByChat}
             draftsByChat={draftsByChat}
@@ -1359,9 +1462,15 @@ export function App() {
             onSearchChange={setSearchQuery}
             onSelectChat={handleSelectChat}
             onOpenOverflowMenu={() => setOverflowMenuOpen((v) => !v)}
+            onOpenQuickCamera={() => setQuickCameraOpen(true)}
             onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
             onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
-            onOpenNotifications={() => setNotificationsOpen(true)}
+            onRespondRequest={async (requestId, action) => {
+              const res = await api.respondContactRequest(token, requestId, action);
+              setFriendRequests((prev) => prev.map((r) => (r.id === requestId ? res.request : r)));
+              setCurrentUser((prev) => (prev ? { ...prev, contactIds: res.contactIds } : prev));
+              showToast(action === 'accept' ? 'Permintaan kontak diterima.' : 'Permintaan kontak ditolak.');
+            }}
             onStartCall={(peerId, kind) => void handleStartCall(peerId, kind)}
             onOpenProfile={() => setProfileModalOpen(true)}
             onOpenQrCard={() => setCreateModalState({ open: true, mode: 'dm' })}
@@ -1765,6 +1874,29 @@ export function App() {
         onReject={handleRejectCall}
         onEnd={handleEndCall}
         onSwitchCamera={() => void handleSwitchCamera()}
+      />
+
+      <CameraCaptureModal
+        open={quickCameraOpen}
+        mode="photo"
+        onClose={() => setQuickCameraOpen(false)}
+        onCapturePhoto={async (file) => {
+          setQuickCameraOpen(false);
+          try {
+            const att = await handleUploadFile(file);
+            await handleCreateStory({
+              kind: 'image',
+              text: '',
+              bgColor: '#8C0027',
+              mediaUrl: att.url,
+              privacy: 'everyone',
+            });
+            setActiveMainTab('status');
+            showToast('Foto diterbitkan ke Status 24 jam.');
+          } catch (err) {
+            showToast(err instanceof Error ? err.message : 'Gagal mengunggah foto kamera.');
+          }
+        }}
       />
 
       <AdminPanel

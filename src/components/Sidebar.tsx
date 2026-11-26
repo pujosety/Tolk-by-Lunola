@@ -3,8 +3,10 @@ import {
   Archive,
   Bell,
   BellOff,
+  Camera,
   Check,
   CheckCheck,
+  CircleDot,
   Edit3,
   FileText,
   Film,
@@ -30,7 +32,9 @@ import type {
   CallRecord,
   ChatRoom,
   FolderKey,
+  FriendRequest,
   LanguageCode,
+  PlatformSettings,
   StoryItem,
   UserProfile,
 } from '../types/chat';
@@ -38,10 +42,11 @@ import { formatChatListTime } from '../lib/androidBridge';
 import { t } from '../lib/i18n';
 import { Avatar } from './Avatar';
 import { CallsView } from './CallsView';
+import { NotificationsUpdatesView } from './NotificationsUpdatesView';
 import { UpdatesView } from './StoriesBar';
 import { YouView } from './YouView';
 
-export type MainNavTab = 'chats' | 'updates' | 'calls' | 'you';
+export type MainNavTab = 'chats' | 'status' | 'updates' | 'calls' | 'you';
 
 interface SidebarProps {
   lang: LanguageCode;
@@ -52,6 +57,8 @@ interface SidebarProps {
   users: Record<string, UserProfile>;
   currentUser: UserProfile;
   stories: StoryItem[];
+  friendRequests: FriendRequest[];
+  settings: PlatformSettings | null;
   onlineUserIds: Set<string>;
   typingByChat: Record<string, string[]>;
   draftsByChat: Record<string, string>;
@@ -70,9 +77,10 @@ interface SidebarProps {
   onSearchChange: (q: string) => void;
   onSelectChat: (chatId: string) => void;
   onOpenOverflowMenu: () => void;
+  onOpenQuickCamera: () => void;
   onOpenNewChat: () => void;
   onOpenNewChannel: () => void;
-  onOpenNotifications: () => void;
+  onRespondRequest: (requestId: string, action: 'accept' | 'reject') => Promise<void>;
   onStartCall: (peerId: string, kind: 'voice' | 'video') => void;
   onOpenProfile: () => void;
   onOpenQrCard: () => void;
@@ -110,6 +118,8 @@ export function Sidebar({
   users,
   currentUser,
   stories,
+  friendRequests,
+  settings,
   onlineUserIds,
   typingByChat,
   draftsByChat,
@@ -128,9 +138,10 @@ export function Sidebar({
   onSearchChange,
   onSelectChat,
   onOpenOverflowMenu,
+  onOpenQuickCamera,
   onOpenNewChat,
   onOpenNewChannel,
-  onOpenNotifications,
+  onRespondRequest,
   onStartCall,
   onOpenProfile,
   onOpenQrCard,
@@ -349,30 +360,27 @@ export function Sidebar({
               />
             ) : (
               <h1 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA] truncate">
-                {activeTab === 'updates'
-                  ? 'Update'
-                  : activeTab === 'calls'
-                    ? 'Panggilan'
-                    : 'Kamu'}
+                {activeTab === 'status'
+                  ? 'Status'
+                  : activeTab === 'updates'
+                    ? 'Update'
+                    : activeTab === 'calls'
+                      ? 'Panggilan'
+                      : 'Kamu'}
               </h1>
             )}
           </div>
 
-          {/* Right Actions: Notifications, Overflow Menu (top-right dropdown), Minimize (desktop) */}
+          {/* Right Actions: Camera Shortcut, Overflow Menu (top-right dropdown), Minimize (desktop) */}
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={onOpenNotifications}
-              aria-label="Notifikasi"
-              title="Notifikasi & Permintaan Kontak"
-              className="relative h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+              onClick={onOpenQuickCamera}
+              aria-label="Buka kamera"
+              title="Kamera Cepat"
+              className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
-              <Bell className="w-4 h-4" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F59B00] text-white text-[10px] font-mono font-bold flex items-center justify-center border border-white dark:border-[#171E2C]">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              )}
+              <Camera className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -395,11 +403,12 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Desktop 4-Tab Switcher */}
-        <div className="hidden md:grid grid-cols-4 gap-1 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
+        {/* Desktop 5-Tab Switcher */}
+        <div className="hidden md:grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
           {(
             [
               { key: 'chats', label: 'Obrolan' },
+              { key: 'status', label: 'Status' },
               { key: 'updates', label: 'Update' },
               { key: 'calls', label: 'Panggilan' },
               { key: 'you', label: 'Kamu' },
@@ -409,13 +418,18 @@ export function Sidebar({
               key={tab.key}
               type="button"
               onClick={() => onSelectTab(tab.key)}
-              className={`py-1.5 rounded-xl text-[11px] font-bold transition-all ${
+              className={`relative py-1.5 rounded-xl text-[10px] font-bold transition-all ${
                 activeTab === tab.key
                   ? 'bg-[#8C0027] text-white brutal-shadow-sm'
                   : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-white'
               }`}
             >
               {tab.label}
+              {tab.key === 'updates' && notificationCount > 0 && (
+                <span className="ml-1 inline-flex min-w-[14px] h-[14px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono items-center justify-center">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -446,8 +460,8 @@ export function Sidebar({
         )}
       </div>
 
-      {activeTab === 'updates' ? (
-        <div key="tab-updates" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+      {activeTab === 'status' ? (
+        <div key="tab-status" className="p5-tab-enter flex-1 flex flex-col min-h-0">
           <UpdatesView
             stories={stories}
             channels={chats.filter((c) => c.type === 'channel')}
@@ -461,6 +475,16 @@ export function Sidebar({
             onDeleteStory={onDeleteStory}
             onMuteStoryAuthor={onMuteStoryAuthor}
             onReplyToStory={onReplyToStory}
+          />
+        </div>
+      ) : activeTab === 'updates' ? (
+        <div key="tab-updates" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+          <NotificationsUpdatesView
+            currentUserId={currentUser.id}
+            users={users}
+            friendRequests={friendRequests}
+            settings={settings}
+            onRespondRequest={onRespondRequest}
           />
         </div>
       ) : activeTab === 'calls' ? (
@@ -757,18 +781,18 @@ export function Sidebar({
       </div>
       )}
 
-      {/* WhatsApp-Style Mobile Bottom Navigation Bar */}
+      {/* WhatsApp-Style 5-Tab Mobile Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden pt-1.5 pb-safe-2 px-2 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-4 gap-1 shrink-0 z-20"
+        className="md:hidden pt-1.5 pb-safe-2 px-1 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md border-t border-[#E6ECF2] dark:border-[#2A364B] grid grid-cols-5 gap-0.5 shrink-0 z-20"
       >
         <button
           type="button"
           onClick={() => onSelectTab('chats')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
         >
           <span
-            className={`relative px-4 py-1 rounded-full transition-colors ${
+            className={`relative px-3 py-1 rounded-full transition-colors ${
               activeTab === 'chats'
                 ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
@@ -776,7 +800,7 @@ export function Sidebar({
           >
             <MessageCircle className="w-5 h-5" />
             {unreadByFolder.all > 0 && (
-              <span className="absolute -top-0.5 right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#8C0027] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+              <span className="absolute -top-0.5 right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-[#8C0027] text-white text-[9px] font-mono font-bold flex items-center justify-center">
                 {unreadByFolder.all > 99 ? '99+' : unreadByFolder.all}
               </span>
             )}
@@ -788,19 +812,43 @@ export function Sidebar({
 
         <button
           type="button"
-          onClick={() => onSelectTab('updates')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
+          onClick={() => onSelectTab('status')}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
         >
           <span
-            className={`relative px-4 py-1 rounded-full transition-colors ${
-              activeTab === 'updates'
+            className={`relative px-3 py-1 rounded-full transition-colors ${
+              activeTab === 'status'
                 ? 'bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
-            <Sparkles className="w-5 h-5" />
+            <CircleDot className="w-5 h-5" />
             {stories.length > 0 && (
-              <span className="absolute top-0.5 right-3 w-2 h-2 rounded-full bg-[#F59B00]" />
+              <span className="absolute top-0.5 right-2 w-2 h-2 rounded-full bg-[#F59B00]" />
+            )}
+          </span>
+          <span className={activeTab === 'status' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+            Status
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTab('updates')}
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+        >
+          <span
+            className={`relative px-3 py-1 rounded-full transition-colors ${
+              activeTab === 'updates'
+                ? 'bg-[#8C0027] text-white brutal-shadow-sm'
+                : 'text-[#5A6578] dark:text-[#94A3B8]'
+            }`}
+          >
+            <Bell className="w-5 h-5" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-0.5 right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
             )}
           </span>
           <span className={activeTab === 'updates' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
@@ -811,10 +859,10 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('calls')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
         >
           <span
-            className={`px-4 py-1 rounded-full transition-colors ${
+            className={`px-3 py-1 rounded-full transition-colors ${
               activeTab === 'calls'
                 ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
@@ -830,10 +878,10 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('you')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
         >
           <span
-            className={`px-3 py-0.5 rounded-full flex items-center justify-center transition-colors ${
+            className={`px-2.5 py-0.5 rounded-full flex items-center justify-center transition-colors ${
               activeTab === 'you'
                 ? 'ring-2 ring-[#8C0027] dark:ring-[#F47296]'
                 : ''
