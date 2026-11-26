@@ -9,4 +9,7 @@ coverage/
 data/
 uploads/
 dev-dist/
+bun.lock
+bun.lockb
+
 

@@ -26,8 +26,15 @@ import type {
 } from './src/types/chat.ts';
 
 const PORT = Number(process.env.PORT || 3000);
-const IS_PROD = process.env.NODE_ENV === 'production';
 const ROOT_DIR = process.cwd();
+const IS_DEV_SCRIPT =
+  process.env.NODE_ENV === 'development' ||
+  process.env.npm_lifecycle_event === 'dev' ||
+  process.execArgv.some((arg) => arg.includes('tsx'));
+const IS_PROD =
+  process.env.NODE_ENV === 'production' ||
+  process.env.npm_lifecycle_event === 'start' ||
+  (!IS_DEV_SCRIPT && fs.existsSync(path.resolve(ROOT_DIR, 'dist', 'index.html')));
 const DATA_DIR = path.resolve(ROOT_DIR, 'data');
 const UPLOADS_DIR = path.resolve(ROOT_DIR, 'uploads');
 const STORE_PATH = path.resolve(DATA_DIR, 'store.json');
