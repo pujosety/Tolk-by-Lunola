@@ -707,7 +707,7 @@ export function ChatWindow({
             type="button"
             onClick={onBackMobile}
             aria-label="Kembali ke daftar chat"
-            className="md:hidden h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#F5F7FA] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
+            className="md:hidden h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -755,7 +755,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'voice')}
                 aria-label="Panggilan suara"
                 title="Panggilan Suara WebRTC"
-                className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Phone className="w-4 h-4" />
               </button>
@@ -764,7 +764,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'video')}
                 aria-label="Panggilan video"
                 title="Panggilan Video WebRTC"
-                className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Video className="w-4 h-4" />
               </button>
@@ -776,7 +776,7 @@ export function ChatWindow({
             disabled={summarizing}
             aria-label={t(lang, 'aiSummarize')}
             title={t(lang, 'aiSummarize')}
-            className="hidden sm:flex h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
+            className="hidden sm:flex h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
           >
             <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#8C0027]' : ''}`} />
           </button>
@@ -787,7 +787,7 @@ export function ChatWindow({
               setSearchTerm('');
             }}
             aria-label="Cari di percakapan"
-            className={`hidden sm:flex h-9 w-9 rounded-xl border brutal-shadow-sm brutal-press items-center justify-center ${
+            className={`hidden sm:flex h-9 w-9 rounded-full border brutal-shadow-sm brutal-press items-center justify-center ${
               searchOpen
                 ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
                 : 'border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
@@ -799,7 +799,7 @@ export function ChatWindow({
             type="button"
             onClick={onOpenInfo}
             aria-label="Detail percakapan"
-            className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+            className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
           >
             <Info className="w-4 h-4" />
           </button>
@@ -808,7 +808,7 @@ export function ChatWindow({
               type="button"
               onClick={() => setMobileHeaderMenuOpen((v) => !v)}
               aria-label="Menu percakapan"
-              className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+              className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
             >
               <MoreVertical className="w-4 h-4" />
             </button>

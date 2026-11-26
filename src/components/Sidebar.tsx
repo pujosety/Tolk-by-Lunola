@@ -423,7 +423,7 @@ export function Sidebar({
               onClick={onOpenQuickCamera}
               aria-label="Buka kamera"
               title="Kamera Cepat"
-              className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+              className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
               <Camera className="w-4 h-4" />
             </button>
@@ -432,7 +432,7 @@ export function Sidebar({
               onClick={onOpenOverflowMenu}
               aria-label="Menu opsi"
               title="Menu"
-              className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+              className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
@@ -441,7 +441,7 @@ export function Sidebar({
               onClick={onToggleMinimize}
               aria-label="Perkecil sidebar"
               title="Perkecil sidebar (Ctrl+B)"
-              className="hidden md:flex h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
+              className="hidden md:flex h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
             >
               <PanelLeftClose className="w-4 h-4" />
             </button>
@@ -589,13 +589,13 @@ export function Sidebar({
               key={folder.key}
               type="button"
               onClick={() => onSelectFolder(folder.key)}
-              className={`p5-skew brutal-press px-2.5 py-1 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 border shrink-0 ${
+              className={`rounded-full brutal-press px-3 py-1.5 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 border shrink-0 ${
                 isActive
-                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm p5-slash-btn'
-                  : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#E2E8F0] border-[#161B26]/25 dark:border-[#324058] hover:border-[#8C0027]'
+                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#8C0027] brutal-shadow-sm'
+                  : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#E2E8F0] border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027]'
               }`}
             >
-              <span className="p5-unskew flex items-center gap-1">
+              <span className="flex items-center gap-1">
                 {folder.key === 'archived' && <Archive className="w-3 h-3" />}
                 <span>{folder.label}</span>
                 {badge > 0 && (
@@ -837,7 +837,7 @@ export function Sidebar({
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+82px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
+        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+82px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>

@@ -105,7 +105,7 @@ function ModalShell({
                 type="button"
                 onClick={onClose}
                 aria-label="Kembali"
-                className="md:hidden h-10 w-10 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
+                className="md:hidden h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -126,7 +126,7 @@ function ModalShell({
               type="button"
               onClick={onClose}
               aria-label="Tutup dialog"
-              className="hidden md:flex h-9 w-9 rounded-2xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press items-center justify-center shrink-0"
+              className="hidden md:flex h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press items-center justify-center shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
