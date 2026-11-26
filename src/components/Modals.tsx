@@ -226,7 +226,7 @@ export function AuthModal({
                 autoComplete="name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Contoh: Bima Pratama"
+                placeholder="Masukkan nama tampilan"
                 className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
               />
             </div>
@@ -239,7 +239,7 @@ export function AuthModal({
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@domain.com"
+                placeholder="Masukkan alamat email"
                 className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
               />
             </div>
@@ -256,7 +256,7 @@ export function AuthModal({
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder={mode === 'login' ? 'username atau nama@domain.com' : 'bima_dev'}
+            placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
             className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
           />
         </div>
@@ -296,7 +296,7 @@ export function AuthModal({
               type="text"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Pengguna Tolk by Lunola"
+              placeholder="Tulis bio singkat"
               className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
             />
           </div>
@@ -728,7 +728,7 @@ export function ProfileModal({
             type="text"
             value={statusText}
             onChange={(e) => setStatusText(e.target.value)}
-            placeholder="Tersedia untuk diskusi"
+            placeholder="Masukkan status singkat"
             className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
           />
         </div>
@@ -740,7 +740,7 @@ export function ProfileModal({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="opsional@domain.com"
+            placeholder="Masukkan alamat email (opsional)"
             className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
           />
         </div>
@@ -939,7 +939,7 @@ export function CreateChatModal({
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={mode === 'group' ? 'Komunitas Lunola ID' : 'Info Rilis Lunola'}
+              placeholder={mode === 'group' ? 'Masukkan nama grup' : 'Masukkan nama channel'}
               className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
             />
           </div>
@@ -951,7 +951,7 @@ export function CreateChatModal({
               type="text"
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
-              placeholder="lunola_komunitas"
+              placeholder="Masukkan username handle"
               className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
             />
           </div>
