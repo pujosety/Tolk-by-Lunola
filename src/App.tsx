@@ -49,6 +49,7 @@ import {
   type ActiveCallSession,
 } from './components/CallOverlay';
 import { AdminPanel } from './components/AdminPanel';
+import { AuthScreen } from './components/AuthScreen';
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -1166,24 +1167,20 @@ export function App() {
 
   if (!currentUser || !token) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2]">
-        <AuthModal
-          open={true}
-          closable={false}
-          defaultMode="login"
-          onClose={() => {}}
-          onRegister={async (payload) => {
-            const { token: newToken } = await api.register(payload);
-            await hydrateFromToken(newToken);
-            showToast('Akun Tolk by Lunola berhasil dibuat.');
-          }}
-          onLogin={async (payload) => {
-            const { token: newToken } = await api.login(payload);
-            await hydrateFromToken(newToken);
-            showToast('Berhasil masuk ke akun Anda.');
-          }}
-        />
-      </div>
+      <AuthScreen
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode((v) => !v)}
+        onRegister={async (payload) => {
+          const { token: newToken } = await api.register(payload);
+          await hydrateFromToken(newToken);
+          showToast('Akun Tolk by Lunola berhasil dibuat.');
+        }}
+        onLogin={async (payload) => {
+          const { token: newToken } = await api.login(payload);
+          await hydrateFromToken(newToken);
+          showToast('Berhasil masuk ke akun Anda.');
+        }}
+      />
     );
   }
 

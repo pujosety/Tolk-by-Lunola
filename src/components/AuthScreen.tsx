@@ -1,7 +1,20 @@
 import { useState } from 'react';
-import { ArrowRight, Lock, Mail, ShieldCheck, User, UserPlus } from 'lucide-react';
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  MessageCircleHeart,
+  Moon,
+  PhoneCall,
+  Sparkles,
+  Sun,
+  UserPlus,
+} from 'lucide-react';
 
 interface AuthScreenProps {
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
   onLogin: (payload: { username: string; password: string }) => Promise<void>;
   onRegister: (payload: {
     username: string;
@@ -13,12 +26,19 @@ interface AuthScreenProps {
   notice?: string | null;
 }
 
-export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
+export function AuthScreen({
+  darkMode,
+  onToggleDarkMode,
+  onLogin,
+  onRegister,
+  notice,
+}: AuthScreenProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [bio, setBio] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,164 +61,220 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2] flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-[440px] p5-modal-impact">
-        {/* Official Tolk by Lunola Brand Header */}
-        <div className="flex flex-col items-center mb-5">
-          <div className="px-6 py-4 rounded-3xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex items-center justify-center">
-            <img
-              src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-              alt="Tolk by Lunola"
-              className="h-11 w-auto object-contain select-none"
-            />
-          </div>
-          <p className="mt-3 text-xs font-mono font-bold tracking-wide text-[#5E645C] dark:text-[#B7C0B3] text-center">
-            Komunikasi Real-Time · Web, PWA & Android
-          </p>
-        </div>
+    <div className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2] flex flex-col">
+      {/* Top-Right Theme Toggle */}
+      <div className="pt-safe-3 px-4 sm:px-6 flex justify-end shrink-0 z-10">
+        <button
+          type="button"
+          onClick={onToggleDarkMode}
+          aria-label={darkMode ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
+          className="h-10 w-10 rounded-2xl border border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#1E241C] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+        >
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+      </div>
 
-        {/* Auth Card */}
-        <div className="rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden">
-          {/* Mode Tabs */}
-          <div className="grid grid-cols-2 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17]">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('login');
-                setError('');
-              }}
-              className={`py-3 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors border-r border-[#E3E1DC] dark:border-[#364032] ${
-                mode === 'login'
-                  ? 'bg-[#D96868] text-[#FBF9F6]'
-                  : 'text-[#5E645C] dark:text-[#A3AD9E] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              Masuk Akun
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('register');
-                setError('');
-              }}
-              className={`py-3 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
-                mode === 'register'
-                  ? 'bg-[#D96868] text-[#FBF9F6]'
-                  : 'text-[#5E645C] dark:text-[#A3AD9E] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Daftar Baru
-            </button>
+      {/* Centered Split 3D Pastel Card */}
+      <div className="flex-1 flex items-center justify-center px-4 pt-2 pb-safe-3 sm:p-6">
+        <div className="w-full max-w-[880px] p5-modal-impact grid grid-cols-1 md:grid-cols-12 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-white/80 dark:border-[#364032] brutal-shadow-lg overflow-hidden">
+          {/* Left Panel: Strong Branding & Fun 3D Pastel Chat Showcase */}
+          <div className="md:col-span-5 p-6 sm:p-7 p5-maroon-banner text-white flex flex-col justify-between gap-6 relative overflow-hidden">
+            {/* Soft 3D ambient spheres */}
+            <div className="pointer-events-none absolute -top-10 -right-10 w-36 h-36 rounded-full bg-white/15 blur-xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-10 w-40 h-40 rounded-full bg-[#6A994E]/35 blur-xl" />
+
+            <div className="relative z-10">
+              <div className="inline-flex items-center px-4 py-2.5 rounded-2xl bg-[#FBF9F6] border border-white/80 brutal-shadow-sm">
+                <img
+                  src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
+                  alt="Tolk by Lunola"
+                  className="h-8 w-auto object-contain select-none"
+                />
+              </div>
+
+              <h1 className="mt-5 font-display font-extrabold text-2xl sm:text-3xl leading-tight tracking-tight text-white">
+                Ngobrol Lebih Seru, Cepat &amp; Dekat.
+              </h1>
+              <p className="mt-2 text-xs sm:text-sm text-white/90 leading-relaxed">
+                Ruang obrolan hangat untuk chat personal, grup seru, panggilan suara/video, dan Stories 24 jam.
+              </p>
+            </div>
+
+            {/* Playful 3D Pastel Mini Chat Preview */}
+            <div className="relative z-10 hidden sm:flex flex-col gap-2.5 p-3.5 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25">
+              <div className="self-start max-w-[85%] px-3.5 py-2 rounded-2xl rounded-bl-md bg-[#FBF9F6] text-[#252A24] text-xs font-medium brutal-shadow-sm">
+                Lagi pada di mana nih? Ayo kumpul!
+              </div>
+              <div className="self-end max-w-[85%] px-3.5 py-2 rounded-2xl rounded-br-md bg-[#6A994E] text-white text-xs font-semibold brutal-shadow-sm">
+                Udah online di Tolk, langsung gas!
+              </div>
+              <div className="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FBF9F6]/90 text-[#252A24] text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#6A994E] animate-pulse" />
+                <span>Sedang mengetik...</span>
+              </div>
+            </div>
+
+            {/* Feature Pills */}
+            <div className="relative z-10 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
+                <MessageCircleHeart className="w-3.5 h-3.5" />
+                Chat Real-Time
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
+                <PhoneCall className="w-3.5 h-3.5" />
+                Panggilan HD
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-[11px] font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                Stories 24 Jam
+              </span>
+            </div>
           </div>
 
-          <div className="p-5 sm:p-6">
+          {/* Right Panel: Clean 3D Pastel Auth Form */}
+          <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center">
+            {/* 3D Pill Mode Switcher */}
+            <div className="flex rounded-2xl bg-[#F2F2F2] dark:bg-[#151914] border border-[#E3E1DC] dark:border-[#364032] p-1.5 mb-5 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setError('');
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  mode === 'login'
+                    ? 'bg-[#D96868] text-white brutal-shadow-sm'
+                    : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Masuk Akun</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('register');
+                  setError('');
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  mode === 'register'
+                    ? 'bg-[#D96868] text-white brutal-shadow-sm'
+                    : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Daftar Baru</span>
+              </button>
+            </div>
+
             {notice && (
-              <div className="mb-4 px-3 py-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-[#E3E1DC] dark:border-amber-500/60 text-xs font-semibold text-[#252A24] dark:text-amber-200">
+              <div className="mb-4 px-3.5 py-2.5 rounded-xl bg-[#EEF3E6] dark:bg-[#232C1E] border border-[#8FA86C]/40 text-xs font-semibold text-[#252A24] dark:text-[#E2E6DF]">
                 {notice}
               </div>
             )}
 
             <div className="mb-4">
-              <h1 className="font-display font-extrabold text-xl leading-tight">
-                {mode === 'login' ? 'Selamat Datang Kembali' : 'Buat Akun Tolk by Lunola'}
-              </h1>
+              <h2 className="font-display font-extrabold text-xl sm:text-2xl text-[#252A24] dark:text-[#F2F2F2]">
+                {mode === 'login' ? 'Selamat Datang Kembali!' : 'Gabung ke Tolk by Lunola'}
+              </h2>
               <p className="mt-1 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
                 {mode === 'login'
-                  ? 'Masuk dengan username atau email Anda untuk mulai berkirim pesan.'
-                  : 'Daftar akun pribadi untuk chat, grup, panggilan suara/video, dan Stories 24 jam.'}
+                  ? 'Masuk dengan akun Anda untuk melanjutkan obrolan.'
+                  : 'Buat akun baru dan mulai terhubung dalam hitungan detik.'}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               {mode === 'register' && (
-                <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold mb-1">Nama Tampilan</label>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+                      Nama Tampilan
+                    </label>
                     <input
                       type="text"
                       required
-                      minLength={2}
-                      maxLength={48}
+                      autoComplete="name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Nama lengkap atau panggilan"
-                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
+                      placeholder="Masukkan nama tampilan"
+                      className="w-full h-11 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold mb-1">
-                      Email <span className="font-normal text-[#6B5F64] dark:text-[#A39199]">(opsional)</span>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+                      Email (opsional)
                     </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-[#6B5F64] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="nama@domain.com"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
-                      />
-                    </div>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Masukkan alamat email"
+                      className="w-full h-11 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+                    />
                   </div>
-                </>
+                </div>
               )}
 
               <div>
-                <label className="block text-xs font-bold mb-1">
+                <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
                   {mode === 'login' ? 'Username atau Email' : 'Username'}
                 </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-[#6B5F64] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    required
-                    autoComplete="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={mode === 'login' ? 'username atau nama@domain.com' : 'huruf_angka_garisbawah'}
-                    className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono focus:outline-none focus:border-[#D96868]"
-                  />
-                </div>
+                <input
+                  type="text"
+                  required
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-bold mb-1">Kata Sandi</label>
+                <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+                  Kata Sandi
+                </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#6B5F64] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     minLength={6}
-                    maxLength={128}
                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimal 6 karakter"
-                    className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
+                    className="w-full h-11 pl-3.5 pr-11 rounded-xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#D96868]"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
               {mode === 'register' && (
                 <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Bio Singkat <span className="font-normal text-[#6B5F64] dark:text-[#A39199]">(opsional)</span>
+                  <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+                    Bio Singkat (opsional)
                   </label>
                   <input
                     type="text"
-                    maxLength={140}
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder="Ceritakan sedikit tentang Anda"
-                    className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
+                    placeholder="Tulis bio singkat"
+                    className="w-full h-11 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                   />
                 </div>
               )}
 
               {error && (
-                <div className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-600 text-xs font-bold text-rose-700 dark:text-rose-300">
+                <div className="px-3.5 py-2.5 rounded-xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#D96868]/40 text-xs font-semibold text-[#C45454] dark:text-[#E58383]">
                   {error}
                 </div>
               )}
@@ -206,17 +282,18 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full h-11 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-[#FBF9F6] text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full h-12 rounded-2xl bg-[#D96868] hover:bg-[#C45454] text-white brutal-shadow-maroon brutal-press p5-slash-btn text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>{busy ? 'Memproses...' : mode === 'login' ? 'Masuk Sekarang' : 'Buat Akun'}</span>
+                <span>
+                  {busy
+                    ? 'Memproses...'
+                    : mode === 'register'
+                      ? 'Buat Akun Sekarang'
+                      : 'Masuk ke Tolk'}
+                </span>
                 {!busy && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
-
-            <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-[#2E222A] flex items-center gap-2 text-[11px] text-[#6B5F64] dark:text-[#A39199]">
-              <ShieldCheck className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
-              <span>Akses publik memerlukan akun terdaftar. Kata sandi dienkripsi di server.</span>
-            </div>
           </div>
         </div>
       </div>
