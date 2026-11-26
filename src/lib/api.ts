@@ -254,7 +254,14 @@ export const api = {
     payload: {
       text: string;
       replyToId?: string | null;
-      replyToStory?: { storyId: string; authorName: string; snippet: string } | null;
+      replyToStory?: {
+        storyId: string;
+        authorName: string;
+        snippet: string;
+        kind?: 'text' | 'image' | 'video';
+        mediaUrl?: string | null;
+        bgColor?: string;
+      } | null;
       forwardedFrom?: { senderName: string; chatTitle?: string } | null;
       attachment?: Attachment | null;
       scheduledFor?: number | null;
@@ -385,6 +392,15 @@ export const api = {
       method: 'POST',
       token,
     }),
+
+  likeStory: (token: string, storyId: string) =>
+    requestJson<{ story: StoryItem; liked: boolean }>(
+      `/api/stories/${encodeURIComponent(storyId)}/like`,
+      {
+        method: 'POST',
+        token,
+      }
+    ),
 
   deleteStory: (token: string, storyId: string) =>
     requestJson<{ ok: boolean }>(`/api/stories/${encodeURIComponent(storyId)}`, {

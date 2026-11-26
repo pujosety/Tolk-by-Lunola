@@ -117,6 +117,9 @@ export interface Message {
     storyId: string;
     authorName: string;
     snippet: string;
+    kind?: 'text' | 'image' | 'video';
+    mediaUrl?: string | null;
+    bgColor?: string;
   } | null;
   forwardedFrom?: {
     senderName: string;
@@ -180,6 +183,7 @@ export interface StoryItem {
   } | null;
   viewerIds: string[];
   viewerTimes?: Record<string, number>;
+  likedUserIds?: string[];
   createdAt: number;
   expiresAt: number;
 }

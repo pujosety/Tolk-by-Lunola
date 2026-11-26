@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Edit3,
   Eye,
+  Heart,
   Image as ImageIcon,
   Loader2,
   MoreVertical,
@@ -56,6 +57,7 @@ interface UpdatesViewProps {
   onDeleteStory: (storyId: string) => Promise<void>;
   onMuteStoryAuthor: (authorId: string) => Promise<void>;
   onReplyToStory: (story: StoryItem, text: string) => Promise<void>;
+  onLikeStory: (storyId: string) => Promise<void>;
 }
 
 export function UpdatesView({
@@ -71,6 +73,7 @@ export function UpdatesView({
   onDeleteStory,
   onMuteStoryAuthor,
   onReplyToStory,
+  onLikeStory,
 }: UpdatesViewProps) {
   const [creating, setCreating] = useState(false);
   const [reshareSource, setReshareSource] = useState<StoryItem | null>(null);
@@ -79,7 +82,7 @@ export function UpdatesView({
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [openViewersOnMount, setOpenViewersOnMount] = useState(false);
 
-  // Group stories by author
+  // Group stories by author (chronological oldest -> newest for playback; latest is last item)
   const groupedByAuthor = useMemo(() => {
     const map = new Map<string, StoryItem[]>();
     for (const s of stories) {
@@ -88,11 +91,16 @@ export function UpdatesView({
       map.set(s.userId, list);
     }
     const entries = Array.from(map.entries());
+    for (const [, list] of entries) {
+      list.sort((a, b) => a.createdAt - b.createdAt);
+    }
     // Put current user first if they have stories
     entries.sort((a, b) => {
       if (a[0] === currentUser.id) return -1;
       if (b[0] === currentUser.id) return 1;
-      return b[1][0].createdAt - a[1][0].createdAt;
+      const aLatest = a[1][a[1].length - 1]?.createdAt || 0;
+      const bLatest = b[1][b[1].length - 1]?.createdAt || 0;
+      return bLatest - aLatest;
     });
     return entries;
   }, [stories, currentUser.id]);
@@ -492,6 +500,7 @@ export function UpdatesView({
             nextStory={activeAuthorStories[activeStoryIndex + 1] || null}
             author={users[viewerRetained.renderedValue.userId]}
             users={users}
+            currentUserId={currentUser.id}
             isOwn={viewerRetained.renderedValue.userId === currentUser.id}
             initialShowViewers={openViewersOnMount}
             index={activeStoryIndex}
@@ -536,6 +545,11 @@ export function UpdatesView({
               if (!target) return;
               await onReplyToStory(target, text);
               setActiveAuthorId(null);
+            }}
+            onLike={async () => {
+              const target = viewerRetained.renderedValue;
+              if (!target) return;
+              await onLikeStory(target.id);
             }}
           />,
           document.body
@@ -925,7 +939,7 @@ function renderStoryCaptionText(text: string): React.ReactNode {
   );
 }
 
-const QUICK_STORY_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥'];
+const QUICK_STORY_EMOJIS = ['😂', '😮', '😢', '👏', '🔥'];
 
 function StoryImageWithLoader({
   src,
@@ -1041,6 +1055,7 @@ function MyStatusModal({
         <div className="flex-1 overflow-y-auto thin-scrollbar px-3.5 pb-safe-3 space-y-2">
           {stories.map((s, idx) => {
             const viewCount = s.viewerIds.filter((id) => id !== currentUserId).length;
+            const likeCount = (s.likedUserIds || []).filter((id) => id !== currentUserId).length;
             const isMenuOpen = menuStoryId === s.id;
             const isDeleting = deletingId === s.id;
 
@@ -1095,6 +1110,15 @@ function MyStatusModal({
                         <span className="font-mono tabular-nums">{viewCount}</span>
                         <span>tayangan</span>
                       </span>
+                      {likeCount > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-1 font-semibold text-rose-500">
+                            <Heart className="w-3 h-3 fill-rose-500" />
+                            <span className="font-mono tabular-nums">{likeCount}</span>
+                          </span>
+                        </>
+                      )}
                       <span>·</span>
                       <span className="font-mono text-[11px]">{formatTimeShort(s.createdAt)}</span>
                     </div>
@@ -1171,6 +1195,7 @@ function StoryViewerModal({
   nextStory,
   author,
   users,
+  currentUserId,
   isOwn,
   initialShowViewers = false,
   index,
@@ -1182,12 +1207,14 @@ function StoryViewerModal({
   onMuteAuthor,
   onReshare,
   onReply,
+  onLike,
 }: {
   closing: boolean;
   story: StoryItem;
   nextStory?: StoryItem | null;
   author?: UserProfile;
   users: Record<string, UserProfile>;
+  currentUserId: string;
   isOwn: boolean;
   initialShowViewers?: boolean;
   index: number;
@@ -1199,6 +1226,7 @@ function StoryViewerModal({
   onMuteAuthor: () => Promise<void>;
   onReshare: () => void;
   onReply: (text: string) => Promise<void>;
+  onLike: () => Promise<void>;
 }) {
   const [replyText, setReplyText] = useState('');
   const [showViewers, setShowViewers] = useState(initialShowViewers);
@@ -1531,6 +1559,7 @@ function StoryViewerModal({
                   ) : (
                     viewers.map((v) => {
                       const viewedAt = story.viewerTimes?.[v.id];
+                      const hasLiked = Boolean(story.likedUserIds?.includes(v.id));
                       return (
                         <div key={v.id} className="flex items-center justify-between gap-2.5">
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -1541,8 +1570,11 @@ function StoryViewerModal({
                               size="sm"
                             />
                             <div className="min-w-0">
-                              <div className="font-semibold text-white truncate leading-tight">
-                                {v.displayName}
+                              <div className="font-semibold text-white truncate leading-tight flex items-center gap-1.5">
+                                <span className="truncate">{v.displayName}</span>
+                                {hasLiked && (
+                                  <Heart className="w-3 h-3 fill-rose-500 text-rose-500 shrink-0" />
+                                )}
                               </div>
                               <div className="text-[10px] font-mono text-white/60 truncate">
                                 @{v.username}
@@ -1561,8 +1593,27 @@ function StoryViewerModal({
             </div>
           ) : (
             <div className="max-w-md mx-auto space-y-2.5">
-              {/* Quick Emoji Choices (centered above reply form) */}
+              {/* Quick Emoji Choices + Story Like Button (centered above reply form) */}
               <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void onLike()}
+                  aria-label="Sukai status"
+                  title="Sukai status"
+                  className={`w-10 h-10 rounded-full border backdrop-blur-md flex items-center justify-center brutal-press transition-all active:scale-90 ${
+                    story.likedUserIds?.includes(currentUserId)
+                      ? 'bg-[#8C0027] border-[#F47296] text-white'
+                      : 'bg-black/50 hover:bg-[#8C0027] border-white/25 text-white'
+                  }`}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${
+                      story.likedUserIds?.includes(currentUserId)
+                        ? 'fill-white text-white'
+                        : 'text-[#F47296]'
+                    }`}
+                  />
+                </button>
                 {QUICK_STORY_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}

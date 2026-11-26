@@ -289,6 +289,15 @@ export function ChatWindow({
   const [sending, setSending] = useState(false);
   const [composerFocused, setComposerFocused] = useState(false);
   const [sendKick, setSendKick] = useState(0);
+  const [swipingMsgId, setSwipingMsgId] = useState<string | null>(null);
+  const [swipeOffsetX, setSwipeOffsetX] = useState(0);
+  const swipeReplyRef = useRef<{
+    msgId: string;
+    x: number;
+    y: number;
+    locked: boolean;
+    ignore: boolean;
+  } | null>(null);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
@@ -958,10 +967,71 @@ export function ChatWindow({
                 )}
 
                 <div
-                  className={`flex items-end gap-2 group ${
-                    isOwn ? 'justify-end p5-msg-own' : 'justify-start p5-msg-peer'
-                  }`}
+                  onTouchStart={(e) => {
+                    if (e.touches.length !== 1) return;
+                    const target = e.target as HTMLElement | null;
+                    const ignore = Boolean(target?.closest('button, a, input, textarea, audio, video'));
+                    swipeReplyRef.current = {
+                      msgId: msg.id,
+                      x: e.touches[0].clientX,
+                      y: e.touches[0].clientY,
+                      locked: false,
+                      ignore,
+                    };
+                  }}
+                  onTouchMove={(e) => {
+                    const start = swipeReplyRef.current;
+                    if (!start || start.ignore || start.msgId !== msg.id || e.touches.length !== 1) {
+                      return;
+                    }
+                    const dx = e.touches[0].clientX - start.x;
+                    const dy = e.touches[0].clientY - start.y;
+                    if (!start.locked) {
+                      if (dx > 10 && dx > Math.abs(dy) * 1.25) {
+                        start.locked = true;
+                        setSwipingMsgId(msg.id);
+                      } else if (Math.abs(dy) > 10 || dx < -10) {
+                        start.ignore = true;
+                        return;
+                      } else {
+                        return;
+                      }
+                    }
+                    setSwipeOffsetX(Math.max(0, Math.min(68, dx)));
+                  }}
+                  onTouchEnd={() => {
+                    const start = swipeReplyRef.current;
+                    const pulledEnough = swipeOffsetX >= 44 && start?.msgId === msg.id;
+                    swipeReplyRef.current = null;
+                    setSwipingMsgId(null);
+                    setSwipeOffsetX(0);
+                    if (pulledEnough) {
+                      setReplyTo(msg);
+                      window.setTimeout(() => inputRef.current?.focus(), 60);
+                    }
+                  }}
+                  onTouchCancel={() => {
+                    swipeReplyRef.current = null;
+                    setSwipingMsgId(null);
+                    setSwipeOffsetX(0);
+                  }}
+                  style={
+                    swipingMsgId === msg.id && swipeOffsetX > 0
+                      ? { transform: `translate3d(${swipeOffsetX}px, 0, 0)` }
+                      : undefined
+                  }
+                  className={`relative flex items-end gap-2 group ${
+                    swipingMsgId === msg.id ? '' : 'transition-transform duration-200 ease-out'
+                  } ${isOwn ? 'justify-end p5-msg-own' : 'justify-start p5-msg-peer'}`}
                 >
+                  {swipingMsgId === msg.id && swipeOffsetX > 12 && (
+                    <div
+                      style={{ opacity: Math.min(1, swipeOffsetX / 44) }}
+                      className="pointer-events-none absolute -left-9 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#8C0027] text-white flex items-center justify-center shadow-sm"
+                    >
+                      <Reply className="w-3.5 h-3.5" />
+                    </div>
+                  )}
                   {!isOwn && chat.type === 'group' && (
                     <div className="w-8 shrink-0">
                       {showSenderName && (
@@ -998,19 +1068,49 @@ export function ChatWindow({
                         </div>
                       )}
 
-                      {/* Reply-to-Story Quote (all-around crisp border, no thick left bar) */}
+                      {/* Reply-to-Story Quote with Thumbnail */}
                       {msg.replyToStory && (
                         <div
-                          className={`mb-1.5 px-2.5 py-1.5 rounded-lg border text-xs ${
+                          className={`mb-1.5 p-2 rounded-xl border text-xs flex items-center gap-2.5 ${
                             isOwn
                               ? 'bg-[#161B26]/25 border-[#FFFFFF]/35 text-[#FFFFFF]'
                               : 'bg-[#F5F7FA] dark:bg-[#261D2A] border-[#161B26]/25 dark:border-[#324058]'
                           }`}
                         >
-                          <div className="font-bold text-[11px]">
-                            Balasan Status · {msg.replyToStory.authorName}
+                          <div
+                            style={
+                              !msg.replyToStory.mediaUrl
+                                ? { backgroundColor: msg.replyToStory.bgColor || '#8C0027' }
+                                : undefined
+                            }
+                            className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-[#171E2C] flex items-center justify-center"
+                          >
+                            {msg.replyToStory.mediaUrl && msg.replyToStory.kind === 'image' ? (
+                              <img
+                                src={msg.replyToStory.mediaUrl}
+                                alt="Status"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : msg.replyToStory.mediaUrl && msg.replyToStory.kind === 'video' ? (
+                              <video
+                                src={msg.replyToStory.mediaUrl}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[8px] font-bold text-white px-1 text-center line-clamp-2 leading-tight">
+                                {msg.replyToStory.snippet}
+                              </span>
+                            )}
                           </div>
-                          <div className="opacity-85 truncate">{msg.replyToStory.snippet}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-[11px] truncate">
+                              Status · {msg.replyToStory.authorName}
+                            </div>
+                            <div className="opacity-85 truncate">{msg.replyToStory.snippet}</div>
+                          </div>
                         </div>
                       )}
 

@@ -113,6 +113,7 @@ interface SidebarProps {
   onDeleteStory: (storyId: string) => Promise<void>;
   onMuteStoryAuthor: (authorId: string) => Promise<void>;
   onReplyToStory: (story: StoryItem, text: string) => Promise<void>;
+  onLikeStory: (storyId: string) => Promise<void>;
 }
 
 export function Sidebar({
@@ -165,6 +166,7 @@ export function Sidebar({
   onDeleteStory,
   onMuteStoryAuthor,
   onReplyToStory,
+  onLikeStory,
 }: SidebarProps) {
   const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -875,6 +877,7 @@ export function Sidebar({
             onDeleteStory={onDeleteStory}
             onMuteStoryAuthor={onMuteStoryAuthor}
             onReplyToStory={onReplyToStory}
+            onLikeStory={onLikeStory}
           />
         </div>
 

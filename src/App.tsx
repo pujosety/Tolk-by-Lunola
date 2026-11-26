@@ -1309,12 +1309,24 @@ export function App() {
           storyId: story.id,
           authorName,
           snippet: story.text || (story.kind === 'video' ? 'Status video' : 'Status foto'),
+          kind: story.kind,
+          mediaUrl: story.mediaUrl || null,
+          bgColor: story.bgColor,
         },
       });
       handleSelectChat(chat.id);
       showToast('Balasan status terkirim.');
     },
     [token, users, handleSelectChat, showToast]
+  );
+
+  const handleLikeStory = useCallback(
+    async (storyId: string) => {
+      if (!token) return;
+      const { story } = await api.likeStory(token, storyId);
+      setStories((prev) => prev.map((s) => (s.id === story.id ? story : s)));
+    },
+    [token]
   );
 
   const loadSessions = useCallback(async () => {
@@ -1607,6 +1619,7 @@ export function App() {
               showToast('Status pengguna ini dibisukan.');
             }}
             onReplyToStory={handleReplyToStory}
+            onLikeStory={handleLikeStory}
           />
         </div>
 

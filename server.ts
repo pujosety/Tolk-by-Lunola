@@ -2229,6 +2229,16 @@ async function startServer(): Promise<void> {
             storyId: sanitizeText(req.body.replyToStory.storyId, 64),
             authorName: sanitizeText(req.body.replyToStory.authorName, 64),
             snippet: sanitizeText(req.body.replyToStory.snippet, 120),
+            kind:
+              req.body.replyToStory.kind === 'image' || req.body.replyToStory.kind === 'video'
+                ? (req.body.replyToStory.kind as 'image' | 'video')
+                : ('text' as const),
+            mediaUrl:
+              typeof req.body.replyToStory.mediaUrl === 'string' &&
+              req.body.replyToStory.mediaUrl.startsWith('/uploads/')
+                ? req.body.replyToStory.mediaUrl
+                : null,
+            bgColor: sanitizeText(req.body.replyToStory.bgColor, 16) || undefined,
           }
         : null;
     const forwardedFrom =
@@ -2561,11 +2571,83 @@ async function startServer(): Promise<void> {
       resharedFrom,
       viewerIds: [userId],
       viewerTimes: { [userId]: now },
+      likedUserIds: [],
       createdAt: now,
       expiresAt: now + expiryMs,
     };
 
     store.stories.unshift(story);
+
+    const sendStoryActivityDm = (targetUserId: string, dmText: string) => {
+      const target = store.users[targetUserId];
+      const actor = store.users[userId];
+      if (!target || !actor || targetUserId === userId) return;
+      if (target.blockedUserIds?.includes(userId)) return;
+
+      const dmId = `dm_${[userId, targetUserId].sort().join('_')}`;
+      let chat = store.chats[dmId];
+      if (!chat) {
+        chat = {
+          id: dmId,
+          type: 'dm',
+          title: target.displayName,
+          description: 'Percakapan pribadi',
+          avatarUrl: target.avatarUrl,
+          avatarColor: target.avatarColor,
+          memberIds: [userId, targetUserId],
+          adminIds: [userId, targetUserId],
+          moderatorIds: [],
+          pinnedMessageId: null,
+          selfDestructSec: 0,
+          createdAt: now,
+        };
+        store.chats[dmId] = chat;
+        store.messages[dmId] = [];
+        sendWsToUser(targetUserId, {
+          type: 'chat:created',
+          chat: buildChatRoomForUser(chat, targetUserId),
+        });
+        sendWsToUser(userId, {
+          type: 'chat:created',
+          chat: buildChatRoomForUser(chat, userId),
+        });
+      }
+
+      const dmMessage: Message = {
+        id: `msg_${crypto.randomBytes(6).toString('hex')}`,
+        chatId: chat.id,
+        senderId: userId,
+        text: dmText,
+        createdAt: Date.now(),
+        replyToStory: {
+          storyId: story.id,
+          authorName: actor.displayName,
+          snippet: story.text || (story.kind === 'video' ? 'Status video' : 'Status foto'),
+          kind: story.kind,
+          mediaUrl: story.mediaUrl || null,
+          bgColor: story.bgColor,
+        },
+        reactions: [],
+        readBy: [userId],
+      };
+
+      if (!store.messages[chat.id]) store.messages[chat.id] = [];
+      store.messages[chat.id].push(dmMessage);
+      broadcastToChat(chat, { type: 'message:created', message: dmMessage });
+    };
+
+    if (resharedFrom && resharedFrom.userId && resharedFrom.userId !== userId) {
+      sendStoryActivityDm(resharedFrom.userId, 'Membagikan ulang status kamu');
+    }
+    const uniqueMentioned: string[] = Array.from(
+      new Set((mentionedUserIds as unknown[]).filter((id): id is string => typeof id === 'string'))
+    );
+    for (const mentionedId of uniqueMentioned) {
+      if (mentionedId !== userId && mentionedId !== resharedFrom?.userId) {
+        sendStoryActivityDm(mentionedId, 'Menyebut kamu di statusnya');
+      }
+    }
+
     saveStore(store);
     broadcastAll({ type: 'story:created', story });
     res.status(201).json({ story });
@@ -2593,6 +2675,28 @@ async function startServer(): Promise<void> {
       sendWsToUser(story.userId, { type: 'story:updated', story });
     }
     res.json({ story });
+  });
+
+  app.post('/api/stories/:storyId/like', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const story = store.stories.find((s) => s.id === req.params.storyId);
+    if (!story) {
+      res.status(404).json({ error: 'Status tidak ditemukan.' });
+      return;
+    }
+    story.likedUserIds = story.likedUserIds || [];
+    const alreadyLiked = story.likedUserIds.includes(userId);
+    if (alreadyLiked) {
+      story.likedUserIds = story.likedUserIds.filter((id) => id !== userId);
+    } else {
+      story.likedUserIds.push(userId);
+    }
+    saveStore(store);
+    sendWsToUser(story.userId, { type: 'story:updated', story });
+    if (userId !== story.userId) {
+      sendWsToUser(userId, { type: 'story:updated', story });
+    }
+    res.json({ story, liked: !alreadyLiked });
   });
 
   app.delete('/api/stories/:storyId', requireAuth, (req: AuthedRequest, res) => {
