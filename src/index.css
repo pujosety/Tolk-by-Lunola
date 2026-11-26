@@ -1,0 +1,637 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: "Barlow Condensed", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-maroon-50: #FDF2F4;
+  --color-maroon-100: #FCE4E9;
+  --color-maroon-200: #F8C5D0;
+  --color-maroon-500: #A81737;
+  --color-maroon-600: #8B112B;
+  --color-maroon-700: #6E0C21;
+  --color-maroon-800: #520919;
+  --color-maroon-900: #3A0612;
+  --color-ink: #111111;
+  --color-paper: #F6F2EB;
+  --color-cream: #FFFDF9;
+}
+
+:root {
+  --ease-p5-snap: cubic-bezier(0.22, 1.28, 0.36, 1);
+  --ease-p5-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-p5-slam: cubic-bezier(0.18, 1.38, 0.32, 1);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.015em;
+  }
+}
+
+/* Persona 5 x Neo-Brutalism comic halftone + diagonal energy canvas */
+.chat-canvas-bg {
+  background-color: #F4EFE6;
+  background-image:
+    radial-gradient(rgba(126, 25, 50, 0.14) 1.25px, transparent 1.25px),
+    repeating-linear-gradient(
+      -28deg,
+      rgba(17, 17, 17, 0.025) 0px,
+      rgba(17, 17, 17, 0.025) 14px,
+      transparent 14px,
+      transparent 42px
+    );
+  background-size: 20px 20px, 100% 100%;
+  transition: background-color 280ms var(--ease-p5-smooth);
+}
+
+.dark .chat-canvas-bg {
+  background-color: #0D0B0E;
+  background-image:
+    radial-gradient(rgba(214, 40, 73, 0.18) 1.25px, transparent 1.25px),
+    repeating-linear-gradient(
+      -28deg,
+      rgba(126, 25, 50, 0.09) 0px,
+      rgba(126, 25, 50, 0.09) 14px,
+      transparent 14px,
+      transparent 46px
+    );
+  background-size: 20px 20px, 100% 100%;
+}
+
+/* Neo-Brutalist hard offset shadows */
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px #111111;
+}
+.dark .brutal-shadow-sm {
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.brutal-shadow {
+  box-shadow: 3px 3px 0px #111111;
+}
+.dark .brutal-shadow {
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.brutal-shadow-maroon {
+  box-shadow: 4px 4px 0px #7E1932;
+}
+.dark .brutal-shadow-maroon {
+  box-shadow: 4px 4px 0px #8B112B;
+}
+
+.brutal-shadow-lg {
+  box-shadow: 6px 6px 0px #111111;
+}
+.dark .brutal-shadow-lg {
+  box-shadow: 6px 6px 0px #8B112B;
+}
+
+/* Smooth springy hover lift + mechanical tactile slam */
+.brutal-press {
+  transition:
+    transform 190ms var(--ease-p5-snap),
+    box-shadow 190ms var(--ease-p5-smooth),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+  will-change: transform;
+}
+.brutal-press:hover:not(:disabled) {
+  transform: translate(-1.5px, -1.5px);
+}
+.brutal-press:active:not(:disabled) {
+  transform: translate(2px, 2px) scale(0.985);
+  box-shadow: 0px 0px 0px #111111 !important;
+  transition-duration: 75ms;
+}
+
+/* Persona 5 kinetic card hover for chat rows & tiles */
+.p5-row-motion {
+  transition:
+    transform 210ms var(--ease-p5-snap),
+    box-shadow 210ms var(--ease-p5-smooth),
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+.p5-row-motion:hover {
+  transform: translateX(3px);
+}
+.p5-row-motion:active {
+  transform: translate(1.5px, 1.5px) scale(0.99);
+  transition-duration: 75ms;
+}
+
+/* Persona 5 diagonal slash wipe sheen on hero buttons & badges */
+@layer components {
+  .p5-slash-btn {
+    position: relative;
+    overflow: hidden;
+  }
+  .p5-slash-btn::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: -130%;
+    width: 60%;
+    height: 160%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 253, 249, 0.34) 48%,
+      rgba(255, 253, 249, 0.08) 100%
+    );
+    transform: skewX(-24deg);
+    pointer-events: none;
+    transition: left 460ms var(--ease-p5-smooth);
+  }
+  .p5-slash-btn:hover::after {
+    left: 145%;
+  }
+}
+
+/* Persona 5 diagonal graphic slash backdrop for brand headers */
+.p5-maroon-banner {
+  background-color: #7E1932;
+  background-image:
+    linear-gradient(115deg, rgba(17, 17, 17, 0.34) 0%, rgba(17, 17, 17, 0.34) 28%, transparent 28.2%),
+    radial-gradient(rgba(255, 253, 249, 0.14) 1px, transparent 1px);
+  background-size: 100% 100%, 10px 10px;
+}
+
+/* Persona 5 subtle dynamic skew badge/ribbon */
+.p5-skew {
+  transform: skewX(-8deg);
+}
+.p5-unskew {
+  display: inline-block;
+  transform: skewX(8deg);
+}
+
+/* =========================================================
+   Persona 5 x Neo-Brutalism Smooth & Impact Motion Keyframes
+   ========================================================= */
+
+@keyframes p5FadeBackdrop {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes p5ModalImpact {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.93) skewX(-2.5deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.012) skewX(0.4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) skewX(0deg);
+  }
+}
+
+@keyframes p5DrawerSlideLeft {
+  0% {
+    opacity: 0.4;
+    transform: translateX(-100%) skewX(-3deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(4px) skewX(0.4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+  }
+}
+
+@keyframes p5DrawerSlideRight {
+  0% {
+    opacity: 0.4;
+    transform: translateX(100%) skewX(3deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-4px) skewX(-0.4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+  }
+}
+
+@keyframes p5ChatSwitch {
+  0% {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes p5MsgOwnPop {
+  0% {
+    opacity: 0;
+    transform: translate(14px, 10px) scale(0.92);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(-1.5px, -1px) scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes p5MsgPeerPop {
+  0% {
+    opacity: 0;
+    transform: translate(-14px, 10px) scale(0.92);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(1.5px, -1px) scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes p5ImpactSlam {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) rotate(-2.5deg) translateY(16px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.035) rotate(0.6deg) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg) translateY(0);
+  }
+}
+
+@keyframes p5ToastImpact {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 24px) scale(0.88) skewX(-6deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translate(-50%, -3px) scale(1.03) skewX(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1) skewX(0deg);
+  }
+}
+
+@keyframes p5ReactionPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes p5ImpactRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 17, 43, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(139, 17, 43, 0);
+  }
+}
+
+@keyframes p5SendRecoil {
+  0% {
+    transform: scale(1) translateX(0);
+  }
+  30% {
+    transform: scale(0.88) translateX(-3px);
+  }
+  68% {
+    transform: scale(1.09) translateX(3px);
+  }
+  100% {
+    transform: scale(1) translateX(0);
+  }
+}
+
+@keyframes p5PanelReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes p5FadeBackdropOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes p5ModalOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) skewX(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94) skewX(-2deg);
+  }
+}
+
+@keyframes p5DrawerSlideLeftOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translateX(-104%) skewX(-3deg);
+  }
+}
+
+@keyframes p5DrawerSlideRightOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translateX(104%) skewX(3deg);
+  }
+}
+
+@keyframes p5PanelHide {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.975);
+  }
+}
+
+@keyframes p5MenuPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92) skewX(-2deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.015) skewX(0.3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) skewX(0deg);
+  }
+}
+
+@keyframes p5MenuPopOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+}
+
+@keyframes p5ToastOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1) skewX(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.9) skewX(-4deg);
+  }
+}
+
+@keyframes p5SidebarSwap {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.p5-backdrop-in {
+  animation: p5FadeBackdrop 200ms var(--ease-p5-smooth) both;
+}
+
+.p5-backdrop-out {
+  animation: p5FadeBackdropOut 190ms var(--ease-p5-smooth) both;
+}
+
+.p5-modal-impact {
+  animation: p5ModalImpact 310ms var(--ease-p5-snap) both;
+  will-change: transform, opacity;
+}
+
+.p5-modal-out {
+  animation: p5ModalOut 200ms var(--ease-p5-smooth) both;
+  will-change: transform, opacity;
+}
+
+.p5-drawer-left {
+  animation: p5DrawerSlideLeft 320ms var(--ease-p5-smooth) both;
+  will-change: transform, opacity;
+}
+
+.p5-drawer-left-out {
+  animation: p5DrawerSlideLeftOut 230ms var(--ease-p5-smooth) both;
+  will-change: transform, opacity;
+}
+
+.p5-drawer-right {
+  animation: p5DrawerSlideRight 300ms var(--ease-p5-smooth) both;
+  will-change: transform, opacity;
+}
+
+.p5-drawer-right-out {
+  animation: p5DrawerSlideRightOut 230ms var(--ease-p5-smooth) both;
+  will-change: transform, opacity;
+}
+
+.p5-chat-enter {
+  animation: p5ChatSwitch 240ms var(--ease-p5-smooth) both;
+}
+
+.p5-msg-own {
+  animation: p5MsgOwnPop 260ms var(--ease-p5-snap) both;
+}
+
+.p5-msg-peer {
+  animation: p5MsgPeerPop 260ms var(--ease-p5-snap) both;
+}
+
+.p5-impact-slam {
+  animation: p5ImpactSlam 420ms var(--ease-p5-slam) both;
+}
+
+.p5-toast-impact {
+  animation: p5ToastImpact 320ms var(--ease-p5-slam) both;
+}
+
+.p5-toast-out {
+  animation: p5ToastOut 190ms var(--ease-p5-smooth) both;
+}
+
+.p5-reaction-pop {
+  animation: p5ReactionPop 240ms var(--ease-p5-slam) both;
+}
+
+.p5-impact-ring {
+  animation: p5ImpactRing 480ms var(--ease-p5-smooth) 1;
+}
+
+.p5-send-recoil {
+  animation: p5SendRecoil 320ms var(--ease-p5-snap) 1;
+}
+
+.p5-panel-reveal {
+  animation: p5PanelReveal 210ms var(--ease-p5-smooth) both;
+}
+
+.p5-panel-out {
+  animation: p5PanelHide 175ms var(--ease-p5-smooth) both;
+}
+
+.p5-menu-in {
+  animation: p5MenuPopIn 200ms var(--ease-p5-snap) both;
+  transform-origin: top center;
+}
+
+.p5-menu-out {
+  animation: p5MenuPopOut 155ms var(--ease-p5-smooth) both;
+  transform-origin: top center;
+}
+
+.p5-sidebar-swap {
+  animation: p5SidebarSwap 220ms var(--ease-p5-smooth) both;
+}
+
+/* Android WebView safe-area utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Refined crisp scrollbars */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(126, 25, 50, 0.35);
+}
+.dark .thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(214, 40, 73, 0.35);
+}
+
+/* Accessibility: text scaling */
+html[data-text-scale="sm"] {
+  font-size: 14px;
+}
+html[data-text-scale="md"] {
+  font-size: 16px;
+}
+html[data-text-scale="lg"] {
+  font-size: 18px;
+}
+
+/* Accessibility: high contrast mode */
+html.high-contrast body {
+  filter: contrast(1.14);
+}
+html.high-contrast .chat-canvas-bg {
+  background-image: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brutal-press,
+  .p5-row-motion,
+  .p5-slash-btn::after {
+    transition: none !important;
+  }
+  .p5-backdrop-in,
+  .p5-backdrop-out,
+  .p5-modal-impact,
+  .p5-modal-out,
+  .p5-drawer-left,
+  .p5-drawer-left-out,
+  .p5-drawer-right,
+  .p5-drawer-right-out,
+  .p5-chat-enter,
+  .p5-msg-own,
+  .p5-msg-peer,
+  .p5-impact-slam,
+  .p5-toast-impact,
+  .p5-toast-out,
+  .p5-reaction-pop,
+  .p5-impact-ring,
+  .p5-send-recoil,
+  .p5-panel-reveal,
+  .p5-panel-out,
+  .p5-menu-in,
+  .p5-menu-out,
+  .p5-sidebar-swap {
+    animation: none !important;
+  }
+}

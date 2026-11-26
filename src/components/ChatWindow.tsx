@@ -1,0 +1,1659 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowLeft,
+  CalendarClock,
+  Check,
+  CheckCheck,
+  Clock,
+  Download,
+  Edit2,
+  Eye,
+  FileText,
+  Flag,
+  Forward,
+  Info,
+  Languages,
+  Mic,
+  MoreVertical,
+  Paperclip,
+  Pause,
+  Phone,
+  Pin,
+  Play,
+  RefreshCw,
+  Reply,
+  Search,
+  SendHorizontal,
+  Sparkles,
+  Square,
+  Timer,
+  Trash2,
+  UploadCloud,
+  Video,
+  X,
+} from 'lucide-react';
+import type {
+  Attachment,
+  ChatRoom,
+  LanguageCode,
+  Message,
+  UserProfile,
+} from '../types/chat';
+import {
+  formatBytes,
+  formatDateDivider,
+  formatDuration,
+  formatLastSeen,
+  formatTimeShort,
+  isSafeHttpUrl,
+  triggerAndroidHaptic,
+} from '../lib/androidBridge';
+import { t } from '../lib/i18n';
+import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
+import { Avatar } from './Avatar';
+
+const QUICK_REACTIONS = ['👍', '❤️', '🔥', '😂', '👏', '😮'];
+
+interface ChatWindowProps {
+  lang: LanguageCode;
+  chat: ChatRoom;
+  messages: Message[];
+  scheduledMessages: Message[];
+  loading: boolean;
+  users: Record<string, UserProfile>;
+  currentUser: UserProfile;
+  onlineUserIds: Set<string>;
+  typingUserIds: string[];
+  draftText: string;
+  maxUploadMb: number;
+  onDraftChange: (text: string) => void;
+  onBackMobile: () => void;
+  onOpenInfo: () => void;
+  onStartCall: (peerId: string, kind: 'voice' | 'video') => void;
+  onSendMessage: (payload: {
+    text: string;
+    replyToId?: string | null;
+    attachment?: Attachment | null;
+    scheduledFor?: number | null;
+  }) => Promise<void>;
+  onUploadFile: (
+    file: File,
+    onProgress?: (percent: number) => void,
+    durationSec?: number
+  ) => Promise<Attachment>;
+  onEditMessage: (messageId: string, text: string) => Promise<void>;
+  onDeleteMessage: (messageId: string) => Promise<void>;
+  onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
+  onPinMessage: (messageId: string | null) => Promise<void>;
+  onForwardMessage: (message: Message) => void;
+  onTranslateMessage: (messageId: string, text: string) => Promise<string>;
+  onSummarizeChat: () => Promise<string>;
+  onReportMessage: (message: Message) => void;
+  onTyping: (isTyping: boolean) => void;
+}
+
+function VoiceNotePlayer({
+  url,
+  durationSec,
+  isOwn,
+}: {
+  url: string;
+  durationSec?: number;
+  isOwn: boolean;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.playbackRate = speed;
+      void audio.play().catch(() => setPlaying(false));
+      setPlaying(true);
+    }
+  };
+
+  const cycleSpeed = () => {
+    const next: 1 | 1.5 | 2 = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1;
+    setSpeed(next);
+    if (audioRef.current) audioRef.current.playbackRate = next;
+  };
+
+  const bars = [35, 65, 90, 50, 80, 100, 60, 40, 85, 70, 55, 95, 65, 45, 75, 50];
+
+  return (
+    <div className="flex items-center gap-2.5 min-w-[215px] py-1">
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="metadata"
+        onTimeUpdate={(e) => {
+          const el = e.currentTarget;
+          if (el.duration && Number.isFinite(el.duration)) {
+            setProgress(el.currentTime / el.duration);
+          }
+        }}
+        onEnded={() => {
+          setPlaying(false);
+          setProgress(0);
+        }}
+      />
+      <button
+        type="button"
+        onClick={togglePlay}
+        aria-label={playing ? 'Jeda pesan suara' : 'Putar pesan suara'}
+        className={`h-9 w-9 rounded-[4px] border-2 border-[#111111] flex items-center justify-center shrink-0 transition-colors ${
+          isOwn
+            ? 'bg-[#FFFDF9] text-[#8B112B] hover:bg-[#111111] hover:text-[#FFFDF9]'
+            : 'bg-[#8B112B] text-[#FFFDF9] hover:bg-[#6E0C21]'
+        }`}
+      >
+        {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+      </button>
+
+      <div className="flex-1 flex flex-col gap-1">
+        <div className="flex items-end gap-[2px] h-5">
+          {bars.map((height, idx) => {
+            const active = idx / bars.length <= progress;
+            return (
+              <span
+                key={idx}
+                style={{ height: `${Math.max(25, height)}%` }}
+                className={`w-[3px] transition-colors ${
+                  isOwn
+                    ? active
+                      ? 'bg-[#FFFDF9]'
+                      : 'bg-[#FFFDF9]/35'
+                    : active
+                      ? 'bg-[#8B112B] dark:bg-[#FF5C7A]'
+                      : 'bg-[#111111]/25 dark:bg-[#F4EFE6]/30'
+                }`}
+              />
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-between">
+          <span
+            className={`font-mono text-[10px] tabular-nums ${
+              isOwn ? 'text-[#FCE4E9]' : 'text-[#52494D] dark:text-[#B9A7AE]'
+            }`}
+          >
+            {formatDuration(durationSec)} · Pesan suara
+          </span>
+          <button
+            type="button"
+            onClick={cycleSpeed}
+            className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-[2px] border ${
+              isOwn
+                ? 'border-[#FFFDF9]/50 bg-[#111111]/30 text-[#FFFDF9]'
+                : 'border-[#111111] dark:border-[#4A313C] bg-[#F6F2EB] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6]'
+            }`}
+          >
+            {speed}x
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
+  const tokenRegex = /(https?:\/\/[^\s]+|@[a-zA-Z0-9_]{3,24})/g;
+  const parts = text.split(tokenRegex);
+  return parts.map((part, idx) => {
+    if (/^https?:\/\/[^\s]+$/i.test(part) && isSafeHttpUrl(part)) {
+      return (
+        <a
+          key={idx}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline font-medium break-all ${
+            isOwn
+              ? 'text-[#FDE68A] decoration-[#FDE68A]/70 hover:text-white'
+              : 'text-[#8B112B] dark:text-[#FF5C7A] decoration-[#8B112B]/60'
+          }`}
+        >
+          {part}
+        </a>
+      );
+    }
+    if (/^@[a-zA-Z0-9_]{3,24}$/.test(part)) {
+      return (
+        <span
+          key={idx}
+          className={`font-mono font-semibold ${
+            isOwn ? 'text-[#FDE68A]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+          }`}
+        >
+          {part}
+        </span>
+      );
+    }
+    return <span key={idx}>{part}</span>;
+  });
+}
+
+export function ChatWindow({
+  lang,
+  chat,
+  messages,
+  scheduledMessages,
+  loading,
+  users,
+  currentUser,
+  onlineUserIds,
+  typingUserIds,
+  draftText,
+  maxUploadMb,
+  onDraftChange,
+  onBackMobile,
+  onOpenInfo,
+  onStartCall,
+  onSendMessage,
+  onUploadFile,
+  onEditMessage,
+  onDeleteMessage,
+  onToggleReaction,
+  onPinMessage,
+  onForwardMessage,
+  onTranslateMessage,
+  onSummarizeChat,
+  onReportMessage,
+  onTyping,
+}: ChatWindowProps) {
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const [activeMenuMsgId, setActiveMenuMsgId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendKick, setSendKick] = useState(0);
+
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState<number | null>(null);
+  const [customScheduleInput, setCustomScheduleInput] = useState('');
+
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
+  const [summaryText, setSummaryText] = useState<string | null>(null);
+  const [summarizing, setSummarizing] = useState(false);
+
+  const [recording, setRecording] = useState(false);
+  const [recordSec, setRecordSec] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<number | null>(null);
+  const recordStartRef = useRef<number>(0);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const isGroupAdminOrMod =
+    chat.adminIds.includes(currentUser.id) ||
+    Boolean(chat.moderatorIds?.includes(currentUser.id));
+
+  const canPost =
+    chat.type === 'channel'
+      ? chat.adminIds.includes(currentUser.id)
+      : chat.type === 'group' && chat.adminOnlyPost
+        ? isGroupAdminOrMod
+        : !chat.suspended;
+
+  // Animated presence hooks so every bar, option menu, and overlay animates cleanly on both open & close
+  const dragPresence = useAnimatedPresence(isDragging && canPost, 180);
+  const searchPresence = useAnimatedPresence(searchOpen, 175);
+  const summaryRetained = useRetainedValue(summaryText, 175);
+  const menuRetained = useRetainedValue(activeMenuMsgId, 155);
+  const fileBarPresence = useAnimatedPresence(
+    Boolean(pendingFile || uploadError || uploadProgress !== null),
+    175
+  );
+  const replyBarPresence = useAnimatedPresence(
+    Boolean(replyTo || editingMsg || scheduledFor),
+    175
+  );
+  const schedulePresence = useAnimatedPresence(scheduleOpen && canPost, 175);
+  const lightboxRetained = useRetainedValue(lightboxImage, 200);
+
+  const pinnedMessage = useMemo(
+    () => messages.find((m) => m.id === chat.pinnedMessageId) || null,
+    [messages, chat.pinnedMessageId]
+  );
+
+  const visibleMessages = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter(
+      (m) =>
+        m.text.toLowerCase().includes(q) ||
+        (m.attachment?.name || '').toLowerCase().includes(q)
+    );
+  }, [messages, searchTerm]);
+
+  const mentionCandidates = useMemo(() => {
+    if (chat.type !== 'group') return [];
+    const match = draftText.match(/@([a-zA-Z0-9_]*)$/);
+    if (!match) return [];
+    const query = match[1].toLowerCase();
+    return chat.memberIds
+      .map((id) => users[id])
+      .filter((u): u is UserProfile => Boolean(u) && u.id !== currentUser.id)
+      .filter(
+        (u) =>
+          u.username.toLowerCase().includes(query) ||
+          u.displayName.toLowerCase().includes(query)
+      )
+      .slice(0, 5);
+  }, [chat, draftText, users, currentUser.id]);
+
+  useEffect(() => {
+    setReplyTo(null);
+    setEditingMsg(null);
+    setActiveMenuMsgId(null);
+    setSearchOpen(false);
+    setSearchTerm('');
+    setScheduleOpen(false);
+    setScheduledFor(null);
+    setSummaryText(null);
+    clearPendingFile();
+  }, [chat.id]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, chat.id]);
+
+  const clearPendingFile = () => {
+    if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+    setPendingFile(null);
+    setPendingPreviewUrl(null);
+    setUploadProgress(null);
+    setUploadError(null);
+  };
+
+  const stageFileForPreview = (file: File) => {
+    if (file.size > maxUploadMb * 1024 * 1024) {
+      setUploadError(`Ukuran file melebihi batas server (${maxUploadMb} MB).`);
+      return;
+    }
+    if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+    setPendingFile(file);
+    setUploadError(null);
+    setUploadProgress(null);
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      setPendingPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPendingPreviewUrl(null);
+    }
+  };
+
+  const handleInputChange = (val: string) => {
+    onDraftChange(val);
+    onTyping(val.trim().length > 0);
+    if (typingTimeoutRef.current !== null) {
+      window.clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = window.setTimeout(() => {
+      onTyping(false);
+    }, 2400);
+  };
+
+  const insertMention = (username: string) => {
+    const replaced = draftText.replace(/@([a-zA-Z0-9_]*)$/, `@${username} `);
+    onDraftChange(replaced);
+    inputRef.current?.focus();
+  };
+
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmed = draftText.trim();
+    if ((!trimmed && !pendingFile) || sending) return;
+
+    setSending(true);
+    setSendKick((k) => k + 1);
+    setUploadError(null);
+    triggerAndroidHaptic();
+
+    try {
+      if (editingMsg) {
+        await onEditMessage(editingMsg.id, trimmed);
+        setEditingMsg(null);
+        onDraftChange('');
+      } else {
+        let uploadedAttachment: Attachment | null = null;
+        if (pendingFile) {
+          setUploadProgress(5);
+          uploadedAttachment = await onUploadFile(pendingFile, (pct) => {
+            setUploadProgress(pct);
+          });
+        }
+        await onSendMessage({
+          text: trimmed,
+          replyToId: replyTo?.id || null,
+          attachment: uploadedAttachment,
+          scheduledFor,
+        });
+        setReplyTo(null);
+        setScheduledFor(null);
+        setScheduleOpen(false);
+        onDraftChange('');
+        clearPendingFile();
+      }
+      onTyping(false);
+    } catch (err) {
+      if (pendingFile) {
+        setUploadError(err instanceof Error ? err.message : 'Gagal mengunggah lampiran.');
+        setUploadProgress(null);
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          stageFileForPreview(file);
+          return;
+        }
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file && canPost) stageFileForPreview(file);
+  };
+
+  const startVoiceRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setUploadError('Browser ini tidak mendukung perekaman suara.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : '';
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      recordChunksRef.current = [];
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size > 0) recordChunksRef.current.push(ev.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((tTrack) => tTrack.stop());
+        if (recordTimerRef.current !== null) {
+          window.clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        const durationSec = Math.max(1, Math.round((Date.now() - recordStartRef.current) / 1000));
+        const blob = new Blob(recordChunksRef.current, {
+          type: recorder.mimeType || 'audio/webm',
+        });
+        setRecording(false);
+        setRecordSec(0);
+        if (blob.size < 200) return;
+
+        setSending(true);
+        setUploadProgress(15);
+        try {
+          const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+          const voiceFile = new File([blob], `voice-${Date.now()}.${ext}`, {
+            type: blob.type || 'audio/webm',
+          });
+          const attachment = await onUploadFile(
+            voiceFile,
+            (pct) => setUploadProgress(pct),
+            durationSec
+          );
+          await onSendMessage({
+            text: '',
+            replyToId: replyTo?.id || null,
+            attachment,
+          });
+          setReplyTo(null);
+        } catch (err) {
+          setUploadError(err instanceof Error ? err.message : 'Gagal mengirim pesan suara.');
+        } finally {
+          setUploadProgress(null);
+          setSending(false);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recordStartRef.current = Date.now();
+      recorder.start();
+      setRecording(true);
+      setRecordSec(0);
+      triggerAndroidHaptic();
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordSec(Math.round((Date.now() - recordStartRef.current) / 1000));
+      }, 400);
+    } catch {
+      setUploadError('Izin mikrofon ditolak oleh browser atau perangkat.');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const cancelVoiceRecording = () => {
+    recordChunksRef.current = [];
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.onstop = () => {
+        mediaRecorderRef.current?.stream.getTracks().forEach((tr) => tr.stop());
+      };
+      mediaRecorderRef.current.stop();
+    }
+    if (recordTimerRef.current !== null) {
+      window.clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    setRecording(false);
+    setRecordSec(0);
+  };
+
+  const handleTriggerTranslate = async (msg: Message) => {
+    setActiveMenuMsgId(null);
+    if (!msg.text.trim()) return;
+    setTranslatingId(msg.id);
+    try {
+      const translated = await onTranslateMessage(msg.id, msg.text);
+      setTranslations((prev) => ({ ...prev, [msg.id]: translated }));
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
+  const handleTriggerSummarize = async () => {
+    setSummarizing(true);
+    try {
+      const result = await onSummarizeChat();
+      setSummaryText(result);
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+  const isPeerOnline =
+    chat.type === 'dm' && chat.peerUser ? onlineUserIds.has(chat.peerUser.id) : false;
+
+  const activeTypers = typingUserIds.filter((id) => id !== currentUser.id);
+
+  let subtitleText = '';
+  if (activeTypers.length > 0) {
+    const names = activeTypers
+      .map((id) => users[id]?.displayName?.split(' ')[0] || 'Seseorang')
+      .join(', ');
+    subtitleText = chat.type === 'dm' ? t(lang, 'typing') : `${names} ${t(lang, 'typing')}`;
+  } else if (chat.type === 'dm' && chat.peerUser) {
+    subtitleText = isPeerOnline ? t(lang, 'online') : formatLastSeen(chat.peerUser.lastSeen);
+  } else if (chat.type === 'group') {
+    const onlineMembers = chat.memberIds.filter((id) => onlineUserIds.has(id)).length;
+    subtitleText = `${chat.memberIds.length} anggota · ${onlineMembers} online`;
+  } else if (chat.type === 'channel') {
+    subtitleText = `${chat.subscriberCount || chat.memberIds.length} pelanggan`;
+  } else {
+    subtitleText = 'Catatan & lampiran sinkron cloud';
+  }
+
+  return (
+    <section
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (canPost) setIsDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setIsDragging(false);
+      }}
+      onDrop={handleDrop}
+      className="relative flex flex-col flex-1 h-full min-w-0 chat-canvas-bg"
+    >
+      {/* Drag-and-Drop Overlay */}
+      {dragPresence.mounted && (
+        <div
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`${
+            dragPresence.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
+          } absolute inset-0 z-40 bg-[#8B112B]/20 backdrop-blur-[2px] border-4 border-dashed border-[#8B112B] flex items-center justify-center p-6`}
+        >
+          <div
+            className={`${
+              dragPresence.closing ? 'p5-modal-out' : 'p5-modal-impact'
+            } px-6 py-5 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg text-center`}
+          >
+            <UploadCloud className="w-9 h-9 text-[#8B112B] dark:text-[#FF5C7A] mx-auto" />
+            <p className="mt-2 font-display font-extrabold text-lg text-[#111111] dark:text-[#F4EFE6]">
+              Lepaskan file untuk pratinjau sebelum dikirim
+            </p>
+            <p className="mt-0.5 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+              Foto, video, dokumen PDF/Office, atau audio · maks {maxUploadMb} MB
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Top Bar */}
+      <header className="pt-safe h-[62px] px-3 sm:px-4 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center justify-between gap-2 shrink-0 z-10">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={onBackMobile}
+            aria-label="Kembali ke daftar chat"
+            className="md:hidden h-10 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#F4EFE6] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenInfo}
+            className="flex items-center gap-2.5 min-w-0 text-left group"
+          >
+            <Avatar
+              name={chat.title}
+              imageUrl={chat.avatarUrl}
+              color={chat.avatarColor}
+              chatType={chat.type}
+              online={isPeerOnline}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h2 className="font-display font-extrabold text-lg leading-tight text-[#111111] dark:text-[#F4EFE6] truncate group-hover:text-[#8B112B] dark:group-hover:text-[#FF5C7A] transition-colors">
+                  {chat.title}
+                </h2>
+                {chat.selfDestructSec > 0 && (
+                  <Timer className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                )}
+              </div>
+              <p
+                className={`text-xs truncate ${
+                  activeTypers.length > 0 || isPeerOnline
+                    ? 'text-[#8B112B] dark:text-[#FF5C7A] font-semibold'
+                    : 'text-[#6E6367] dark:text-[#B9A7AE]'
+                }`}
+              >
+                {subtitleText}
+              </p>
+            </div>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {chat.type === 'dm' && chat.peerUser && (
+            <>
+              <button
+                type="button"
+                onClick={() => onStartCall(chat.peerUser!.id, 'voice')}
+                aria-label="Panggilan suara"
+                title="Panggilan Suara WebRTC"
+                className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+              >
+                <Phone className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onStartCall(chat.peerUser!.id, 'video')}
+                aria-label="Panggilan video"
+                title="Panggilan Video WebRTC"
+                className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+              >
+                <Video className="w-4 h-4" />
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => void handleTriggerSummarize()}
+            disabled={summarizing}
+            aria-label={t(lang, 'aiSummarize')}
+            title={t(lang, 'aiSummarize')}
+            className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center disabled:opacity-50"
+          >
+            <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#8B112B]' : ''}`} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchOpen((v) => !v);
+              setSearchTerm('');
+            }}
+            aria-label="Cari di percakapan"
+            className={`h-9 w-9 rounded-[4px] border-2 brutal-shadow-sm brutal-press flex items-center justify-center ${
+              searchOpen
+                ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6]'
+                : 'border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white'
+            }`}
+          >
+            <Search className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onOpenInfo}
+            aria-label="Detail percakapan"
+            className="h-9 w-9 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* In-Chat Search Strip */}
+      {searchPresence.mounted && (
+        <div
+          className={`${
+            searchPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+          } px-4 py-2 bg-[#F6F2EB] dark:bg-[#1B161E] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center gap-2 z-10`}
+        >
+          <Search className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+          <input
+            type="text"
+            autoFocus
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Cari teks atau nama file di percakapan ini..."
+            className="flex-1 bg-transparent text-sm text-[#111111] dark:text-[#F4EFE6] placeholder:text-[#6E6367] focus:outline-none"
+          />
+          <span className="font-mono text-xs font-bold text-[#8B112B] dark:text-[#FF5C7A] tabular-nums">
+            {visibleMessages.length} hasil
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchOpen(false);
+              setSearchTerm('');
+            }}
+            className="p-1 text-[#52494D] hover:text-[#8B112B] brutal-press"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* AI Conversation Summary Banner */}
+      {summaryRetained.renderedValue && (
+        <div
+          className={`${
+            summaryRetained.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+          } px-4 py-2.5 bg-[#FDF2F4] dark:bg-[#2A131C] border-b-2 border-[#111111] dark:border-[#8B112B] flex items-start gap-2.5 z-10`}
+        >
+          <Sparkles className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A] shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0 text-xs text-[#111111] dark:text-[#F4EFE6] whitespace-pre-wrap leading-relaxed">
+            <div className="font-display font-extrabold text-sm text-[#8B112B] dark:text-[#FF5C7A] mb-0.5">
+              Ringkasan Percakapan (AI)
+            </div>
+            {summaryRetained.renderedValue}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSummaryText(null)}
+            className="p-1 text-[#52494D] hover:text-[#8B112B] brutal-press"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Pinned Message Banner */}
+      {pinnedMessage && (
+        <div className="p5-panel-reveal px-4 py-2 bg-[#FFFDF9] dark:bg-[#1B161E] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center gap-3 z-10">
+          <Pin className="w-3.5 h-3.5 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-bold text-[#8B112B] dark:text-[#FF5C7A]">
+              Pesan Disematkan
+            </div>
+            <div className="text-xs text-[#52494D] dark:text-[#D5C3C9] truncate">
+              {pinnedMessage.text || pinnedMessage.attachment?.name || 'Lampiran media'}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void onPinMessage(null)}
+            aria-label="Lepas sematan pesan"
+            className="p-1 text-[#52494D] hover:text-[#8B112B]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Scheduled Messages Strip */}
+      {scheduledMessages.length > 0 && (
+        <div className="px-4 py-1.5 bg-[#FEF3C7] dark:bg-[#3A1E08] border-b-2 border-[#111111] dark:border-amber-500 flex items-center justify-between gap-2 text-xs text-[#111111] dark:text-amber-200 font-semibold z-10">
+          <span className="flex items-center gap-1.5 truncate">
+            <CalendarClock className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {scheduledMessages.length} pesan terjadwal · berikutnya pukul{' '}
+              <span className="font-mono">
+                {scheduledMessages[0].scheduledFor
+                  ? formatTimeShort(scheduledMessages[0].scheduledFor)
+                  : ''}
+              </span>
+            </span>
+          </span>
+        </div>
+      )}
+
+      {/* Messages Canvas */}
+      <div
+        key={chat.id}
+        className="p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5"
+        onClick={() => setActiveMenuMsgId(null)}
+      >
+        {loading ? (
+          <div className="h-full flex items-center justify-center text-xs font-semibold text-[#52494D] dark:text-[#B9A7AE]">
+            Memuat riwayat pesan...
+          </div>
+        ) : visibleMessages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="px-6 py-5 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow text-center max-w-xs">
+              <p className="font-display font-extrabold text-lg text-[#111111] dark:text-[#F4EFE6]">
+                Belum ada pesan di sini
+              </p>
+              <p className="mt-1 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+                Kirim teks, seret dokumen, tempel gambar (Ctrl+V), atau rekam pesan suara.
+              </p>
+            </div>
+          </div>
+        ) : (
+          visibleMessages.map((msg, index) => {
+            const prevMsg = index > 0 ? visibleMessages[index - 1] : null;
+            const showDateDivider =
+              !prevMsg ||
+              formatDateDivider(prevMsg.createdAt) !== formatDateDivider(msg.createdAt);
+
+            if (msg.systemEvent) {
+              return (
+                <div key={msg.id} className="my-2.5 flex justify-center">
+                  <span className="px-3 py-1 rounded-[3px] bg-[#FFFDF9] dark:bg-[#1B161E] border-2 border-[#111111] dark:border-[#4A313C] text-[11px] font-semibold text-[#111111] dark:text-[#E7DDE0]">
+                    {msg.text}
+                  </span>
+                </div>
+              );
+            }
+
+            const isOwn = msg.senderId === currentUser.id;
+            const sender = users[msg.senderId];
+            const repliedMsg = msg.replyToId
+              ? messages.find((m) => m.id === msg.replyToId)
+              : null;
+            const isReadByOther =
+              isOwn && msg.readBy.some((uid) => uid !== currentUser.id);
+            const showSenderName =
+              !isOwn &&
+              chat.type === 'group' &&
+              (!prevMsg || prevMsg.senderId !== msg.senderId || showDateDivider);
+
+            return (
+              <div key={msg.id}>
+                {showDateDivider && (
+                  <div className="my-3.5 flex justify-center">
+                    <span className="p5-skew inline-block px-3.5 py-0.5 bg-[#111111] text-[#FFFDF9] border-2 border-[#8B112B] brutal-shadow-sm">
+                      <span className="p5-unskew font-display font-bold text-xs tracking-wider">
+                        {formatDateDivider(msg.createdAt)}
+                      </span>
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  className={`flex items-end gap-2 group ${
+                    isOwn ? 'justify-end p5-msg-own' : 'justify-start p5-msg-peer'
+                  }`}
+                >
+                  {!isOwn && chat.type === 'group' && (
+                    <div className="w-8 shrink-0">
+                      {showSenderName && (
+                        <Avatar
+                          name={sender?.displayName || 'Anggota'}
+                          imageUrl={sender?.avatarUrl}
+                          color={sender?.avatarColor}
+                          size="xs"
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <div className="relative max-w-[84%] sm:max-w-[68%]">
+                    <div
+                      className={`rounded-[4px] px-3.5 py-2.5 border-2 brutal-shadow-sm ${
+                        isOwn
+                          ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6]'
+                          : 'bg-[#FFFDF9] dark:bg-[#1B161E] text-[#111111] dark:text-[#F4EFE6] border-[#111111] dark:border-[#4A313C]'
+                      }`}
+                    >
+                      {/* Group Sender Name */}
+                      {showSenderName && (
+                        <div className="text-xs font-display font-extrabold text-[#8B112B] dark:text-[#FF5C7A] mb-0.5">
+                          {sender?.displayName || 'Pengguna'}
+                        </div>
+                      )}
+
+                      {/* Forwarded Attribution */}
+                      {msg.forwardedFrom && (
+                        <div
+                          className={`text-[11px] mb-1 flex items-center gap-1 font-semibold ${
+                            isOwn ? 'text-[#FDE68A]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+                          }`}
+                        >
+                          <Forward className="w-3 h-3" />
+                          <span>Diteruskan dari {msg.forwardedFrom.senderName}</span>
+                        </div>
+                      )}
+
+                      {/* Reply-to-Story Quote (all-around crisp border, no thick left bar) */}
+                      {msg.replyToStory && (
+                        <div
+                          className={`mb-1.5 px-2.5 py-1.5 rounded-[3px] border text-xs ${
+                            isOwn
+                              ? 'bg-[#111111]/25 border-[#FFFDF9]/35 text-[#FFFDF9]'
+                              : 'bg-[#F6F2EB] dark:bg-[#261D2A] border-[#111111]/25 dark:border-[#4A313C]'
+                          }`}
+                        >
+                          <div className="font-bold text-[11px]">
+                            Balasan Status · {msg.replyToStory.authorName}
+                          </div>
+                          <div className="opacity-85 truncate">{msg.replyToStory.snippet}</div>
+                        </div>
+                      )}
+
+                      {/* Reply Quote */}
+                      {repliedMsg && (
+                        <div
+                          className={`mb-1.5 px-2.5 py-1.5 rounded-[3px] border text-xs ${
+                            isOwn
+                              ? 'bg-[#111111]/25 border-[#FFFDF9]/35 text-[#FFFDF9]'
+                              : 'bg-[#F6F2EB] dark:bg-[#261D2A] border-[#111111]/25 dark:border-[#4A313C]'
+                          }`}
+                        >
+                          <div
+                            className={`font-bold text-[11px] truncate ${
+                              isOwn ? 'text-[#FDE68A]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+                            }`}
+                          >
+                            {users[repliedMsg.senderId]?.displayName || 'Pengguna'}
+                          </div>
+                          <div className="opacity-85 truncate">
+                            {repliedMsg.text || repliedMsg.attachment?.name || 'Lampiran'}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Image Attachment */}
+                      {msg.attachment?.kind === 'image' && (
+                        <button
+                          type="button"
+                          onClick={() => setLightboxImage(msg.attachment!.url)}
+                          className="block mb-1.5 rounded-[3px] overflow-hidden border-2 border-[#111111] bg-[#111111]"
+                        >
+                          <img
+                            src={msg.attachment.url}
+                            alt={msg.attachment.name}
+                            className="max-h-72 w-auto object-cover"
+                            loading="lazy"
+                          />
+                        </button>
+                      )}
+
+                      {/* Video Attachment */}
+                      {msg.attachment?.kind === 'video' && (
+                        <div className="mb-1.5 rounded-[3px] overflow-hidden border-2 border-[#111111] bg-black">
+                          <video
+                            src={msg.attachment.url}
+                            controls
+                            preload="metadata"
+                            className="max-h-72 max-w-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Voice Note Attachment */}
+                      {msg.attachment?.kind === 'audio' && (
+                        <VoiceNotePlayer
+                          url={msg.attachment.url}
+                          durationSec={msg.attachment.durationSec}
+                          isOwn={isOwn}
+                        />
+                      )}
+
+                      {/* Document Attachment */}
+                      {msg.attachment?.kind === 'file' && (
+                        <a
+                          href={msg.attachment.url}
+                          download={msg.attachment.name}
+                          className={`mb-1.5 p-2.5 rounded-[3px] border flex items-center gap-3 transition-colors ${
+                            isOwn
+                              ? 'bg-[#111111]/25 border-[#FFFDF9]/35 hover:bg-[#111111]/40'
+                              : 'bg-[#F6F2EB] dark:bg-[#221B24] border-[#111111]/30 dark:border-[#4A313C] hover:border-[#8B112B]'
+                          }`}
+                        >
+                          <div
+                            className={`h-9 w-9 rounded-[3px] border border-[#111111] flex items-center justify-center shrink-0 ${
+                              isOwn ? 'bg-[#FFFDF9] text-[#8B112B]' : 'bg-[#8B112B] text-[#FFFDF9]'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold truncate">
+                              {msg.attachment.name}
+                            </div>
+                            <div className="font-mono text-[10px] opacity-75">
+                              {formatBytes(msg.attachment.size)}
+                            </div>
+                          </div>
+                          <Download className="w-4 h-4 opacity-75 shrink-0" />
+                        </a>
+                      )}
+
+                      {/* Message Text */}
+                      {msg.text && (
+                        <p className="text-[14px] leading-[1.5] whitespace-pre-wrap break-words">
+                          {renderSafeMessageText(msg.text, isOwn)}
+                        </p>
+                      )}
+
+                      {/* AI Translation Block */}
+                      {translatingId === msg.id && (
+                        <div className="mt-1.5 pt-1.5 border-t border-current/20 text-[11px] opacity-85">
+                          Menerjemahkan dengan AI...
+                        </div>
+                      )}
+                      {translations[msg.id] && (
+                        <div className="mt-1.5 pt-1.5 border-t border-current/20 text-xs">
+                          <span className="font-bold text-[10px] block mb-0.5 opacity-80">
+                            Terjemahan AI
+                          </span>
+                          {translations[msg.id]}
+                        </div>
+                      )}
+
+                      {/* Footer Metadata */}
+                      <div
+                        className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] select-none ${
+                          isOwn ? 'text-[#FCE4E9]/90' : 'text-[#6E6367] dark:text-[#A9959C]'
+                        }`}
+                      >
+                        {msg.expiresAt && (
+                          <span className="inline-flex items-center gap-0.5 text-[#FDE68A]">
+                            <Timer className="w-2.5 h-2.5" />
+                          </span>
+                        )}
+                        {chat.type === 'channel' && typeof msg.views === 'number' && (
+                          <span className="inline-flex items-center gap-0.5 font-mono tabular-nums">
+                            <Eye className="w-3 h-3" />
+                            {msg.views}
+                          </span>
+                        )}
+                        {msg.editedAt && <span className="italic">diedit</span>}
+                        <span className="font-mono tabular-nums">
+                          {formatTimeShort(msg.createdAt)}
+                        </span>
+                        {isOwn && (
+                          isReadByOther ? (
+                            <CheckCheck className="w-3.5 h-3.5 text-[#FDE68A]" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5 text-[#FCE4E9]/75" />
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Reactions Row */}
+                    {msg.reactions.length > 0 && (
+                      <div
+                        className={`mt-1.5 flex flex-wrap gap-1 ${
+                          isOwn ? 'justify-end' : 'justify-start'
+                        }`}
+                      >
+                        {msg.reactions.map((r) => {
+                          const reactedByMe = r.userIds.includes(currentUser.id);
+                          return (
+                            <button
+                              key={r.emoji}
+                              type="button"
+                              onClick={() => void onToggleReaction(msg.id, r.emoji)}
+                              className={`px-2 py-0.5 rounded-[3px] text-xs flex items-center gap-1 border-2 transition-colors ${
+                                reactedByMe
+                                  ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6]'
+                                  : 'bg-[#FFFDF9] dark:bg-[#1B161E] text-[#111111] dark:text-[#F4EFE6] border-[#111111] dark:border-[#4A313C] hover:border-[#8B112B]'
+                              }`}
+                            >
+                              <span>{r.emoji}</span>
+                              <span className="font-mono text-[10px] font-bold tabular-nums">
+                                {r.userIds.length}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Action Menu Trigger */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id);
+                      }}
+                      aria-label="Opsi pesan"
+                      className={`absolute top-1.5 ${
+                        isOwn ? '-left-9' : '-right-9'
+                      } h-7 w-7 rounded-[3px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity`}
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Floating Message Context Menu */}
+                    {menuRetained.renderedValue === msg.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={`${
+                          menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
+                        } absolute z-30 top-8 ${
+                          isOwn ? 'right-0' : 'left-0'
+                        } w-52 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow p-1.5`}
+                      >
+                        <div className="flex items-center justify-between px-1 py-1 border-b-2 border-[#111111]/15 dark:border-[#3D2933] mb-1">
+                          {QUICK_REACTIONS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => {
+                                void onToggleReaction(msg.id, emoji);
+                                setActiveMenuMsgId(null);
+                              }}
+                              className="h-7 w-7 rounded-[3px] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center justify-center text-sm"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyTo(msg);
+                            setEditingMsg(null);
+                            setActiveMenuMsgId(null);
+                            inputRef.current?.focus();
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-medium text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center gap-2"
+                        >
+                          <Reply className="w-3.5 h-3.5" />
+                          <span>Balas</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onForwardMessage(msg);
+                            setActiveMenuMsgId(null);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-medium text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center gap-2"
+                        >
+                          <Forward className="w-3.5 h-3.5" />
+                          <span>Teruskan</span>
+                        </button>
+
+                        {msg.text.trim().length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => void handleTriggerTranslate(msg)}
+                            className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-semibold text-[#8B112B] dark:text-[#FF5C7A] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center gap-2"
+                          >
+                            <Languages className="w-3.5 h-3.5" />
+                            <span>{t(lang, 'aiTranslate')}</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void onPinMessage(chat.pinnedMessageId === msg.id ? null : msg.id);
+                            setActiveMenuMsgId(null);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-medium text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center gap-2"
+                        >
+                          <Pin className="w-3.5 h-3.5" />
+                          <span>
+                            {chat.pinnedMessageId === msg.id ? 'Lepas Sematan' : 'Sematkan'}
+                          </span>
+                        </button>
+
+                        {isOwn && msg.text && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingMsg(msg);
+                              setReplyTo(null);
+                              onDraftChange(msg.text);
+                              setActiveMenuMsgId(null);
+                              inputRef.current?.focus();
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-medium text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] flex items-center gap-2"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit Pesan</span>
+                          </button>
+                        )}
+
+                        {!isOwn && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onReportMessage(msg);
+                              setActiveMenuMsgId(null);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-semibold text-amber-800 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 flex items-center gap-2"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                            <span>Laporkan Pesan</span>
+                          </button>
+                        )}
+
+                        {(isOwn || isGroupAdminOrMod) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void onDeleteMessage(msg.id);
+                              setActiveMenuMsgId(null);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-[3px] text-xs font-semibold text-[#B91C1C] dark:text-[#FF6B81] hover:bg-[#FEF2F2] dark:hover:bg-[#2B1217] flex items-center gap-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Mention Autocomplete Popover */}
+      {mentionCandidates.length > 0 && (
+        <div className="p5-panel-reveal mx-3 mb-1 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow overflow-hidden z-20">
+          {mentionCandidates.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => insertMention(u.username)}
+              className="p5-row-motion w-full px-3 py-2 flex items-center gap-2.5 hover:bg-[#FDF2F4] dark:hover:bg-[#2A131C] text-left"
+            >
+              <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="xs" />
+              <span className="text-xs font-semibold text-[#111111] dark:text-[#F4EFE6]">
+                {u.displayName}
+              </span>
+              <span className="font-mono text-[11px] text-[#8B112B] dark:text-[#FF5C7A]">
+                @{u.username}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Pre-Send File Preview & Upload Progress */}
+      {fileBarPresence.mounted && (
+        <div
+          className={`${
+            fileBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+          } px-4 py-2.5 bg-[#FFFDF9] dark:bg-[#161218] border-t-2 border-[#111111] dark:border-[#3D2933] space-y-1.5`}
+        >
+          {pendingFile && (
+            <div className="flex items-center gap-3">
+              {pendingPreviewUrl && pendingFile.type.startsWith('image/') ? (
+                <img
+                  src={pendingPreviewUrl}
+                  alt={pendingFile.name}
+                  className="h-12 w-12 rounded-[4px] object-cover border-2 border-[#111111] shrink-0"
+                />
+              ) : pendingPreviewUrl && pendingFile.type.startsWith('video/') ? (
+                <video
+                  src={pendingPreviewUrl}
+                  className="h-12 w-12 rounded-[4px] object-cover border-2 border-[#111111] shrink-0"
+                  muted
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-[4px] bg-[#FDF2F4] dark:bg-[#2A131C] border-2 border-[#111111] text-[#8B112B] flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-[#111111] dark:text-[#F4EFE6] truncate">
+                  {pendingFile.name}
+                </div>
+                <div className="font-mono text-[11px] text-[#6E6367] dark:text-[#B9A7AE]">
+                  {formatBytes(pendingFile.size)} · Siap dikirim
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={clearPendingFile}
+                aria-label="Hapus pratinjau file"
+                className="p-1.5 text-[#52494D] hover:text-[#8B112B]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {uploadProgress !== null && (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-[#F4EFE6] dark:bg-[#221B24] border border-[#111111] overflow-hidden">
+                <div
+                  className="h-full bg-[#8B112B] transition-all"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <span className="font-mono text-[11px] font-bold text-[#8B112B] dark:text-[#FF5C7A] tabular-nums">
+                {uploadProgress}%
+              </span>
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#B91C1C] dark:text-[#FF6B81]">
+              <span className="truncate">{uploadError}</span>
+              {pendingFile && (
+                <button
+                  type="button"
+                  onClick={() => void handleSend()}
+                  className="inline-flex items-center gap-1 font-bold text-[#8B112B] dark:text-[#FF5C7A] hover:underline shrink-0"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Coba Lagi</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reply / Edit / Schedule Banner */}
+      {replyBarPresence.mounted && (
+        <div
+          className={`${
+            replyBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+          } px-4 py-2 bg-[#FDF2F4] dark:bg-[#26121A] border-t-2 border-[#111111] dark:border-[#3D2933] flex items-center gap-3`}
+        >
+          {editingMsg ? (
+            <Edit2 className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+          ) : scheduledFor ? (
+            <CalendarClock className="w-4 h-4 text-amber-600 shrink-0" />
+          ) : (
+            <Reply className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-[#8B112B] dark:text-[#FF5C7A]">
+              {editingMsg
+                ? 'Edit pesan'
+                : scheduledFor
+                  ? `Dijadwalkan untuk ${new Date(scheduledFor).toLocaleString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}`
+                  : replyTo
+                    ? `Membalas ${users[replyTo.senderId]?.displayName || 'Pengguna'}`
+                    : 'Balasan'}
+            </div>
+            <div className="text-xs text-[#52494D] dark:text-[#D5C3C9] truncate">
+              {editingMsg
+                ? editingMsg.text
+                : replyTo
+                  ? replyTo.text || replyTo.attachment?.name || 'Lampiran'
+                  : 'Pesan akan dikirim otomatis oleh server Tolk by Lunola'}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setReplyTo(null);
+              setEditingMsg(null);
+              setScheduledFor(null);
+            }}
+            className="p-1 text-[#52494D] hover:text-[#8B112B] brutal-press"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Schedule Picker Bar */}
+      {schedulePresence.mounted && (
+        <div
+          className={`${
+            schedulePresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+          } px-4 py-2 bg-[#F6F2EB] dark:bg-[#1B161E] border-t-2 border-[#111111] dark:border-[#3D2933] flex flex-wrap items-center gap-2 text-xs`}
+        >
+          <Clock className="w-3.5 h-3.5 text-[#8B112B] dark:text-[#FF5C7A]" />
+          <span className="font-bold text-[#111111] dark:text-[#F4EFE6]">Jadwalkan:</span>
+          {[
+            { label: '+1 mnt', ms: 60_000 },
+            { label: '+5 mnt', ms: 5 * 60_000 },
+            { label: '+1 jam', ms: 3600_000 },
+          ].map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => {
+                setScheduledFor(Date.now() + preset.ms);
+                setScheduleOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-[3px] bg-[#FFFDF9] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] hover:bg-[#8B112B] hover:text-white font-semibold"
+            >
+              {preset.label}
+            </button>
+          ))}
+          <input
+            type="datetime-local"
+            value={customScheduleInput}
+            onChange={(e) => {
+              setCustomScheduleInput(e.target.value);
+              const ts = Date.parse(e.target.value);
+              if (Number.isFinite(ts) && ts > Date.now() + 5000) {
+                setScheduledFor(ts);
+              }
+            }}
+            className="h-7 px-2 rounded-[3px] bg-[#FFFDF9] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-[#111111] dark:text-[#F4EFE6]"
+          />
+          <button
+            type="button"
+            onClick={() => setScheduleOpen(false)}
+            className="ml-auto text-[#52494D] hover:text-[#8B112B]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Neo-Brutalist Composer */}
+      <footer className="pb-safe px-3 py-2.5 bg-[#FFFDF9] dark:bg-[#161218] border-t-2 border-[#111111] dark:border-[#3D2933] shrink-0">
+        {!canPost ? (
+          <div className="py-2 text-center text-xs font-semibold text-[#52494D] dark:text-[#B9A7AE]">
+            {chat.suspended
+              ? 'Grup atau channel ini sedang ditangguhkan oleh administrator.'
+              : chat.type === 'channel'
+                ? 'Hanya admin channel yang dapat mempublikasikan siaran.'
+                : 'Mode pengumuman aktif — hanya admin & moderator yang dapat mengirim pesan.'}
+          </div>
+        ) : recording ? (
+          <div className="p5-panel-reveal flex items-center justify-between gap-3 h-11 px-3 rounded-[4px] bg-[#FDF2F4] dark:bg-[#2A131C] border-2 border-[#8B112B] brutal-shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="h-3 w-3 rounded-[2px] bg-[#8B112B] animate-pulse" />
+              <span className="font-mono text-sm font-bold text-[#8B112B] dark:text-[#FF5C7A] tabular-nums">
+                Merekam {formatDuration(recordSec)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={cancelVoiceRecording}
+                className="px-3 py-1.5 rounded-[4px] text-xs font-bold text-[#52494D] dark:text-[#D5C3C9] hover:bg-black/10"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={stopVoiceRecording}
+                className="h-9 px-3.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm brutal-press text-xs font-bold flex items-center gap-1.5"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>Kirim Suara</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} className="flex items-end gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*,audio/*,.pdf,.txt,.csv,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) stageFileForPreview(file);
+              }}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+              aria-label="Lampirkan file atau media"
+              title="Lampirkan foto, video, atau dokumen"
+              className="h-11 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#F6F2EB] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setScheduleOpen((v) => !v)}
+              disabled={sending || Boolean(editingMsg)}
+              aria-label={t(lang, 'scheduleMessage')}
+              title={t(lang, 'scheduleMessage')}
+              className={`h-11 w-10 rounded-[4px] border-2 brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 ${
+                scheduledFor
+                  ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111]'
+                  : 'border-[#111111] dark:border-[#4A313C] bg-[#F6F2EB] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white'
+              }`}
+            >
+              <CalendarClock className="w-4 h-4" />
+            </button>
+
+            <textarea
+              ref={inputRef}
+              rows={1}
+              value={draftText}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onPaste={handlePaste}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+              placeholder={t(lang, 'writeMessage')}
+              className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-[4px] bg-[#F4EFE6] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] placeholder:text-[#6E6367] dark:placeholder:text-[#9F8B92] resize-none focus:outline-none focus:border-[#8B112B] dark:focus:border-[#D62849]"
+            />
+
+            {draftText.trim() || pendingFile ? (
+              <button
+                key={`send-${sendKick}`}
+                type="submit"
+                disabled={sending}
+                aria-label="Kirim pesan"
+                className={`h-11 px-4 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
+                  sendKick > 0 ? 'p5-send-recoil p5-impact-ring' : ''
+                }`}
+              >
+                <SendHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm">Kirim</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void startVoiceRecording()}
+                disabled={sending}
+                aria-label="Rekam pesan suara"
+                title="Rekam pesan suara"
+                className="h-11 w-11 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
+              >
+                <Mic className="w-5 h-5" />
+              </button>
+            )}
+          </form>
+        )}
+      </footer>
+
+      {/* Image Lightbox */}
+      {lightboxRetained.renderedValue && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className={`${
+            lightboxRetained.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
+          } fixed inset-0 z-50 bg-[#111111]/92 flex items-center justify-center p-4`}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxImage(null)}
+            aria-label="Tutup pratinjau gambar"
+            className="absolute top-4 right-4 h-10 w-10 rounded-[4px] border-2 border-[#FFFDF9] bg-[#8B112B] text-[#FFFDF9] brutal-press flex items-center justify-center hover:bg-[#6E0C21]"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={lightboxRetained.renderedValue}
+            alt="Pratinjau gambar"
+            className={`${
+              lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
+            } max-h-[90vh] max-w-[92vw] rounded-[4px] border-2 border-[#FFFDF9] object-contain`}
+          />
+        </div>
+      )}
+    </section>
+  );
+}

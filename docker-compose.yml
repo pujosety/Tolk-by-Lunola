@@ -1,0 +1,68 @@
+# Tolk by Lunola Self-Hosted Stack (App + Tinode + PostgreSQL + Caddy Auto-HTTPS)
+# Jalankan: docker compose up -d
+
+services:
+  lunola-talk:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci --omit=dev && npm run build && npm start"
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+      ADMIN_PASSCODE: ${ADMIN_PASSCODE:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      TINODE_HOST: ws://tinode:6060/v0/channels
+    volumes:
+      - .:/app
+      - lunola_data:/app/data
+      - lunola_uploads:/app/uploads
+    depends_on:
+      - tinode
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  tinode:
+    image: tinode/tinode-postgres:latest
+    environment:
+      POSTGRES_DSN: "postgres://tinode:${POSTGRES_PASSWORD:-change_me_in_env}@postgres:5432/tinode?sslmode=disable"
+    ports:
+      - "6060:6060"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tinode
+      POSTGRES_USER: tinode
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_env}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${DOMAIN:-localhost} --to lunola-talk:3000
+    volumes:
+      - caddy_data:/data
+    depends_on:
+      - lunola-talk
+    restart: unless-stopped
+
+volumes:
+  lunola_data:
+  lunola_uploads:
+  pg_data:
+  caddy_data:

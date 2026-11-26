@@ -1,0 +1,35 @@
+# Wasmer Edge Deployment Configuration for Tolk by Lunola
+# Dokumentasi: https://docs.wasmer.io/edge
+# Jalankan: npm run build && wasmer deploy
+
+[package]
+name = "lunola-talk/chat-app"
+version = "1.0.0"
+description = "Tolk by Lunola — Aplikasi komunikasi lintas platform real-time berbasis Web, PWA & Android WebView di Wasmer Edge"
+
+[dependencies]
+"wasmer/node" = "^22"
+
+[fs]
+"/app/dist" = "./dist"
+"/app/server.ts" = "./server.ts"
+"/app/package.json" = "./package.json"
+"/app/node_modules" = "./node_modules"
+"/app/data" = "./data"
+"/app/uploads" = "./uploads"
+
+[[command]]
+name = "run"
+module = "wasmer/node:node"
+runner = "wasi"
+
+[command.annotations.wasi]
+main-args = ["/app/server.ts"]
+env = [
+  "NODE_ENV=production",
+  "PORT=3000",
+  "WASMER_RUNTIME=edge"
+]
+
+[command.annotations.wasmer]
+http = { port = 3000, websockets = true }
