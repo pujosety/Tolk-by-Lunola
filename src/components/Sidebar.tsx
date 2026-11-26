@@ -164,6 +164,46 @@ export function Sidebar({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
 
+  const navOrder: MainNavTab[] = ['chats', 'status', 'updates', 'calls', 'you'];
+  const currentTabIdx = navOrder.indexOf(activeTab);
+  const prevTabIdxRef = useRef(currentTabIdx);
+  const tabAnimClass =
+    currentTabIdx > prevTabIdxRef.current
+      ? 'p5-tab-from-right'
+      : currentTabIdx < prevTabIdxRef.current
+        ? 'p5-tab-from-left'
+        : 'p5-tab-enter';
+  prevTabIdxRef.current = currentTabIdx;
+
+  const swipeRef = useRef<{ x: number; y: number; ignore: boolean } | null>(null);
+
+  const handleTabTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return;
+    const target = e.target as HTMLElement | null;
+    const ignore = Boolean(
+      target?.closest('[data-no-tab-swipe="true"], input, textarea, select')
+    );
+    swipeRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      ignore,
+    };
+  };
+
+  const handleTabTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start || start.ignore || e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    if (dx < 0 && currentTabIdx < navOrder.length - 1) {
+      onSelectTab(navOrder[currentTabIdx + 1]);
+    } else if (dx > 0 && currentTabIdx > 0) {
+      onSelectTab(navOrder[currentTabIdx - 1]);
+    }
+  };
+
   const startLongPress = (chat: ChatRoom) => {
     if (longPressTimerRef.current !== null) {
       window.clearTimeout(longPressTimerRef.current);
@@ -469,8 +509,13 @@ export function Sidebar({
         )}
       </div>
 
+      <div
+        className="flex-1 flex flex-col min-h-0"
+        onTouchStart={handleTabTouchStart}
+        onTouchEnd={handleTabTouchEnd}
+      >
       {activeTab === 'status' ? (
-        <div key="tab-status" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+        <div key="tab-status" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
           <UpdatesView
             stories={stories}
             channels={chats.filter((c) => c.type === 'channel')}
@@ -487,7 +532,7 @@ export function Sidebar({
           />
         </div>
       ) : activeTab === 'updates' ? (
-        <div key="tab-updates" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+        <div key="tab-updates" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
           <NotificationsUpdatesView
             currentUserId={currentUser.id}
             users={users}
@@ -497,7 +542,7 @@ export function Sidebar({
           />
         </div>
       ) : activeTab === 'calls' ? (
-        <div key="tab-calls" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+        <div key="tab-calls" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
           <CallsView
             calls={calls}
             currentUser={currentUser}
@@ -507,7 +552,7 @@ export function Sidebar({
           />
         </div>
       ) : activeTab === 'you' ? (
-        <div key="tab-you" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+        <div key="tab-you" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
           <YouView
             lang={lang}
             user={currentUser}
@@ -523,9 +568,12 @@ export function Sidebar({
           />
         </div>
       ) : (
-        <div key="tab-chats" className="p5-tab-enter flex-1 flex flex-col min-h-0">
+        <div key="tab-chats" className={`${tabAnimClass} flex-1 flex flex-col min-h-0`}>
           {/* Folder Tabs */}
-          <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] shrink-0">
+          <div
+            data-no-tab-swipe="true"
+            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] shrink-0"
+          >
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
           const badge = unreadByFolder[folder.key];
@@ -788,6 +836,7 @@ export function Sidebar({
       </button>
       </div>
       )}
+      </div>
 
       {/* Floating Glassmorphism Capsule Bottom Navigation Bar */}
       <nav
@@ -797,7 +846,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('chats')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
             className={`relative px-3 py-1 rounded-full transition-colors ${
@@ -821,7 +870,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('status')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
             className={`relative px-3 py-1 rounded-full transition-colors ${
@@ -843,7 +892,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('updates')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
             className={`relative px-3 py-1 rounded-full transition-colors ${
@@ -867,7 +916,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('calls')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
             className={`px-3 py-1 rounded-full transition-colors ${
@@ -886,7 +935,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('you')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
             className={`px-2.5 py-0.5 rounded-full flex items-center justify-center transition-colors ${

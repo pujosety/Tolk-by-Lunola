@@ -72,6 +72,7 @@ function ModalShell({
   subtitle,
   maxWidth = 'max-w-md',
   closable = true,
+  mobileBottomBar,
   onClose,
   children,
 }: {
@@ -80,6 +81,7 @@ function ModalShell({
   subtitle?: string;
   maxWidth?: string;
   closable?: boolean;
+  mobileBottomBar?: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
 }) {
@@ -131,6 +133,11 @@ function ModalShell({
           )}
         </div>
         <div className="flex-1 p-4 md:p-5 pb-safe-3 overflow-y-auto thin-scrollbar">{children}</div>
+        {mobileBottomBar && (
+          <div className="md:hidden shrink-0 px-3 pt-2 pb-safe-2 bg-[#FFFFFF]/85 dark:bg-[#171E2C]/85 backdrop-blur-xl border-t border-[#E6ECF2] dark:border-[#2A364B]">
+            {mobileBottomBar}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -922,46 +929,51 @@ export function CreateChatModal({
     }
   };
 
+  const renderModeSwitcher = (layoutIdSuffix: string) => (
+    <div className="relative grid grid-cols-3 gap-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
+      {(
+        [
+          { key: 'dm', label: 'Pribadi', icon: <UserPlus className="w-3.5 h-3.5" /> },
+          { key: 'group', label: 'Grup', icon: <Users className="w-3.5 h-3.5" /> },
+          { key: 'channel', label: 'Channel', icon: <Radio className="w-3.5 h-3.5" /> },
+        ] as const
+      ).map((tab) => {
+        const active = mode === tab.key;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setMode(tab.key)}
+            className={`relative min-h-[40px] py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 touch-manipulation ${
+              active
+                ? 'text-white'
+                : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
+            }`}
+          >
+            {active && (
+              <motion.span
+                layoutId={`create-chat-mode-pill-${layoutIdSuffix}`}
+                transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
+                className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
+              />
+            )}
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <ModalShell
       open={open}
       title="Mulai Percakapan"
       subtitle="Chat pribadi via @username, buat grup komunitas, atau buka channel publik."
+      mobileBottomBar={renderModeSwitcher('mobile')}
       onClose={onClose}
     >
-      <div className="relative grid grid-cols-3 gap-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1 mb-4">
-        {(
-          [
-            { key: 'dm', label: 'Pribadi', icon: <UserPlus className="w-3.5 h-3.5" /> },
-            { key: 'group', label: 'Grup', icon: <Users className="w-3.5 h-3.5" /> },
-            { key: 'channel', label: 'Channel', icon: <Radio className="w-3.5 h-3.5" /> },
-          ] as const
-        ).map((tab) => {
-          const active = mode === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setMode(tab.key)}
-              className={`relative py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 ${
-                active
-                  ? 'text-white'
-                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
-              }`}
-            >
-              {active && (
-                <motion.span
-                  layoutId="create-chat-mode-pill"
-                  transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
-                  className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
-                />
-              )}
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <div className="hidden md:block mb-4">{renderModeSwitcher('desktop')}</div>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div

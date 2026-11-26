@@ -569,6 +569,28 @@
   }
 }
 
+@keyframes p5TabFromRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes p5TabFromLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .p5-menu-right-in {
   animation: p5MenuRightIn 200ms var(--ease-p5-smooth) both;
   transform-origin: top right;
@@ -580,7 +602,15 @@
 }
 
 .p5-tab-enter {
-  animation: p5TabEnter 240ms var(--ease-p5-smooth) both;
+  animation: p5TabEnter 220ms var(--ease-p5-smooth) both;
+}
+
+.p5-tab-from-right {
+  animation: p5TabFromRight 240ms var(--ease-p5-smooth) both;
+}
+
+.p5-tab-from-left {
+  animation: p5TabFromLeft 240ms var(--ease-p5-smooth) both;
 }
 
 .p5-sidebar-swap {
