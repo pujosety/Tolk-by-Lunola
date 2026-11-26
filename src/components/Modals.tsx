@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowLeft,
   Ban,
@@ -928,45 +929,48 @@ export function CreateChatModal({
       subtitle="Chat pribadi via @username, buat grup komunitas, atau buka channel publik."
       onClose={onClose}
     >
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1 mb-4">
-        <button
-          type="button"
-          onClick={() => setMode('dm')}
-          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
-            mode === 'dm'
-              ? 'bg-[#8C0027] text-white'
-              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
-          }`}
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>Pribadi</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('group')}
-          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
-            mode === 'group'
-              ? 'bg-[#8C0027] text-white'
-              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" />
-          <span>Grup</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('channel')}
-          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
-            mode === 'channel'
-              ? 'bg-[#8C0027] text-white'
-              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
-          }`}
-        >
-          <Radio className="w-3.5 h-3.5" />
-          <span>Channel</span>
-        </button>
+      <div className="relative grid grid-cols-3 gap-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1 mb-4">
+        {(
+          [
+            { key: 'dm', label: 'Pribadi', icon: <UserPlus className="w-3.5 h-3.5" /> },
+            { key: 'group', label: 'Grup', icon: <Users className="w-3.5 h-3.5" /> },
+            { key: 'channel', label: 'Channel', icon: <Radio className="w-3.5 h-3.5" /> },
+          ] as const
+        ).map((tab) => {
+          const active = mode === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setMode(tab.key)}
+              className={`relative py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 ${
+                active
+                  ? 'text-white'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="create-chat-mode-pill"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
+                  className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
+                />
+              )}
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={mode}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+        >
       {mode === 'dm' ? (
         <div className="space-y-3.5">
           {/* 2 Bento Action Boxes: Kartu QR Saya & Scan QR */}
@@ -1228,6 +1232,8 @@ export function CreateChatModal({
           </button>
         </form>
       )}
+        </motion.div>
+      </AnimatePresence>
 
       <CameraCaptureModal
         open={scanQrOpen}

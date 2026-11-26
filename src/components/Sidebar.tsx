@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
+import { motion } from 'motion/react';
 import {
   Archive,
   Bell,
@@ -401,7 +402,7 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Desktop 5-Tab Switcher */}
+        {/* Desktop 5-Tab Switcher (Morphing Pill) */}
         <div className="hidden md:grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
           {(
             [
@@ -411,25 +412,35 @@ export function Sidebar({
               { key: 'calls', label: 'Panggilan' },
               { key: 'you', label: 'Kamu' },
             ] as const
-          ).map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => onSelectTab(tab.key)}
-              className={`relative py-1.5 rounded-xl text-[10px] font-bold transition-all ${
-                activeTab === tab.key
-                  ? 'bg-[#8C0027] text-white brutal-shadow-sm'
-                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-              {tab.key === 'updates' && notificationCount > 0 && (
-                <span className="ml-1 inline-flex min-w-[14px] h-[14px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono items-center justify-center">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              )}
-            </button>
-          ))}
+          ).map((tab) => {
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => onSelectTab(tab.key)}
+                className={`relative py-1.5 rounded-xl text-[10px] font-bold transition-colors z-10 ${
+                  active
+                    ? 'text-white'
+                    : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="sidebar-desktop-tab-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
+                    className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
+                  />
+                )}
+                {tab.label}
+                {tab.key === 'updates' && notificationCount > 0 && (
+                  <span className="ml-1 inline-flex min-w-[14px] h-[14px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono items-center justify-center">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {activeTab === 'chats' && (

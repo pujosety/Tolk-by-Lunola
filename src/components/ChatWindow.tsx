@@ -1086,12 +1086,12 @@ export function ChatWindow({
                         <button
                           type="button"
                           onClick={() => setLightboxImage(msg.attachment!.url)}
-                          className="block mb-1.5 rounded-lg overflow-hidden border border-[#E6ECF2] bg-[#161B26]"
+                          className="block w-full max-w-[300px] sm:max-w-[340px] mb-1.5 rounded-2xl overflow-hidden bg-black/5 dark:bg-black/25 focus:outline-none"
                         >
                           <img
                             src={msg.attachment.url}
                             alt={msg.attachment.name}
-                            className="max-h-72 w-auto object-cover"
+                            className="block w-full max-h-80 object-contain rounded-2xl"
                             loading="lazy"
                           />
                         </button>
@@ -1654,28 +1654,6 @@ export function ChatWindow({
             />
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={sending}
-              aria-label="Lampirkan file atau media"
-              title="Lampirkan foto, video, atau dokumen"
-              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <Paperclip className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              disabled={sending}
-              aria-label="Buka kamera"
-              title="Ambil foto dari kamera"
-              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
               onClick={() => setScheduleOpen((v) => !v)}
               disabled={sending || Boolean(editingMsg)}
               aria-label={t(lang, 'scheduleMessage')}
@@ -1704,6 +1682,28 @@ export function ChatWindow({
               placeholder={t(lang, 'writeMessage')}
               className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027]"
             />
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+              aria-label="Lampirkan file atau media"
+              title="Lampirkan foto, video, atau dokumen"
+              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              disabled={sending}
+              aria-label="Buka kamera"
+              title="Ambil foto dari kamera"
+              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
 
             {draftText.trim() || pendingFile ? (
               <button
