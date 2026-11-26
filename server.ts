@@ -7,6 +7,7 @@ import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import mysql from 'mysql2/promise';
 import { GoogleGenAI } from '@google/genai';
+import * as webpush from 'web-push';
 import { WebSocketServer, WebSocket } from 'ws';
 import type {
   AdminOverviewPayload,
@@ -113,6 +114,14 @@ interface StoredChat {
   createdAt: number;
 }
 
+interface PushSubscriptionRecord {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
+
 interface StoreData {
   users: Record<string, StoredUser>;
   sessions: Record<string, DeviceSession>;
@@ -127,6 +136,8 @@ interface StoreData {
   settings: PlatformSettings;
   adminPasscodeHash?: string;
   adminPasscodeSalt?: string;
+  vapidKeys?: { publicKey: string; privateKey: string };
+  pushSubscriptions?: Record<string, PushSubscriptionRecord[]>;
   lastBackupAt: number | null;
 }
 
@@ -1238,6 +1249,105 @@ async function startServer(): Promise<void> {
     });
   });
 
+  const ensureVapidKeys = () => {
+    const envPub = process.env.VAPID_PUBLIC_KEY?.trim();
+    const envPriv = process.env.VAPID_PRIVATE_KEY?.trim();
+    if (envPub && envPriv) {
+      webpush.setVapidDetails('mailto:support@lunola.app', envPub, envPriv);
+      return { publicKey: envPub, privateKey: envPriv };
+    }
+    if (!store.vapidKeys?.publicKey || !store.vapidKeys?.privateKey) {
+      store.vapidKeys = webpush.generateVAPIDKeys();
+      saveStore(store);
+    }
+    webpush.setVapidDetails(
+      'mailto:support@lunola.app',
+      store.vapidKeys.publicKey,
+      store.vapidKeys.privateKey
+    );
+    return store.vapidKeys;
+  };
+
+  const sendPushForChatMessage = (chat: StoredChat, msg: Message) => {
+    const sender = store.users[msg.senderId];
+    if (!sender) return;
+    const subsMap = store.pushSubscriptions;
+    if (!subsMap) return;
+
+    const vapid = ensureVapidKeys();
+    if (!vapid.publicKey || !vapid.privateKey) return;
+
+    const title =
+      chat.type === 'group' ? `${sender.displayName} · ${chat.title}` : sender.displayName;
+    const body = msg.text || msg.attachment?.name || 'Mengirim lampiran media';
+    const payload = JSON.stringify({
+      title,
+      body: body.slice(0, 140),
+      chatId: chat.id,
+      tag: `chat-${chat.id}`,
+      url: `/?chat=${encodeURIComponent(chat.id)}`,
+    });
+
+    for (const memberId of chat.memberIds) {
+      if (memberId === msg.senderId) continue;
+      const member = store.users[memberId];
+      if (!member) continue;
+      const muted = isChatMuted(member, chat.id).muted;
+      const mentioned = msg.mentions?.includes(member.username.toLowerCase());
+      if (muted && !mentioned) continue;
+
+      const userSubs = subsMap[memberId] || [];
+      if (userSubs.length === 0) continue;
+
+      for (const sub of userSubs) {
+        void webpush.sendNotification(sub, payload).catch((err: { statusCode?: number }) => {
+          if (err?.statusCode === 404 || err?.statusCode === 410) {
+            store.pushSubscriptions = store.pushSubscriptions || {};
+            store.pushSubscriptions[memberId] = (store.pushSubscriptions[memberId] || []).filter(
+              (s) => s.endpoint !== sub.endpoint
+            );
+            saveStore(store);
+          }
+        });
+      }
+    }
+  };
+
+  app.get('/api/push/vapid-public-key', (_req, res) => {
+    const keys = ensureVapidKeys();
+    res.json({ publicKey: keys.publicKey });
+  });
+
+  app.post('/api/push/subscribe', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const endpoint = typeof req.body?.endpoint === 'string' ? req.body.endpoint.trim() : '';
+    const p256dh = typeof req.body?.keys?.p256dh === 'string' ? req.body.keys.p256dh.trim() : '';
+    const auth = typeof req.body?.keys?.auth === 'string' ? req.body.keys.auth.trim() : '';
+    if (!endpoint || !p256dh || !auth) {
+      res.status(400).json({ error: 'Data subscription push tidak valid.' });
+      return;
+    }
+    store.pushSubscriptions = store.pushSubscriptions || {};
+    const list = store.pushSubscriptions[userId] || [];
+    const filtered = list.filter((s) => s.endpoint !== endpoint);
+    filtered.push({ endpoint, keys: { p256dh, auth } });
+    store.pushSubscriptions[userId] = filtered.slice(-6);
+    saveStore(store);
+    res.json({ ok: true });
+  });
+
+  app.post('/api/push/unsubscribe', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const endpoint = typeof req.body?.endpoint === 'string' ? req.body.endpoint.trim() : '';
+    if (endpoint && store.pushSubscriptions?.[userId]) {
+      store.pushSubscriptions[userId] = store.pushSubscriptions[userId].filter(
+        (s) => s.endpoint !== endpoint
+      );
+      saveStore(store);
+    }
+    res.json({ ok: true });
+  });
+
   // Guest Session Bootstrap (disabled — mandatory login enabled)
   app.post('/api/auth/guest', (_req, res) => {
     res.status(403).json({ error: 'Akses tamu dinonaktifkan. Silakan masuk atau daftar akun.' });
@@ -2322,6 +2432,7 @@ async function startServer(): Promise<void> {
     saveStore(store);
 
     broadcastToChat(chat, { type: 'message:created', message });
+    sendPushForChatMessage(chat, message);
     res.status(201).json({ message, scheduled: false });
   });
 
@@ -2634,6 +2745,7 @@ async function startServer(): Promise<void> {
       if (!store.messages[chat.id]) store.messages[chat.id] = [];
       store.messages[chat.id].push(dmMessage);
       broadcastToChat(chat, { type: 'message:created', message: dmMessage });
+      sendPushForChatMessage(chat, dmMessage);
     };
 
     if (resharedFrom && resharedFrom.userId && resharedFrom.userId !== userId) {

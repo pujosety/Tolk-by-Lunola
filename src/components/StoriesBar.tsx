@@ -1327,6 +1327,7 @@ function StoryViewerModal({
 
   return (
     <div
+      style={{ paddingBottom: 'var(--keyboard-inset, 0px)' }}
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
       } fixed inset-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4`}

@@ -119,6 +119,79 @@ export function playNotificationSound(tone: NotificationTone, vibrate = true): v
   }
 }
 
+const PUSH_AUTH_CACHE = 'tolk-push-auth-v1';
+const PUSH_AUTH_KEY = '/__tolk_push_auth';
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const buffer = new ArrayBuffer(rawData.length);
+  const outputArray = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export async function syncPushAuthToken(token: string | null): Promise<void> {
+  if (typeof window === 'undefined' || !('caches' in window)) return;
+  try {
+    const cache = await caches.open(PUSH_AUTH_CACHE);
+    if (token) {
+      await cache.put(PUSH_AUTH_KEY, new Response(token));
+    } else {
+      await cache.delete(PUSH_AUTH_KEY);
+    }
+  } catch {
+    // Ignore cache storage errors in restricted contexts
+  }
+}
+
+export async function ensureWebPushSubscribed(token: string): Promise<void> {
+  if (
+    typeof window === 'undefined' ||
+    !('Notification' in window) ||
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window)
+  ) {
+    return;
+  }
+  if (Notification.permission !== 'granted') return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      const keyRes = await fetch('/api/push/vapid-public-key');
+      if (!keyRes.ok) return;
+      const { publicKey } = (await keyRes.json()) as { publicKey?: string };
+      if (!publicKey) return;
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+    const json = subscription.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        endpoint: json.endpoint,
+        keys: {
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+        },
+      }),
+    });
+  } catch {
+    // Ignore push subscription errors on unsupported browsers
+  }
+}
+
 export async function requestBrowserNotificationPermission(): Promise<NotificationPermission | 'unsupported'> {
   if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
   if (Notification.permission === 'granted') return 'granted';
@@ -134,9 +207,44 @@ export function showBrowserNotification(title: string, body: string, tag?: strin
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   if (!document.hidden) return;
+  const trimmedBody = body.slice(0, 140);
+  const chatId = tag || '';
+  if ('serviceWorker' in navigator) {
+    void navigator.serviceWorker.ready
+      .then((reg) => {
+        const actions = chatId
+          ? [
+              {
+                action: 'reply',
+                type: 'text',
+                title: 'Balas',
+                placeholder: 'Ketik balasan...',
+              },
+              { action: 'open', title: 'Buka' },
+            ]
+          : undefined;
+        const notifOptions = {
+          body: trimmedBody,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: chatId ? `chat-${chatId}` : undefined,
+          data: { chatId, url: chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/' },
+          actions,
+        } as unknown as NotificationOptions;
+        return reg.showNotification(title, notifOptions);
+      })
+      .catch(() => {
+        new Notification(title, {
+          body: trimmedBody,
+          icon: '/pwa-192x192.png',
+          tag,
+        });
+      });
+    return;
+  }
   try {
     new Notification(title, {
-      body: body.slice(0, 140),
+      body: trimmedBody,
       icon: '/pwa-192x192.png',
       tag,
     });

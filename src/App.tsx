@@ -27,8 +27,10 @@ import {
 } from './lib/androidBridge';
 import { t } from './lib/i18n';
 import {
+  ensureWebPushSubscribed,
   playNotificationSound,
   showBrowserNotification,
+  syncPushAuthToken,
   useOnlineStatus,
 } from './lib/pwa';
 import { useAnimatedPresence, useRetainedValue } from './lib/useAnimatedPresence';
@@ -1344,6 +1346,7 @@ export function App() {
     if (token) {
       await api.logout(token).catch(() => {});
     }
+    void syncPushAuthToken(null);
     try {
       window.localStorage.removeItem(AUTH_TOKEN_KEY);
     } catch {
@@ -1358,6 +1361,32 @@ export function App() {
     setAuthModalOpen(false);
     showToast('Anda telah keluar. Silakan masuk kembali.');
   }, [token, cleanupWebRtc, showToast]);
+
+  useEffect(() => {
+    void syncPushAuthToken(token);
+    if (!token) return;
+    void ensureWebPushSubscribed(token);
+
+    if (typeof window !== 'undefined') {
+      const chatParam = new URLSearchParams(window.location.search).get('chat');
+      if (chatParam) {
+        handleSelectChat(chatParam);
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, [token, handleSelectChat]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    const onSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; chatId?: string } | null;
+      if (data?.type === 'tolk:open-chat' && data.chatId) {
+        handleSelectChat(data.chatId);
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
+  }, [handleSelectChat]);
 
   const loadStarredMessages = useCallback(async () => {
     if (!token) return;
@@ -1671,7 +1700,7 @@ export function App() {
               onTyping={(isTyping) => socketRef.current?.sendTyping(activeChat.id, isTyping)}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center bg-[#FFFFFF] dark:bg-[#171E2C] p-6 text-center">
               <div className="p5-impact-slam px-7 py-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg max-w-sm flex flex-col items-center">
                 <div className="mb-4 flex items-center justify-center">
                   <img

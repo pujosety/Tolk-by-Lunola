@@ -857,7 +857,7 @@ export function Sidebar({
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+82px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
+        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+98px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>
