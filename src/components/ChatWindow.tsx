@@ -282,6 +282,22 @@ export function ChatWindow({
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState<string | null>(null);
+  const [menuOpenUpward, setMenuOpenUpward] = useState(false);
+  const msgLongPressRef = useRef<number | null>(null);
+
+  const openMessageMenu = (msgId: string, anchorEl?: HTMLElement | null) => {
+    if (activeMenuMsgId === msgId) {
+      setActiveMenuMsgId(null);
+      return;
+    }
+    if (anchorEl && typeof window !== 'undefined') {
+      const rect = anchorEl.getBoundingClientRect();
+      setMenuOpenUpward(rect.bottom + 270 > window.innerHeight);
+    } else {
+      setMenuOpenUpward(false);
+    }
+    setActiveMenuMsgId(msgId);
+  };
   const [searchOpen, setSearchOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -764,7 +780,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'voice')}
                 aria-label="Panggilan suara"
                 title="Panggilan Suara WebRTC"
-                className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Phone className="w-4 h-4" />
               </button>
@@ -773,7 +789,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'video')}
                 aria-label="Panggilan video"
                 title="Panggilan Video WebRTC"
-                className="h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Video className="w-4 h-4" />
               </button>
@@ -786,7 +802,7 @@ export function ChatWindow({
               setSearchTerm('');
             }}
             aria-label="Cari di percakapan"
-            className={`flex h-9 w-9 rounded-full border brutal-shadow-sm brutal-press items-center justify-center ${
+            className={`flex h-10 w-10 rounded-full border brutal-shadow-sm brutal-press items-center justify-center ${
               searchOpen
                 ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
                 : 'border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
@@ -798,7 +814,7 @@ export function ChatWindow({
             type="button"
             onClick={onOpenInfo}
             aria-label="Detail percakapan"
-            className={`h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press ${
+            className={`h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press ${
               chat.type === 'dm' ? 'hidden md:flex' : 'flex'
             } items-center justify-center`}
           >
@@ -971,6 +987,16 @@ export function ChatWindow({
                     if (e.touches.length !== 1) return;
                     const target = e.target as HTMLElement | null;
                     const ignore = Boolean(target?.closest('button, a, input, textarea, audio, video'));
+                    const rowEl = e.currentTarget;
+                    if (msgLongPressRef.current !== null) {
+                      window.clearTimeout(msgLongPressRef.current);
+                    }
+                    if (!ignore) {
+                      msgLongPressRef.current = window.setTimeout(() => {
+                        msgLongPressRef.current = null;
+                        openMessageMenu(msg.id, rowEl);
+                      }, 450);
+                    }
                     swipeReplyRef.current = {
                       msgId: msg.id,
                       x: e.touches[0].clientX,
@@ -986,6 +1012,12 @@ export function ChatWindow({
                     }
                     const dx = e.touches[0].clientX - start.x;
                     const dy = e.touches[0].clientY - start.y;
+                    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                      if (msgLongPressRef.current !== null) {
+                        window.clearTimeout(msgLongPressRef.current);
+                        msgLongPressRef.current = null;
+                      }
+                    }
                     if (!start.locked) {
                       if (dx > 10 && dx > Math.abs(dy) * 1.25) {
                         start.locked = true;
@@ -1000,6 +1032,10 @@ export function ChatWindow({
                     setSwipeOffsetX(Math.max(0, Math.min(68, dx)));
                   }}
                   onTouchEnd={() => {
+                    if (msgLongPressRef.current !== null) {
+                      window.clearTimeout(msgLongPressRef.current);
+                      msgLongPressRef.current = null;
+                    }
                     const start = swipeReplyRef.current;
                     const pulledEnough = swipeOffsetX >= 44 && start?.msgId === msg.id;
                     swipeReplyRef.current = null;
@@ -1011,6 +1047,10 @@ export function ChatWindow({
                     }
                   }}
                   onTouchCancel={() => {
+                    if (msgLongPressRef.current !== null) {
+                      window.clearTimeout(msgLongPressRef.current);
+                      msgLongPressRef.current = null;
+                    }
                     swipeReplyRef.current = null;
                     setSwipingMsgId(null);
                     setSwipeOffsetX(0);
@@ -1021,6 +1061,8 @@ export function ChatWindow({
                       : undefined
                   }
                   className={`relative flex items-end gap-2 group ${
+                    menuRetained.renderedValue === msg.id ? 'z-40' : ''
+                  } ${
                     swipingMsgId === msg.id ? '' : 'transition-transform duration-200 ease-out'
                   } ${isOwn ? 'justify-end p5-msg-own' : 'justify-start p5-msg-peer'}`}
                 >
@@ -1294,7 +1336,7 @@ export function ChatWindow({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id);
+                        openMessageMenu(msg.id, e.currentTarget);
                       }}
                       aria-label="Opsi pesan"
                       className={`absolute top-1.5 ${
@@ -1310,7 +1352,7 @@ export function ChatWindow({
                         onClick={(e) => e.stopPropagation()}
                         className={`${
                           menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
-                        } absolute z-30 top-8 ${
+                        } absolute z-50 ${menuOpenUpward ? 'bottom-8' : 'top-8'} ${
                           isOwn ? 'right-0' : 'left-0'
                         } w-52 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow p-1.5`}
                       >

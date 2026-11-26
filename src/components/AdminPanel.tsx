@@ -335,9 +335,13 @@ export function AdminPanel({
 
   return (
     <div
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
       className={`${
         closing ? 'p5-modal-out pointer-events-none' : 'p5-modal-impact'
-      } fixed inset-0 z-50 bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col md:flex-row overflow-hidden`}
+      } fixed inset-x-0 z-50 bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col md:flex-row overflow-hidden transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
     >
       {/* Navigation: Left Sidebar on Desktop, Bottom Icon Bar on Mobile */}
       <aside className="order-last md:order-first w-full md:w-64 shrink-0 bg-[#FFFFFF] dark:bg-[#171E2C] border-t md:border-t-0 md:border-r border-[#E6ECF2] dark:border-[#2A364B] flex flex-col z-20">

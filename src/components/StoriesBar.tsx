@@ -686,7 +686,13 @@ function CreateStoryModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-[80] flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}>
+    <div
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
+      className={`fixed inset-x-0 z-[80] flex items-stretch md:items-center justify-center p-0 md:p-4 transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] ${closing ? 'pointer-events-none' : ''}`}
+    >
       <div
         className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/65 backdrop-blur-[2px]`}
         onClick={onClose}
@@ -1065,7 +1071,9 @@ function MyStatusModal({
             return (
               <div
                 key={s.id}
-                className="relative flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738]"
+                className={`relative flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] ${
+                  isMenuOpen ? 'z-30' : ''
+                }`}
               >
                 <button
                   type="button"
@@ -1140,7 +1148,11 @@ function MyStatusModal({
                   </button>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 top-10 w-44 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_10px_28px_rgba(15,20,30,0.22)] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 z-30 space-y-0.5">
+                    <div
+                      className={`absolute right-0 ${
+                        idx >= stories.length - 1 && stories.length > 1 ? 'bottom-10' : 'top-10'
+                      } w-44 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_10px_28px_rgba(15,20,30,0.22)] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 z-40 space-y-0.5`}
+                    >
                       <button
                         type="button"
                         onClick={() => {

@@ -626,7 +626,7 @@ export function Sidebar({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-24 md:pb-20 space-y-1.5 bg-[#FFFFFF] dark:bg-[#171E2C]">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-28 md:pb-20 space-y-1.5 bg-[#FFFFFF] dark:bg-[#171E2C]">
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="font-display font-bold text-base text-[#161B26] dark:text-[#F5F7FA]">
