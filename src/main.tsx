@@ -1,8 +1,16 @@
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
+import { isRunningInAndroidWebView } from './lib/androidBridge';
 import './index.css';
 
 if (typeof window !== 'undefined') {
+  const isStandalone =
+    isRunningInAndroidWebView() ||
+    window.matchMedia?.('(display-mode: standalone)')?.matches ||
+    (window.navigator as { standalone?: boolean }).standalone === true;
+  if (isStandalone) {
+    document.documentElement.classList.add('is-standalone-app');
+  }
   const syncKeyboardInset = () => {
     const vv = window.visualViewport;
     if (!vv) return;
