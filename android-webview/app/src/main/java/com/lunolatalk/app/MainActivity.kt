@@ -158,36 +158,38 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPermissionRequest(request: PermissionRequest?) {
                 val req = request ?: return
-                val resources = req.resources ?: return
-                val allowed = mutableListOf<String>()
-                val missingAndroidPerms = mutableListOf<String>()
+                runOnUiThread {
+                    val resources = req.resources ?: emptyArray()
+                    val allowed = mutableListOf<String>()
+                    val missingAndroidPerms = mutableListOf<String>()
 
-                if (resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-                    val hasMic = ContextCompat.checkSelfPermission(
-                        this@MainActivity,
-                        Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
-                    if (hasMic) allowed.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
-                    else missingAndroidPerms.add(Manifest.permission.RECORD_AUDIO)
-                }
+                    if (resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                        val hasMic = ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasMic) allowed.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                        else missingAndroidPerms.add(Manifest.permission.RECORD_AUDIO)
+                    }
 
-                if (resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                    val hasCam = ContextCompat.checkSelfPermission(
-                        this@MainActivity,
-                        Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED
-                    if (hasCam) allowed.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
-                    else missingAndroidPerms.add(Manifest.permission.CAMERA)
-                }
+                    if (resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                        val hasCam = ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasCam) allowed.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                        else missingAndroidPerms.add(Manifest.permission.CAMERA)
+                    }
 
-                if (missingAndroidPerms.isNotEmpty()) {
-                    pendingWebPermissionRequest = req
-                    pendingWebResources = resources.toList()
-                    mediaPermissionLauncher.launch(missingAndroidPerms.toTypedArray())
-                } else if (allowed.isNotEmpty()) {
-                    req.grant(allowed.toTypedArray())
-                } else {
-                    req.deny()
+                    if (missingAndroidPerms.isNotEmpty()) {
+                        pendingWebPermissionRequest = req
+                        pendingWebResources = resources.toList()
+                        mediaPermissionLauncher.launch(missingAndroidPerms.toTypedArray())
+                    } else if (allowed.isNotEmpty()) {
+                        req.grant(allowed.toTypedArray())
+                    } else {
+                        req.grant(resources)
+                    }
                 }
             }
         }

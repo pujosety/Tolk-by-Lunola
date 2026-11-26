@@ -33,6 +33,7 @@ import {
 } from './lib/pwa';
 import { useAnimatedPresence, useRetainedValue } from './lib/useAnimatedPresence';
 import { DEFAULT_CHAT_APPEARANCE } from './lib/appearance';
+import { compressImageFile } from './lib/imageCompression';
 import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInfoDrawer } from './components/ChatInfoDrawer';
@@ -905,10 +906,13 @@ export function App() {
   const handleUploadFile = useCallback(
     async (file: File, onProgress?: (pct: number) => void, durationSec?: number): Promise<Attachment> => {
       if (!token) throw new Error('Sesi belum aktif.');
-      const dataUrl = await fileToDataUrl(file);
+      onProgress?.(4);
+      const processedFile = await compressImageFile(file);
+      onProgress?.(12);
+      const dataUrl = await fileToDataUrl(processedFile);
       const { attachment } = await api.uploadMediaWithProgress(
         token,
-        { dataUrl, name: file.name, durationSec },
+        { dataUrl, name: processedFile.name, durationSec },
         onProgress
       );
       return attachment;
@@ -1353,7 +1357,7 @@ export function App() {
               showToast(prefs.isArchivedByUser ? 'Chat diarsipkan.' : 'Dikeluarkan dari arsip.');
             }}
             onCreateStory={handleCreateStory}
-            onUploadStoryMedia={(file) => handleUploadFile(file)}
+            onUploadStoryMedia={(file, onProgress) => handleUploadFile(file, onProgress)}
             onViewStory={(storyId) => {
               void api.viewStory(token, storyId).catch(() => {});
             }}

@@ -505,19 +505,31 @@ export function ChatWindow({
 
   const startVoiceRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setUploadError('Browser ini tidak mendukung perekaman suara.');
+      setUploadError('Browser atau perangkat ini tidak mendukung perekaman suara.');
       return;
     }
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setUploadError('Izin mikrofon ditolak oleh browser atau perangkat.');
+      return;
+    }
+
+    try {
       const mimeType = MediaRecorder.isTypeSupported('audio/webm')
         ? 'audio/webm'
         : MediaRecorder.isTypeSupported('audio/mp4')
           ? 'audio/mp4'
           : '';
-      const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
+      let recorder: MediaRecorder;
+      try {
+        recorder = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
 
       recordChunksRef.current = [];
       recorder.ondataavailable = (ev) => {
@@ -572,8 +584,9 @@ export function ChatWindow({
       recordTimerRef.current = window.setInterval(() => {
         setRecordSec(Math.round((Date.now() - recordStartRef.current) / 1000));
       }, 400);
-    } catch {
-      setUploadError('Izin mikrofon ditolak oleh browser atau perangkat.');
+    } catch (err) {
+      stream.getTracks().forEach((tr) => tr.stop());
+      setUploadError(err instanceof Error ? err.message : 'Gagal memulai perekaman suara.');
     }
   };
 

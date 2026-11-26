@@ -70,7 +70,7 @@ interface SidebarProps {
     allowedUserIds?: string[];
     excludedUserIds?: string[];
   }) => Promise<void>;
-  onUploadStoryMedia: (file: File) => Promise<Attachment>;
+  onUploadStoryMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onViewStory: (storyId: string) => void;
   onDeleteStory: (storyId: string) => Promise<void>;
   onMuteStoryAuthor: (authorId: string) => Promise<void>;

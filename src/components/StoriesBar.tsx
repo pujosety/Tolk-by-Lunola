@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   BellOff,
   ChevronLeft,
   ChevronRight,
@@ -15,7 +16,7 @@ import { formatTimeShort } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
 
-const STORY_BG_COLORS = ['#8C0027', '#111111', '#B54B4B', '#9A3412', '#1E293B', '#0F766E'];
+const STORY_BG_COLORS = ['#8C0027', '#F59B00', '#0284C7', '#161B26', '#0F766E', '#6D28D9'];
 
 interface StoriesBarProps {
   stories: StoryItem[];
@@ -30,7 +31,7 @@ interface StoriesBarProps {
     allowedUserIds?: string[];
     excludedUserIds?: string[];
   }) => Promise<void>;
-  onUploadStoryMedia: (file: File) => Promise<Attachment>;
+  onUploadStoryMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onViewStory: (storyId: string) => void;
   onDeleteStory: (storyId: string) => Promise<void>;
   onMuteStoryAuthor: (authorId: string) => Promise<void>;
@@ -118,13 +119,13 @@ export function StoriesBar({
               className="flex flex-col items-center gap-1 shrink-0 focus-visible:outline-none group"
             >
               <div
-                className={`p-[2px] rounded-2xl brutal-press ${
+                className={`p-[2.5px] rounded-2xl brutal-press ${
                   hasUnseen
-                    ? 'bg-[#8C0027] border border-[#E6ECF2] dark:border-[#F5F7FA]'
-                    : 'bg-[#C4B8BC] dark:bg-[#324058]'
+                    ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
+                    : 'bg-[#E6ECF2] dark:bg-[#324058]'
                 }`}
               >
-                <div className="p-[1px] rounded-lg bg-[#FFFFFF] dark:bg-[#171E2C]">
+                <div className="p-[1.5px] rounded-[14px] bg-[#FFFFFF] dark:bg-[#171E2C]">
                   <Avatar
                     name={author.displayName}
                     imageUrl={author.avatarUrl}
@@ -208,7 +209,7 @@ function CreateStoryModal({
   closing: boolean;
   users: UserProfile[];
   onClose: () => void;
-  onUploadMedia: (file: File) => Promise<Attachment>;
+  onUploadMedia: (file: File, onProgress?: (pct: number) => void) => Promise<Attachment>;
   onSubmit: (payload: {
     kind: 'text' | 'image' | 'video';
     text: string;
@@ -225,6 +226,7 @@ function CreateStoryModal({
   const [privacy, setPrivacy] = useState<'everyone' | 'selected' | 'except'>('everyone');
   const [pickedUserIds, setPickedUserIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -234,14 +236,16 @@ function CreateStoryModal({
     e.target.value = '';
     if (!file) return;
     setUploading(true);
+    setUploadPct(5);
     setError('');
     try {
-      const att = await onUploadMedia(file);
+      const att = await onUploadMedia(file, (pct) => setUploadPct(pct));
       setMedia(att);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mengunggah media status');
     } finally {
       setUploading(false);
+      setUploadPct(0);
     }
   };
 
@@ -272,32 +276,42 @@ function CreateStoryModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
+    <div className={`fixed inset-0 z-50 flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#161B26]/70 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/65 backdrop-blur-[2px]`}
         onClick={onClose}
       />
       <form
         onSubmit={handleSave}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full max-w-md rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full md:h-auto md:max-w-md flex flex-col rounded-none md:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
-          <h2 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
-            Buat Status 24 Jam
-          </h2>
+        <div className="pt-safe-2 md:pt-3.5 pb-3 px-4 md:px-5 flex items-center justify-between border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Kembali"
+              className="md:hidden h-9 w-9 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h2 className="font-display font-extrabold text-lg md:text-xl text-[#161B26] dark:text-[#F5F7FA]">
+              Bikin Story 24 Jam
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center"
+            className="hidden md:flex h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[80dvh] overflow-y-auto thin-scrollbar">
+        <div className="flex-1 p-4 md:p-5 space-y-4 overflow-y-auto thin-scrollbar">
           {/* Preview Canvas */}
           <div
             className="relative rounded-xl min-h-[180px] p-5 flex flex-col items-center justify-center text-center overflow-hidden border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm"
@@ -356,9 +370,19 @@ function CreateStoryModal({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
             >
               <ImageIcon className="w-3.5 h-3.5" />
-              <span>{uploading ? 'Mengunggah...' : media ? 'Ganti Media' : 'Foto / Video'}</span>
+              <span>
+                {uploading ? `Mengunggah ${uploadPct}%` : media ? 'Ganti Media' : 'Foto / Video'}
+              </span>
             </button>
           </div>
+          {uploading && (
+            <div className="h-2 w-full rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] overflow-hidden">
+              <div
+                className="h-full bg-[#8C0027] transition-all duration-150"
+                style={{ width: `${Math.max(8, uploadPct)}%` }}
+              />
+            </div>
+          )}
 
           {/* Story Privacy Selector */}
           <div>
@@ -463,7 +487,32 @@ function StoryViewerModal({
 }) {
   const [replyText, setReplyText] = useState('');
   const [showViewers, setShowViewers] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [progressPct, setProgressPct] = useState(0);
   const viewersPresence = useAnimatedPresence(showViewers, 175);
+
+  useEffect(() => {
+    setProgressPct(0);
+    setShowViewers(false);
+  }, [story.id]);
+
+  useEffect(() => {
+    if (story.kind === 'video' || paused || showViewers || replyText.trim().length > 0) return;
+    const durationMs = 5500;
+    const stepMs = 80;
+    const timer = window.setInterval(() => {
+      setProgressPct((prev) => {
+        const next = prev + (stepMs / durationMs) * 100;
+        if (next >= 100) {
+          window.clearInterval(timer);
+          onNext();
+          return 100;
+        }
+        return next;
+      });
+    }, stepMs);
+    return () => window.clearInterval(timer);
+  }, [story.id, story.kind, paused, showViewers, replyText, onNext]);
 
   const viewers = story.viewerIds
     .filter((id) => id !== story.userId)
@@ -474,26 +523,38 @@ function StoryViewerModal({
     <div
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-50 bg-[#0F141E]/95 flex items-center justify-center p-3`}
+      } fixed inset-0 z-50 bg-[#0F141E]/95 flex items-center justify-center p-0 sm:p-3`}
     >
       <div
+        onPointerDown={() => setPaused(true)}
+        onPointerUp={() => setPaused(false)}
+        onPointerCancel={() => setPaused(false)}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full max-w-md h-[82dvh] max-h-[720px] rounded-3xl border border-[#F5F7FA] overflow-hidden flex flex-col justify-between brutal-shadow-lg`}
+        } relative w-full h-full sm:max-w-md sm:h-[82dvh] sm:max-h-[720px] rounded-none sm:rounded-3xl border-0 sm:border sm:border-white/20 overflow-hidden flex flex-col justify-between brutal-shadow-lg`}
         style={{ backgroundColor: story.bgColor }}
       >
         {/* Top Progress Bars & Author Info */}
-        <div className="p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
+        <div className="pt-safe-3 px-4 pb-4 bg-gradient-to-b from-black/75 to-transparent z-10">
           <div className="flex gap-1.5 mb-3">
-            {Array.from({ length: total }).map((_, idx) => (
-              <div key={idx} className="h-1.5 flex-1 rounded-md bg-white/30 overflow-hidden">
-                <div
-                  className={`h-full bg-white transition-all ${
-                    idx <= index ? 'w-full' : 'w-0'
-                  }`}
-                />
-              </div>
-            ))}
+            {Array.from({ length: total }).map((_, idx) => {
+              const width =
+                idx < index
+                  ? '100%'
+                  : idx === index
+                    ? story.kind === 'video'
+                      ? '100%'
+                      : `${progressPct}%`
+                    : '0%';
+              return (
+                <div key={idx} className="h-1 flex-1 rounded-full bg-white/30 overflow-hidden">
+                  <div
+                    className="h-full bg-white transition-[width] duration-75 linear"
+                    style={{ width }}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex items-center justify-between gap-2">
