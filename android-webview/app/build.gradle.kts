@@ -14,8 +14,18 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // Ganti URL ini dengan URL Wasmer Edge atau domain self-hosted Tolk by Lunola Anda
+        // URL Wasmer Edge produksi Tolk by Lunola
         buildConfigField("String", "WASMER_APP_URL", "\"https://tolks.wasmer.app\"")
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
 
     buildFeatures {
