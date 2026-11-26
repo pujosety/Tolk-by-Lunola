@@ -158,16 +158,16 @@ export function Sidebar({
     return (
       <aside
         key="sidebar-mini"
-        className="p5-sidebar-swap flex flex-col items-center h-full w-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#3D2933] select-none overflow-hidden"
+        className="p5-sidebar-swap flex flex-col items-center h-full w-full bg-[#FBF9F6] dark:bg-[#1E241C] border-r-2 border-[#E3E1DC] dark:border-[#364032] select-none overflow-hidden"
       >
         {/* Compact Minimized Top Controls */}
-        <div className="pt-safe-3 w-full px-2 pb-2.5 flex flex-col items-center gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218] shrink-0">
+        <div className="pt-safe-3 w-full px-2 pb-2.5 flex flex-col items-center gap-2 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#1E241C] shrink-0">
           <button
             type="button"
             onClick={onToggleMinimize}
             aria-label="Perluas sidebar"
             title="Perluas sidebar (Ctrl+B)"
-            className="h-10 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#F4EFE6] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0"
+            className="h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#F2F2F2] bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0"
           >
             <PanelLeftOpen className="w-5 h-5" />
           </button>
@@ -177,7 +177,7 @@ export function Sidebar({
             onClick={onOpenDrawer}
             aria-label="Buka menu navigasi"
             title="Menu Tolk by Lunola"
-            className="h-10 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#F4EFE6] bg-[#FFFDF9] hover:bg-[#FDF2F4] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
+            className="h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#F2F2F2] bg-[#FBF9F6] hover:bg-[#FCEAEA] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
           >
             <img
               src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
@@ -191,7 +191,7 @@ export function Sidebar({
             onClick={onQuickSearch}
             aria-label={t(lang, 'searchPlaceholder')}
             title="Cari chat (Ctrl+K)"
-            className="h-9 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#F4EFE6] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+            className="h-9 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -212,10 +212,10 @@ export function Sidebar({
                 onClick={() => onSelectChat(chat.id)}
                 title={chat.title}
                 aria-label={chat.title}
-                className={`relative p-1 rounded-[5px] border-2 brutal-press flex items-center justify-center shrink-0 ${
+                className={`relative p-1 rounded-2xl border brutal-press flex items-center justify-center shrink-0 ${
                   isSelected
-                    ? 'bg-[#8B112B] border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm'
-                    : 'bg-transparent border-transparent hover:border-[#111111] dark:hover:border-[#8B112B] hover:bg-[#FDF2F4] dark:hover:bg-[#26161E]'
+                    ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm'
+                    : 'bg-transparent border-transparent hover:border-[#E3E1DC] dark:hover:border-[#D96868] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]'
                 }`}
               >
                 <Avatar
@@ -228,10 +228,10 @@ export function Sidebar({
                 />
                 {showUnread && (
                   <span
-                    className={`p5-skew p5-reaction-pop absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-mono font-bold tabular-nums flex items-center justify-center border border-[#111111] ${
+                    className={`p5-skew p5-reaction-pop absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-mono font-bold tabular-nums flex items-center justify-center border border-[#E3E1DC] ${
                       isSelected
-                        ? 'bg-[#FFFDF9] text-[#8B112B]'
-                        : 'bg-[#8B112B] text-[#FFFDF9]'
+                        ? 'bg-[#FBF9F6] text-[#D96868]'
+                        : 'bg-[#D96868] text-[#FBF9F6]'
                     }`}
                   >
                     <span className="p5-unskew">
@@ -245,13 +245,13 @@ export function Sidebar({
         </div>
 
         {/* Compact Compose Action */}
-        <div className="pt-3 pb-safe-3 w-full px-2 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] flex justify-center shrink-0">
+        <div className="pt-3 pb-safe-3 w-full px-2 border-t-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] flex justify-center shrink-0">
           <button
             type="button"
             onClick={onOpenNewChat}
             aria-label={t(lang, 'newChat')}
             title={t(lang, 'newChat')}
-            className="h-11 w-11 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center"
+            className="h-11 w-11 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center"
           >
             <Edit3 className="w-4 h-4" />
           </button>
@@ -263,22 +263,22 @@ export function Sidebar({
   return (
     <aside
       key="sidebar-full"
-      className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#3D2933] select-none overflow-hidden"
+      className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FBF9F6] dark:bg-[#1E241C] border-r-2 border-[#E3E1DC] dark:border-[#364032] select-none overflow-hidden"
     >
       {/* Top Neo-Brutalist Brand & Search Header */}
-      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218]">
+      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#1E241C]">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={onOpenDrawer}
               aria-label="Buka menu navigasi"
-              className="h-10 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#F4EFE6] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+              className="h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#F2F2F2] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="h-10 px-2.5 py-1 rounded-[4px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm flex items-center min-w-0">
+            <div className="h-10 px-2.5 py-1 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm flex items-center min-w-0">
               <img
                 src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
                 alt="Tolk by Lunola"
@@ -292,14 +292,14 @@ export function Sidebar({
             onClick={onToggleMinimize}
             aria-label="Perkecil sidebar"
             title="Perkecil sidebar (Ctrl+B)"
-            className="hidden md:flex h-10 w-10 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#F4EFE6] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
+            className="hidden md:flex h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press items-center justify-center shrink-0"
           >
             <PanelLeftClose className="w-4 h-4" />
           </button>
         </div>
 
         <div className="relative">
-          <Search className="w-4 h-4 text-[#52494D] dark:text-[#C9B8BE] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[#5E645C] dark:text-[#B7C0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             ref={searchInputRef}
             type="text"
@@ -307,14 +307,14 @@ export function Sidebar({
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t(lang, 'searchPlaceholder')}
             aria-label={t(lang, 'searchPlaceholder')}
-            className="w-full h-10 pl-9 pr-8 rounded-[4px] bg-[#F4EFE6] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] placeholder:text-[#6E6367] dark:placeholder:text-[#9F8B92] focus:outline-none focus:border-[#8B112B] dark:focus:border-[#D62849] transition-colors"
+            className="w-full h-10 pl-9 pr-8 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] placeholder:text-[#787F75] dark:placeholder:text-[#8F9A8A] focus:outline-none focus:border-[#D96868] dark:focus:border-[#D96868] transition-colors"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
               aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#52494D] hover:text-[#8B112B]"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5E645C] hover:text-[#D96868]"
             >
               <X className="w-4 h-4" />
             </button>
@@ -336,7 +336,7 @@ export function Sidebar({
       />
 
       {/* Persona 5 Skewed Folder Tabs */}
-      <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14]">
+      <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17]">
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
           const badge = unreadByFolder[folder.key];
@@ -345,10 +345,10 @@ export function Sidebar({
               key={folder.key}
               type="button"
               onClick={() => onSelectFolder(folder.key)}
-              className={`p5-skew brutal-press px-2.5 py-1 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 border-2 shrink-0 ${
+              className={`p5-skew brutal-press px-2.5 py-1 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 border shrink-0 ${
                 isActive
-                  ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm p5-slash-btn'
-                  : 'bg-[#FFFDF9] dark:bg-[#1D1720] text-[#111111] dark:text-[#E7DDE0] border-[#111111]/25 dark:border-[#4A313C] hover:border-[#8B112B]'
+                  ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm p5-slash-btn'
+                  : 'bg-[#FBF9F6] dark:bg-[#252C22] text-[#252A24] dark:text-[#E2E6DF] border-[#252A24]/25 dark:border-[#3C4738] hover:border-[#D96868]'
               }`}
             >
               <span className="p5-unskew flex items-center gap-1">
@@ -357,7 +357,7 @@ export function Sidebar({
                 {badge > 0 && (
                   <span
                     className={`font-mono text-[10px] font-bold tabular-nums ${
-                      isActive ? 'text-[#FCE4E9]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+                      isActive ? 'text-[#F9DADA]' : 'text-[#D96868] dark:text-[#E58383]'
                     }`}
                   >
                     {badge}
@@ -373,10 +373,10 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto thin-scrollbar p-2 pb-20 space-y-1.5">
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <p className="font-display font-bold text-base text-[#111111] dark:text-[#F4EFE6]">
+            <p className="font-display font-bold text-base text-[#252A24] dark:text-[#F2F2F2]">
               {lang === 'en' ? 'No conversations found' : 'Tidak ada percakapan ditemukan'}
             </p>
-            <p className="mt-1 text-xs text-[#6E6367] dark:text-[#A9959C]">
+            <p className="mt-1 text-xs text-[#787F75] dark:text-[#8F9A8A]">
               {lang === 'en'
                 ? 'Try another keyword or start a new chat.'
                 : 'Coba kata kunci lain atau mulai obrolan baru.'}
@@ -437,10 +437,10 @@ export function Sidebar({
                 key={chat.id}
                 type="button"
                 onClick={() => onSelectChat(chat.id)}
-                className={`p5-row-motion w-full px-2.5 py-2.5 rounded-[4px] flex items-center gap-3 text-left border-2 ${
+                className={`p5-row-motion w-full px-2.5 py-2.5 rounded-xl flex items-center gap-3 text-left border ${
                   isSelected
-                    ? 'bg-[#8B112B] text-[#FFFDF9] border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm'
-                    : 'bg-[#FFFDF9] dark:bg-[#1B161E] text-[#111111] dark:text-[#F4EFE6] border-transparent hover:border-[#111111] dark:hover:border-[#8B112B] hover:bg-[#FDF2F4] dark:hover:bg-[#26161E]'
+                    ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm'
+                    : 'bg-[#FBF9F6] dark:bg-[#252C22] text-[#252A24] dark:text-[#F2F2F2] border-transparent hover:border-[#E3E1DC] dark:hover:border-[#D96868] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]'
                 }`}
               >
                 <Avatar
@@ -458,14 +458,14 @@ export function Sidebar({
                       {chat.type === 'channel' && (
                         <Radio
                           className={`w-3.5 h-3.5 shrink-0 ${
-                            isSelected ? 'text-[#FCE4E9]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+                            isSelected ? 'text-[#F9DADA]' : 'text-[#D96868] dark:text-[#E58383]'
                           }`}
                         />
                       )}
                       {chat.type === 'group' && (
                         <Users
                           className={`w-3.5 h-3.5 shrink-0 ${
-                            isSelected ? 'text-[#FCE4E9]' : 'text-[#52494D] dark:text-[#C9B8BE]'
+                            isSelected ? 'text-[#F9DADA]' : 'text-[#5E645C] dark:text-[#B7C0B3]'
                           }`}
                         />
                       )}
@@ -475,7 +475,7 @@ export function Sidebar({
                       {chat.isMutedByUser && (
                         <BellOff
                           className={`w-3 h-3 shrink-0 ${
-                            isSelected ? 'text-[#FCE4E9]/80' : 'text-[#6E6367]'
+                            isSelected ? 'text-[#F9DADA]/80' : 'text-[#787F75]'
                           }`}
                         />
                       )}
@@ -493,13 +493,13 @@ export function Sidebar({
                         isReadByPeer ? (
                           <CheckCheck
                             className={`w-3.5 h-3.5 ${
-                              isSelected ? 'text-[#FFFDF9]' : 'text-[#8B112B] dark:text-[#FF5C7A]'
+                              isSelected ? 'text-[#FBF9F6]' : 'text-[#6A994E] dark:text-[#8FA86C]'
                             }`}
                           />
                         ) : (
                           <Check
                             className={`w-3.5 h-3.5 ${
-                              isSelected ? 'text-[#FCE4E9]/80' : 'text-[#6E6367]'
+                              isSelected ? 'text-[#F9DADA]/80' : 'text-[#787F75]'
                             }`}
                           />
                         )
@@ -508,8 +508,8 @@ export function Sidebar({
                         <span
                           className={`font-mono text-[11px] tabular-nums ${
                             isSelected
-                              ? 'text-[#FCE4E9]'
-                              : 'text-[#6E6367] dark:text-[#A9959C]'
+                              ? 'text-[#F9DADA]'
+                              : 'text-[#787F75] dark:text-[#8F9A8A]'
                           }`}
                         >
                           {formatChatListTime(lastMsg.createdAt)}
@@ -523,16 +523,16 @@ export function Sidebar({
                       className={`flex items-center gap-1 text-xs truncate ${
                         typingIds.length > 0
                           ? isSelected
-                            ? 'text-[#FFFDF9] font-semibold'
-                            : 'text-[#8B112B] dark:text-[#FF5C7A] font-semibold'
+                            ? 'text-[#FBF9F6] font-semibold'
+                            : 'text-[#6A994E] dark:text-[#8FA86C] font-semibold'
                           : isSelected
-                            ? 'text-[#FCE4E9]'
-                            : 'text-[#52494D] dark:text-[#B9A7AE]'
+                            ? 'text-[#F9DADA]'
+                            : 'text-[#5E645C] dark:text-[#A3AD9E]'
                       }`}
                     >
                       {draftText && !isSelected && typingIds.length === 0 ? (
                         <span className="truncate">
-                          <span className="text-[#8B112B] dark:text-[#FF5C7A] font-bold">
+                          <span className="text-[#D96868] dark:text-[#E58383] font-bold">
                             {t(lang, 'draft')}:{' '}
                           </span>
                           {draftText}
@@ -549,18 +549,18 @@ export function Sidebar({
                       {chat.isPinnedByUser && !showUnread && (
                         <Pin
                           className={`w-3 h-3 rotate-45 ${
-                            isSelected ? 'text-[#FCE4E9]' : 'text-[#6E6367]'
+                            isSelected ? 'text-[#F9DADA]' : 'text-[#787F75]'
                           }`}
                         />
                       )}
                       {showUnread && (
                         <span
-                          className={`p5-skew p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center border border-[#111111] ${
+                          className={`p5-skew p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center border border-[#E3E1DC] ${
                             isSelected
-                              ? 'bg-[#FFFDF9] text-[#8B112B]'
+                              ? 'bg-[#FBF9F6] text-[#D96868]'
                               : chat.isMutedByUser
-                                ? 'bg-[#E7E0D8] dark:bg-[#3A2F36] text-[#111111] dark:text-[#F4EFE6]'
-                                : 'bg-[#8B112B] text-[#FFFDF9]'
+                                ? 'bg-[#E7E0D8] dark:bg-[#3A2F36] text-[#252A24] dark:text-[#F2F2F2]'
+                                : 'bg-[#D96868] text-[#FBF9F6]'
                           }`}
                         >
                           <span className="p5-unskew">
@@ -584,7 +584,7 @@ export function Sidebar({
         onClick={onOpenNewChat}
         aria-label={t(lang, 'newChat')}
         title={t(lang, 'newChat')}
-        className="absolute bottom-5 right-5 h-12 w-12 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow brutal-press p5-slash-btn flex items-center justify-center z-20"
+        className="absolute bottom-5 right-5 h-12 w-12 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow brutal-press p5-slash-btn flex items-center justify-center z-20"
       >
         <Edit3 className="w-5 h-5" />
       </button>

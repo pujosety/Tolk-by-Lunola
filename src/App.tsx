@@ -1079,15 +1079,15 @@ export function App() {
 
   if (bootstrapping) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#111111] dark:text-[#F4EFE6] px-6">
-        <div className="p5-impact-slam px-7 py-6 rounded-[6px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg flex flex-col items-center">
+      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2] px-6">
+        <div className="p5-impact-slam px-7 py-6 rounded-3xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex flex-col items-center">
           <img
             src="/assets/aistudio/tolk-stacked_d5d93707.svg"
             alt="Tolk by Lunola"
             className="h-32 w-auto object-contain select-none"
           />
         </div>
-        <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#52494D] dark:text-[#C9B8BE] p5-panel-reveal">
+        <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#5E645C] dark:text-[#B7C0B3] p5-panel-reveal">
           {t(lang, 'connecting')}
         </p>
       </div>
@@ -1096,16 +1096,16 @@ export function App() {
 
   if (bootError) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-[#F6F2EB] dark:bg-[#0D0B0E] text-[#111111] dark:text-[#F4EFE6] px-6 text-center">
-        <div className="p-6 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow max-w-sm">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-[#F2F2F2] dark:bg-[#151914] text-[#252A24] dark:text-[#F2F2F2] px-6 text-center">
+        <div className="p-6 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow max-w-sm">
           <p className="font-display font-extrabold text-xl">Gagal memuat Tolk by Lunola</p>
-          <p className="mt-1 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+          <p className="mt-1 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
             {bootError}
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm brutal-press text-xs font-bold"
+            className="mt-4 px-4 py-2 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm brutal-press text-xs font-bold"
           >
             Muat Ulang
           </button>
@@ -1116,7 +1116,7 @@ export function App() {
 
   if (!currentUser || !token) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#111111] dark:text-[#F4EFE6]">
+      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2]">
         <AuthModal
           open={true}
           closable={false}
@@ -1138,18 +1138,18 @@ export function App() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#F6F2EB] dark:bg-[#0D0B0E]">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#F2F2F2] dark:bg-[#151914]">
       {/* Offline Indicator (PWA) */}
       {!isOnline && (
-        <div className="p5-panel-reveal px-4 py-1.5 bg-[#111111] text-[#FFFDF9] border-b-2 border-[#8B112B] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
-          <WifiOff className="w-3.5 h-3.5 text-[#FF5C7A]" />
+        <div className="p5-panel-reveal px-4 py-1.5 bg-[#252A24] text-[#FBF9F6] border-b-2 border-[#D96868] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
+          <WifiOff className="w-3.5 h-3.5 text-[#E58383]" />
           <span>{t(lang, 'offlineBanner')}</span>
         </div>
       )}
 
       {/* Maintenance Notice */}
       {settings?.maintenanceMode && (
-        <div className="p5-panel-reveal px-4 py-1.5 bg-amber-500 text-[#111111] border-b-2 border-[#111111] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
+        <div className="p5-panel-reveal px-4 py-1.5 bg-amber-500 text-[#252A24] border-b-2 border-[#E3E1DC] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>Mode Maintenance sedang aktif — beberapa fungsi mungkin dibatasi sementara.</span>
         </div>
@@ -1160,7 +1160,7 @@ export function App() {
         <div
           className={`${
             globalBannerPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-1.5 bg-[#8B112B] text-[#FFFDF9] border-b-2 border-[#111111] text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-30`}
+          } px-4 py-1.5 bg-[#D96868] text-[#FBF9F6] border-b-2 border-[#E3E1DC] text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-30`}
         >
           <div className="flex items-center gap-2 min-w-0">
             <Megaphone className="w-3.5 h-3.5 shrink-0" />
@@ -1170,7 +1170,7 @@ export function App() {
             type="button"
             onClick={() => setDismissedAnnouncement(settings.globalAnnouncement)}
             aria-label="Tutup pengumuman"
-            className="p-0.5 hover:bg-white/15 rounded-[2px] brutal-press"
+            className="p-0.5 hover:bg-white/15 rounded-md brutal-press"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -1278,19 +1278,19 @@ export function App() {
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
-              <div className="p5-impact-slam px-6 py-6 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg max-w-sm flex flex-col items-center">
-                <div className="px-4 py-3 mb-3 rounded-[4px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm">
+              <div className="p5-impact-slam px-6 py-6 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg max-w-sm flex flex-col items-center">
+                <div className="px-4 py-3 mb-3 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm">
                   <img
                     src="/assets/aistudio/tolk-stacked_d5d93707.svg"
                     alt="Tolk by Lunola"
                     className="h-24 w-auto object-contain select-none"
                   />
                 </div>
-                <h2 className="font-display font-extrabold text-xl text-[#111111] dark:text-[#F4EFE6]">
+                <h2 className="font-display font-extrabold text-xl text-[#252A24] dark:text-[#F2F2F2]">
                   Pilih percakapan untuk mulai
                 </h2>
-                <p className="mt-1.5 text-xs text-[#52494D] dark:text-[#B9A7AE] leading-relaxed">
-                  Gunakan <span className="font-mono font-bold text-[#8B112B] dark:text-[#FF5C7A]">Ctrl + K</span> untuk mencari cepat, <span className="font-mono font-bold text-[#8B112B] dark:text-[#FF5C7A]">Ctrl + B</span> untuk memperkecil sidebar, atau mulai panggilan WebRTC.
+                <p className="mt-1.5 text-xs text-[#5E645C] dark:text-[#A3AD9E] leading-relaxed">
+                  Gunakan <span className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">Ctrl + K</span> untuk mencari cepat, <span className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">Ctrl + B</span> untuk memperkecil sidebar, atau mulai panggilan WebRTC.
                 </p>
               </div>
             </div>
@@ -1548,7 +1548,7 @@ export function App() {
           key={toastRetained.renderedValue}
           className={`${
             toastRetained.closing ? 'p5-toast-out pointer-events-none' : 'p5-toast-impact'
-          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-[4px] bg-[#111111] dark:bg-[#8B112B] border-2 border-[#8B112B] dark:border-[#F4EFE6] text-[#F4EFE6] text-xs font-bold brutal-shadow-sm`}
+          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-xl bg-[#252A24] dark:bg-[#D96868] border border-[#D96868] dark:border-[#F2F2F2] text-[#F2F2F2] text-xs font-bold brutal-shadow-sm`}
         >
           {toastRetained.renderedValue}
         </div>

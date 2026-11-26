@@ -17,7 +17,7 @@ export function QrCodeBox({
     QRCode.toDataURL(value, {
       width: size,
       margin: 2,
-      color: { dark: '#111111', light: '#FFFDF9' },
+      color: { dark: '#111111', light: '#FBF9F6' },
     })
       .then((url) => {
         if (active) setDataUrl(url);
@@ -29,23 +29,23 @@ export function QrCodeBox({
   }, [value, size]);
 
   return (
-    <div className="inline-flex flex-col items-center gap-2 p-3 rounded-[4px] bg-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm">
+    <div className="inline-flex flex-col items-center gap-2 p-3 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm">
       {dataUrl ? (
         <img
           src={dataUrl}
           alt={label || 'QR Code'}
           width={size}
           height={size}
-          className="rounded-[2px] block border border-[#111111]/20"
+          className="rounded-md block border border-[#252A24]/20"
         />
       ) : (
         <div
           style={{ width: size, height: size }}
-          className="rounded-[2px] bg-[#EDE5D9] animate-pulse"
+          className="rounded-md bg-[#EDE5D9] animate-pulse"
         />
       )}
       {label && (
-        <span className="font-mono text-[11px] font-bold text-[#8B112B] max-w-[180px] truncate">
+        <span className="font-mono text-[11px] font-bold text-[#D96868] max-w-[180px] truncate">
           {label}
         </span>
       )}

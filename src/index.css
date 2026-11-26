@@ -6,17 +6,20 @@
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-maroon-50: #FDF2F4;
-  --color-maroon-100: #FCE4E9;
-  --color-maroon-200: #F8C5D0;
-  --color-maroon-500: #A81737;
-  --color-maroon-600: #8B112B;
-  --color-maroon-700: #6E0C21;
-  --color-maroon-800: #520919;
-  --color-maroon-900: #3A0612;
-  --color-ink: #111111;
-  --color-paper: #F6F2EB;
-  --color-cream: #FFFDF9;
+  --color-maroon-50: #FCEAEA;
+  --color-maroon-100: #F9DADA;
+  --color-maroon-200: #F2BABA;
+  --color-maroon-500: #E58383;
+  --color-maroon-600: #D96868;
+  --color-maroon-700: #C45454;
+  --color-maroon-800: #A84242;
+  --color-maroon-900: #7D2E2E;
+  --color-sage-100: #EEF3E6;
+  --color-sage-500: #8FA86C;
+  --color-sage-600: #6A994E;
+  --color-ink: #252A24;
+  --color-paper: #F2F2F2;
+  --color-cream: #FBF9F6;
 }
 
 :root {
@@ -47,101 +50,112 @@
   }
 }
 
-/* Persona 5 x Neo-Brutalism comic halftone + diagonal energy canvas */
+/* 3D Pastel Claymorphism soft sculpted ambient canvas */
 .chat-canvas-bg {
-  background-color: #F4EFE6;
+  background-color: #F2F2F2;
   background-image:
-    radial-gradient(rgba(126, 25, 50, 0.14) 1.25px, transparent 1.25px),
-    repeating-linear-gradient(
-      -28deg,
-      rgba(17, 17, 17, 0.025) 0px,
-      rgba(17, 17, 17, 0.025) 14px,
-      transparent 14px,
-      transparent 42px
-    );
-  background-size: 20px 20px, 100% 100%;
+    radial-gradient(circle at 14% 18%, rgba(217, 104, 104, 0.08) 0%, transparent 42%),
+    radial-gradient(circle at 86% 22%, rgba(143, 168, 108, 0.11) 0%, transparent 45%),
+    radial-gradient(circle at 52% 88%, rgba(106, 153, 78, 0.07) 0%, transparent 48%);
   transition: background-color 280ms var(--ease-p5-smooth);
 }
 
 .dark .chat-canvas-bg {
-  background-color: #0D0B0E;
+  background-color: #151914;
   background-image:
-    radial-gradient(rgba(214, 40, 73, 0.18) 1.25px, transparent 1.25px),
-    repeating-linear-gradient(
-      -28deg,
-      rgba(126, 25, 50, 0.09) 0px,
-      rgba(126, 25, 50, 0.09) 14px,
-      transparent 14px,
-      transparent 46px
-    );
-  background-size: 20px 20px, 100% 100%;
+    radial-gradient(circle at 14% 18%, rgba(217, 104, 104, 0.08) 0%, transparent 42%),
+    radial-gradient(circle at 86% 22%, rgba(143, 168, 108, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 52% 88%, rgba(106, 153, 78, 0.08) 0%, transparent 48%);
 }
 
-/* Neo-Brutalist hard offset shadows */
+/* 3D Pastel Claymorphism sculpted shadows + inner highlight */
 .brutal-shadow-sm {
-  box-shadow: 2px 2px 0px #111111;
+  box-shadow:
+    0 3px 10px rgba(37, 42, 36, 0.07),
+    0 1px 3px rgba(37, 42, 36, 0.05),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.8);
 }
 .dark .brutal-shadow-sm {
-  box-shadow: 2px 2px 0px #000000;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.32),
+    0 1px 3px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.07);
 }
 
 .brutal-shadow {
-  box-shadow: 3px 3px 0px #111111;
+  box-shadow:
+    0 8px 20px rgba(37, 42, 36, 0.09),
+    0 2px 6px rgba(37, 42, 36, 0.05),
+    inset 0 2px 3px rgba(255, 255, 255, 0.85);
 }
 .dark .brutal-shadow {
-  box-shadow: 3px 3px 0px #000000;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.38),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.08);
 }
 
 .brutal-shadow-maroon {
-  box-shadow: 4px 4px 0px #7E1932;
+  box-shadow:
+    0 8px 22px rgba(217, 104, 104, 0.22),
+    0 2px 6px rgba(106, 153, 78, 0.12),
+    inset 0 2px 3px rgba(255, 255, 255, 0.7);
 }
 .dark .brutal-shadow-maroon {
-  box-shadow: 4px 4px 0px #8B112B;
+  box-shadow:
+    0 8px 22px rgba(217, 104, 104, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.08);
 }
 
 .brutal-shadow-lg {
-  box-shadow: 6px 6px 0px #111111;
+  box-shadow:
+    0 18px 40px rgba(37, 42, 36, 0.12),
+    0 6px 14px rgba(37, 42, 36, 0.06),
+    inset 0 2px 4px rgba(255, 255, 255, 0.9);
 }
 .dark .brutal-shadow-lg {
-  box-shadow: 6px 6px 0px #8B112B;
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.48),
+    0 6px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.08);
 }
 
-/* Smooth springy hover lift + mechanical tactile slam */
+/* Smooth 3D clay hover lift + soft tactile press */
 .brutal-press {
   transition:
-    transform 190ms var(--ease-p5-snap),
-    box-shadow 190ms var(--ease-p5-smooth),
+    transform 200ms var(--ease-p5-smooth),
+    box-shadow 200ms var(--ease-p5-smooth),
     background-color 180ms ease,
     border-color 180ms ease,
     color 180ms ease;
   will-change: transform;
 }
 .brutal-press:hover:not(:disabled) {
-  transform: translate(-1.5px, -1.5px);
+  transform: translateY(-1.5px);
 }
 .brutal-press:active:not(:disabled) {
-  transform: translate(2px, 2px) scale(0.985);
-  box-shadow: 0px 0px 0px #111111 !important;
-  transition-duration: 75ms;
+  transform: translateY(1px) scale(0.975);
+  transition-duration: 90ms;
 }
 
-/* Persona 5 kinetic card hover for chat rows & tiles */
+/* Soft 3D card hover for chat rows & tiles */
 .p5-row-motion {
   transition:
-    transform 210ms var(--ease-p5-snap),
-    box-shadow 210ms var(--ease-p5-smooth),
+    transform 200ms var(--ease-p5-smooth),
+    box-shadow 200ms var(--ease-p5-smooth),
     background-color 180ms ease,
     border-color 180ms ease;
 }
 .p5-row-motion:hover {
-  transform: translateX(3px);
+  transform: translateY(-1px);
 }
 .p5-row-motion:active {
-  transform: translate(1.5px, 1.5px) scale(0.99);
-  transition-duration: 75ms;
+  transform: scale(0.985);
+  transition-duration: 85ms;
 }
 
-/* Persona 5 diagonal slash wipe sheen on hero buttons & badges */
+/* Soft specular sheen on primary 3D pastel buttons */
 @layer components {
   .p5-slash-btn {
     position: relative;
@@ -152,39 +166,38 @@
     position: absolute;
     top: -30%;
     left: -130%;
-    width: 60%;
+    width: 55%;
     height: 160%;
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 253, 249, 0.34) 48%,
-      rgba(255, 253, 249, 0.08) 100%
+      rgba(255, 255, 255, 0.28) 50%,
+      transparent 100%
     );
-    transform: skewX(-24deg);
+    transform: skewX(-20deg);
     pointer-events: none;
-    transition: left 460ms var(--ease-p5-smooth);
+    transition: left 500ms var(--ease-p5-smooth);
   }
   .p5-slash-btn:hover::after {
     left: 145%;
   }
 }
 
-/* Persona 5 diagonal graphic slash backdrop for brand headers */
+/* 3D Pastel Sculpted Coral-Sage Header Banner */
 .p5-maroon-banner {
-  background-color: #7E1932;
+  background-color: #D96868;
   background-image:
-    linear-gradient(115deg, rgba(17, 17, 17, 0.34) 0%, rgba(17, 17, 17, 0.34) 28%, transparent 28.2%),
-    radial-gradient(rgba(255, 253, 249, 0.14) 1px, transparent 1px);
-  background-size: 100% 100%, 10px 10px;
+    radial-gradient(circle at 85% 18%, rgba(143, 168, 108, 0.45) 0%, transparent 55%),
+    linear-gradient(135deg, #D96868 0%, #DF7A7A 58%, #8FA86C 100%);
+  box-shadow: inset 0 -2px 6px rgba(37, 42, 36, 0.08);
 }
 
-/* Persona 5 subtle dynamic skew badge/ribbon */
+/* Smooth rounded pill (replaces comic skew) */
 .p5-skew {
-  transform: skewX(-8deg);
+  border-radius: 9999px;
 }
 .p5-unskew {
-  display: inline-block;
-  transform: skewX(8deg);
+  display: inline-flex;
 }
 
 /* =========================================================
@@ -203,45 +216,33 @@
 @keyframes p5ModalImpact {
   0% {
     opacity: 0;
-    transform: translateY(18px) scale(0.93) skewX(-2.5deg);
-  }
-  65% {
-    opacity: 1;
-    transform: translateY(-2px) scale(1.012) skewX(0.4deg);
+    transform: translateY(14px) scale(0.96);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1) skewX(0deg);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes p5DrawerSlideLeft {
   0% {
     opacity: 0.4;
-    transform: translateX(-100%) skewX(-3deg);
-  }
-  70% {
-    opacity: 1;
-    transform: translateX(4px) skewX(0.4deg);
+    transform: translateX(-100%);
   }
   100% {
     opacity: 1;
-    transform: translateX(0) skewX(0deg);
+    transform: translateX(0);
   }
 }
 
 @keyframes p5DrawerSlideRight {
   0% {
     opacity: 0.4;
-    transform: translateX(100%) skewX(3deg);
-  }
-  70% {
-    opacity: 1;
-    transform: translateX(-4px) skewX(-0.4deg);
+    transform: translateX(100%);
   }
   100% {
     opacity: 1;
-    transform: translateX(0) skewX(0deg);
+    transform: translateX(0);
   }
 }
 

@@ -67,21 +67,21 @@ function ModalShell({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#111111]/65 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#252A24]/65 backdrop-blur-[2px]`}
         onClick={closable ? onClose : undefined}
       />
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full ${maxWidth} max-h-[88dvh] flex flex-col rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full ${maxWidth} max-h-[88dvh] flex flex-col rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="flex items-start justify-between px-5 py-4 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] shrink-0">
+        <div className="flex items-start justify-between px-5 py-4 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] shrink-0">
           <div>
-            <h2 className="font-display font-extrabold text-xl leading-tight text-[#111111] dark:text-[#F4EFE6]">
+            <h2 className="font-display font-extrabold text-xl leading-tight text-[#252A24] dark:text-[#F2F2F2]">
               {title}
             </h2>
             {subtitle && (
-              <p className="mt-0.5 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+              <p className="mt-0.5 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
                 {subtitle}
               </p>
             )}
@@ -91,7 +91,7 @@ function ModalShell({
               type="button"
               onClick={onClose}
               aria-label="Tutup dialog"
-              className="h-8 w-8 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-press flex items-center justify-center shrink-0"
+              className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-press flex items-center justify-center shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -168,7 +168,7 @@ export function AuthModal({
       onClose={onClose}
     >
       <div className="flex items-center justify-center mb-4">
-        <div className="px-3.5 py-2 rounded-[4px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm flex items-center gap-2.5">
+        <div className="px-3.5 py-2 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm flex items-center gap-2.5">
           <img
             src="/assets/aistudio/tolk-symbol_95df402c.svg"
             alt="Tolk symbol"
@@ -182,17 +182,17 @@ export function AuthModal({
         </div>
       </div>
 
-      <div className="flex rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] p-1 mb-4 gap-1">
+      <div className="flex rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1 mb-4 gap-1">
         <button
           type="button"
           onClick={() => {
             setMode('register');
             setError('');
           }}
-          className={`flex-1 py-1.5 rounded-[3px] text-xs font-bold transition-colors ${
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
             mode === 'register'
-              ? 'bg-[#8B112B] text-white'
-              : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+              ? 'bg-[#D96868] text-white'
+              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
           }`}
         >
           Daftar Baru
@@ -203,10 +203,10 @@ export function AuthModal({
             setMode('login');
             setError('');
           }}
-          className={`flex-1 py-1.5 rounded-[3px] text-xs font-bold transition-colors ${
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
             mode === 'login'
-              ? 'bg-[#8B112B] text-white'
-              : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+              ? 'bg-[#D96868] text-white'
+              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
           }`}
         >
           Masuk Akun
@@ -217,7 +217,7 @@ export function AuthModal({
         {mode === 'register' && (
           <>
             <div>
-              <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
                 Nama Tampilan
               </label>
               <input
@@ -227,11 +227,11 @@ export function AuthModal({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Masukkan nama tampilan"
-                className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
                 Email (opsional)
               </label>
               <input
@@ -240,14 +240,14 @@ export function AuthModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Masukkan alamat email"
-                className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
               />
             </div>
           </>
         )}
 
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             {mode === 'login' ? 'Username atau Email' : 'Username'}
           </label>
           <input
@@ -257,12 +257,12 @@ export function AuthModal({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Kata Sandi
           </label>
           <div className="relative">
@@ -274,13 +274,13 @@ export function AuthModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full h-10 pl-3 pr-10 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+              className="w-full h-10 pl-3 pr-10 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#52494D] dark:text-[#B9A7AE] hover:text-[#8B112B] dark:hover:text-[#FF5C7A]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#D96868] dark:hover:text-[#E58383]"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -289,7 +289,7 @@ export function AuthModal({
 
         {mode === 'register' && (
           <div>
-            <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
               Bio Singkat (opsional)
             </label>
             <input
@@ -297,7 +297,7 @@ export function AuthModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tulis bio singkat"
-              className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
           </div>
         )}
@@ -307,7 +307,7 @@ export function AuthModal({
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
         >
           {busy ? 'Memproses...' : mode === 'register' ? 'Buat Akun' : 'Masuk'}
         </button>
@@ -317,8 +317,8 @@ export function AuthModal({
 }
 
 const AVATAR_COLOR_SWATCHES = [
-  '#8B112B',
-  '#520919',
+  '#D96868',
+  '#B54B4B',
   '#111111',
   '#9A3412',
   '#0F766E',
@@ -397,7 +397,7 @@ export function ProfileModal({
   const [email, setEmail] = useState(user.email || '');
   const [bio, setBio] = useState(user.bio);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl);
-  const [avatarColor, setAvatarColor] = useState<string>(user.avatarColor || '#8B112B');
+  const [avatarColor, setAvatarColor] = useState<string>(user.avatarColor || '#D96868');
   const [showQr, setShowQr] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -418,7 +418,7 @@ export function ProfileModal({
     setEmail(user.email || '');
     setBio(user.bio);
     setAvatarUrl(user.avatarUrl);
-    setAvatarColor(user.avatarColor || '#8B112B');
+    setAvatarColor(user.avatarColor || '#D96868');
     setError('');
     setCropSrc((prev) => {
       if (prev) URL.revokeObjectURL(prev);
@@ -506,9 +506,9 @@ export function ProfileModal({
 
       {/* Interactive Circular Photo Cropper */}
       {cropSrc ? (
-        <div className="mb-4 p-4 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] space-y-3">
+        <div className="mb-4 p-4 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-display font-extrabold text-[#111111] dark:text-[#F4EFE6]">
+            <span className="text-xs font-display font-extrabold text-[#252A24] dark:text-[#F2F2F2]">
               Sesuaikan Posisi & Zoom Foto
             </span>
             <button
@@ -518,7 +518,7 @@ export function ProfileModal({
                 setCropOffsetX(0);
                 setCropOffsetY(0);
               }}
-              className="text-[11px] font-bold text-[#8B112B] dark:text-[#FF5C7A] hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#D96868] dark:text-[#E58383] hover:underline flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
@@ -546,7 +546,7 @@ export function ProfileModal({
               onPointerUp={() => {
                 dragStartRef.current = null;
               }}
-              className="relative w-44 h-44 rounded-[6px] overflow-hidden bg-[#111111] border-2 border-[#8B112B] brutal-shadow-sm cursor-grab active:cursor-grabbing touch-none select-none"
+              className="relative w-44 h-44 rounded-3xl overflow-hidden bg-[#252A24] border border-[#D96868] brutal-shadow-sm cursor-grab active:cursor-grabbing touch-none select-none"
             >
               <img
                 src={cropSrc}
@@ -561,7 +561,7 @@ export function ProfileModal({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <ZoomIn className="w-4 h-4 text-[#52494D] dark:text-[#B9A7AE] shrink-0" />
+            <ZoomIn className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E] shrink-0" />
             <input
               type="range"
               min={1}
@@ -569,14 +569,14 @@ export function ProfileModal({
               step={0.05}
               value={cropZoom}
               onChange={(e) => setCropZoom(Number(e.target.value))}
-              className="flex-1 accent-[#8B112B]"
+              className="flex-1 accent-[#D96868]"
             />
-            <span className="font-mono text-[11px] font-bold text-[#52494D] dark:text-[#B9A7AE] tabular-nums w-9 text-right">
+            <span className="font-mono text-[11px] font-bold text-[#5E645C] dark:text-[#A3AD9E] tabular-nums w-9 text-right">
               {cropZoom.toFixed(1)}x
             </span>
           </div>
 
-          <p className="text-[11px] text-[#52494D] dark:text-[#B9A7AE] text-center">
+          <p className="text-[11px] text-[#5E645C] dark:text-[#A3AD9E] text-center">
             Geser gambar di dalam bingkai untuk mengatur posisi wajah.
           </p>
 
@@ -588,7 +588,7 @@ export function ProfileModal({
                 URL.revokeObjectURL(cropSrc);
                 setCropSrc(null);
               }}
-              className="px-3 py-1.5 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-bold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#FFFDF9] dark:hover:bg-[#161218]"
+              className="px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FBF9F6] dark:hover:bg-[#1E241C]"
             >
               Batal
             </button>
@@ -596,20 +596,20 @@ export function ProfileModal({
               type="button"
               disabled={uploadingPhoto}
               onClick={() => void handleApplyCrop()}
-              className="px-3.5 py-1.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-xs font-bold disabled:opacity-50"
+              className="px-3.5 py-1.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold disabled:opacity-50"
             >
               {uploadingPhoto ? 'Mengunggah...' : 'Terapkan Foto'}
             </button>
           </div>
         </div>
       ) : (
-        <div className="mb-4 p-3.5 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] space-y-3">
+        <div className="mb-4 p-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="relative group rounded-[4px] shrink-0 focus:outline-none focus:ring-2 focus:ring-[#8B112B]"
+                className="relative group rounded-xl shrink-0 focus:outline-none focus:ring-2 focus:ring-[#D96868]"
                 title="Ganti foto profil"
               >
                 <Avatar
@@ -618,22 +618,22 @@ export function ProfileModal({
                   color={avatarColor}
                   size="lg"
                 />
-                <span className="absolute inset-0 rounded-[4px] bg-[#111111]/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                <span className="absolute inset-0 rounded-xl bg-[#252A24]/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                   <Camera className="w-5 h-5" />
                 </span>
               </button>
               <div className="min-w-0">
-                <div className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6] truncate">
+                <div className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] truncate">
                   {displayName || user.displayName}
                 </div>
-                <div className="font-mono text-xs font-bold text-[#8B112B] dark:text-[#FF5C7A]">
+                <div className="font-mono text-xs font-bold text-[#D96868] dark:text-[#E58383]">
                   @{username || user.username}
                 </div>
                 <div className="mt-1.5 flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
-                    className="text-[11px] font-bold text-[#8B112B] dark:text-[#FF5C7A] hover:underline flex items-center gap-1"
+                    className="text-[11px] font-bold text-[#D96868] dark:text-[#E58383] hover:underline flex items-center gap-1"
                   >
                     <Camera className="w-3 h-3" />
                     <span>{avatarUrl ? 'Ganti Foto' : 'Unggah Foto'}</span>
@@ -654,7 +654,7 @@ export function ProfileModal({
             <button
               type="button"
               onClick={() => setShowQr((v) => !v)}
-              className="px-2.5 py-1.5 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-bold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white flex items-center gap-1.5 shrink-0 brutal-press"
+              className="px-2.5 py-1.5 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white flex items-center gap-1.5 shrink-0 brutal-press"
             >
               <QrCode className="w-3.5 h-3.5" />
               <span>{showQr ? 'Tutup' : 'QR'}</span>
@@ -662,8 +662,8 @@ export function ProfileModal({
           </div>
 
           {/* Avatar Color Swatches */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t-2 border-[#111111]/15 dark:border-[#3D2933]">
-            <span className="text-[11px] font-semibold text-[#52494D] dark:text-[#B9A7AE]">
+          <div className="flex items-center justify-between gap-2 pt-2.5 border-t-2 border-[#252A24]/15 dark:border-[#364032]">
+            <span className="text-[11px] font-semibold text-[#5E645C] dark:text-[#A3AD9E]">
               Warna latar inisial:
             </span>
             <div className="flex items-center gap-1.5">
@@ -677,9 +677,9 @@ export function ProfileModal({
                   }}
                   aria-label={`Pilih warna ${hex}`}
                   style={{ backgroundColor: hex }}
-                  className={`w-5 h-5 rounded-[3px] border-2 border-[#111111] dark:border-[#F4EFE6] transition-transform ${
+                  className={`w-5 h-5 rounded-lg border border-[#E3E1DC] dark:border-[#F2F2F2] transition-transform ${
                     avatarColor === hex && !avatarUrl
-                      ? 'ring-2 ring-offset-2 ring-[#8B112B] dark:ring-offset-[#221B24] scale-115'
+                      ? 'ring-2 ring-offset-2 ring-[#D96868] dark:ring-offset-[#2B3328] scale-115'
                       : 'hover:scale-110'
                   }`}
                 />
@@ -697,7 +697,7 @@ export function ProfileModal({
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Nama Tampilan
           </label>
           <input
@@ -705,11 +705,11 @@ export function ProfileModal({
             required
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Username Unik
           </label>
           <input
@@ -717,11 +717,11 @@ export function ProfileModal({
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Status Singkat
           </label>
           <input
@@ -729,11 +729,11 @@ export function ProfileModal({
             value={statusText}
             onChange={(e) => setStatusText(e.target.value)}
             placeholder="Masukkan status singkat"
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Email
           </label>
           <input
@@ -741,25 +741,25 @@ export function ProfileModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Masukkan alamat email (opsional)"
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Bio
           </label>
           <textarea
             rows={2}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full p-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] resize-none focus:outline-none focus:border-[#8B112B]"
+            className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
           />
         </div>
         {error && <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{error}</p>}
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
         >
           {busy ? 'Menyimpan...' : 'Simpan Profil'}
         </button>
@@ -847,14 +847,14 @@ export function CreateChatModal({
       subtitle="Chat pribadi via @username, buat grup komunitas, atau buka channel publik."
       onClose={onClose}
     >
-      <div className="grid grid-cols-3 gap-1 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] p-1 mb-4">
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1 mb-4">
         <button
           type="button"
           onClick={() => setMode('dm')}
-          className={`py-1.5 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1 ${
+          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'dm'
-              ? 'bg-[#8B112B] text-white'
-              : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+              ? 'bg-[#D96868] text-white'
+              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
           }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -863,10 +863,10 @@ export function CreateChatModal({
         <button
           type="button"
           onClick={() => setMode('group')}
-          className={`py-1.5 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1 ${
+          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'group'
-              ? 'bg-[#8B112B] text-white'
-              : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+              ? 'bg-[#D96868] text-white'
+              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -875,10 +875,10 @@ export function CreateChatModal({
         <button
           type="button"
           onClick={() => setMode('channel')}
-          className={`py-1.5 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1 ${
+          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'channel'
-              ? 'bg-[#8B112B] text-white'
-              : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+              ? 'bg-[#D96868] text-white'
+              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
           }`}
         >
           <Radio className="w-3.5 h-3.5" />
@@ -889,13 +889,13 @@ export function CreateChatModal({
       {mode === 'dm' ? (
         <div className="space-y-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-[#52494D] dark:text-[#B9A7AE] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau @username..."
-              className="w-full h-10 pl-9 pr-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+              className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
           </div>
           <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-1">
@@ -913,14 +913,14 @@ export function CreateChatModal({
                     setBusy(false);
                   }
                 }}
-                className="w-full p-2.5 rounded-[4px] border-2 border-transparent hover:border-[#111111] dark:hover:border-[#4A313C] flex items-center gap-3 hover:bg-[#F6F2EB] dark:hover:bg-[#221B24] text-left"
+                className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
               >
                 <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-[#111111] dark:text-[#F4EFE6] truncate">
+                  <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
                     {u.displayName}
                   </div>
-                  <div className="text-xs font-mono text-[#8B112B] dark:text-[#FF5C7A] truncate">
+                  <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
                     @{u.username}
                   </div>
                 </div>
@@ -931,7 +931,7 @@ export function CreateChatModal({
       ) : (
         <form onSubmit={handleSubmitGroupOrChannel} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
               {mode === 'group' ? 'Nama Grup' : 'Nama Channel Publik'}
             </label>
             <input
@@ -940,11 +940,11 @@ export function CreateChatModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={mode === 'group' ? 'Masukkan nama grup' : 'Masukkan nama channel'}
-              className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
               Tautan Undangan (@handle)
             </label>
             <input
@@ -952,11 +952,11 @@ export function CreateChatModal({
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               placeholder="Masukkan username handle"
-              className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
               Deskripsi
             </label>
             <textarea
@@ -964,13 +964,13 @@ export function CreateChatModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tujuan grup atau channel ini..."
-              className="w-full p-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] resize-none focus:outline-none focus:border-[#8B112B]"
+              className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
             />
           </div>
 
           {mode === 'group' && (
             <div>
-              <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1.5">
+              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1.5">
                 Pilih Anggota ({selectedMembers.length})
               </label>
               <div className="max-h-36 overflow-y-auto thin-scrollbar space-y-1">
@@ -981,10 +981,10 @@ export function CreateChatModal({
                       key={u.id}
                       type="button"
                       onClick={() => toggleMember(u.id)}
-                      className={`w-full p-2 rounded-[4px] border-2 flex items-center justify-between text-left ${
+                      className={`w-full p-2 rounded-xl border flex items-center justify-between text-left ${
                         checked
-                          ? 'bg-[#FDF2F4] dark:bg-[#2A131C] border-[#8B112B] text-[#8B112B] dark:text-[#FF5C7A]'
-                          : 'border-transparent hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]'
+                          ? 'bg-[#FCEAEA] dark:bg-[#2E2223] border-[#D96868] text-[#D96868] dark:text-[#E58383]'
+                          : 'border-transparent hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -997,10 +997,10 @@ export function CreateChatModal({
                         <span className="text-xs font-bold truncate">{u.displayName}</span>
                       </div>
                       <span
-                        className={`h-4 w-4 rounded-[3px] border-2 flex items-center justify-center ${
+                        className={`h-4 w-4 rounded-lg border flex items-center justify-center ${
                           checked
-                            ? 'bg-[#8B112B] border-[#111111] dark:border-[#F4EFE6] text-white'
-                            : 'border-[#111111]/40 dark:border-[#4A313C]'
+                            ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
+                            : 'border-[#252A24]/40 dark:border-[#3C4738]'
                         }`}
                       >
                         {checked && <Check className="w-3 h-3" />}
@@ -1016,7 +1016,7 @@ export function CreateChatModal({
           <button
             type="submit"
             disabled={busy}
-            className="w-full h-10 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+            className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
           >
             {busy ? 'Membuat...' : mode === 'group' ? 'Buat Grup' : 'Buat Channel'}
           </button>
@@ -1049,7 +1049,7 @@ export function ForwardModal({
       subtitle="Pilih percakapan tujuan untuk meneruskan pesan ini."
       onClose={onClose}
     >
-      <div className="mb-3 p-2.5 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-xs text-[#111111] dark:text-[#F4EFE6] line-clamp-2">
+      <div className="mb-3 p-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-xs text-[#252A24] dark:text-[#F2F2F2] line-clamp-2">
         {message.text || message.attachment?.name || 'Lampiran media'}
       </div>
       <div className="max-h-72 overflow-y-auto thin-scrollbar space-y-1">
@@ -1067,7 +1067,7 @@ export function ForwardModal({
                 setBusyId(null);
               }
             }}
-            className="w-full p-2.5 rounded-[4px] border-2 border-transparent hover:border-[#111111] dark:hover:border-[#4A313C] flex items-center gap-3 hover:bg-[#F6F2EB] dark:hover:bg-[#221B24] text-left"
+            className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
           >
             <Avatar
               name={chat.title}
@@ -1077,10 +1077,10 @@ export function ForwardModal({
               size="sm"
             />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#111111] dark:text-[#F4EFE6] truncate">
+              <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
                 {chat.title}
               </div>
-              <div className="text-[11px] text-[#52494D] dark:text-[#B9A7AE] capitalize">
+              <div className="text-[11px] text-[#5E645C] dark:text-[#A3AD9E] capitalize">
                 {chat.type}
               </div>
             </div>
@@ -1117,34 +1117,34 @@ export function SessionsModal({
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[#52494D] dark:text-[#B9A7AE]">
-            Total sesi aktif: <strong className="font-mono text-[#111111] dark:text-[#F4EFE6]">{sessions.length}</strong>
+          <span className="text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+            Total sesi aktif: <strong className="font-mono text-[#252A24] dark:text-[#F2F2F2]">{sessions.length}</strong>
           </span>
           <button
             type="button"
             onClick={onRefresh}
-            className="text-xs font-bold text-[#8B112B] dark:text-[#FF5C7A] hover:underline"
+            className="text-xs font-bold text-[#D96868] dark:text-[#E58383] hover:underline"
           >
             Muat ulang
           </button>
         </div>
 
         {loading ? (
-          <p className="text-xs text-[#52494D] dark:text-[#B9A7AE] text-center py-6">Memuat daftar perangkat...</p>
+          <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E] text-center py-6">Memuat daftar perangkat...</p>
         ) : (
           <div className="space-y-2 max-h-72 overflow-y-auto thin-scrollbar">
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="p-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] flex items-center justify-between gap-3"
+                className="p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <MonitorSmartphone className="w-5 h-5 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+                  <MonitorSmartphone className="w-5 h-5 text-[#D96868] dark:text-[#E58383] shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#111111] dark:text-[#F4EFE6] truncate">
+                    <div className="text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
                       {s.deviceName} {s.current ? '(Perangkat ini)' : ''}
                     </div>
-                    <div className="font-mono text-[10px] text-[#52494D] dark:text-[#B9A7AE] truncate">
+                    <div className="font-mono text-[10px] text-[#5E645C] dark:text-[#A3AD9E] truncate">
                       {s.platform} · IP {s.ip} · Aktif {formatTimeShort(s.lastActiveAt)}
                     </div>
                   </div>
@@ -1153,7 +1153,7 @@ export function SessionsModal({
                   <button
                     type="button"
                     onClick={() => void onRevokeSession(s.id)}
-                    className="p-1.5 rounded-[4px] border border-rose-600/40 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white"
+                    className="p-1.5 rounded-xl border border-rose-600/40 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white"
                     title="Cabut sesi ini"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1170,7 +1170,7 @@ export function SessionsModal({
             onClose();
             onLogoutCurrent();
           }}
-          className="w-full h-10 rounded-[4px] border-2 border-[#8B112B] text-[#8B112B] dark:text-[#FF5C7A] hover:bg-[#8B112B] hover:text-white text-xs font-bold flex items-center justify-center gap-2 brutal-press transition-colors"
+          className="w-full h-10 rounded-xl border border-[#D96868] text-[#D96868] dark:text-[#E58383] hover:bg-[#D96868] hover:text-white text-xs font-bold flex items-center justify-center gap-2 brutal-press transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span>Keluar dari Perangkat Ini</span>
@@ -1245,23 +1245,23 @@ export function SettingsModal({
       <div className="space-y-5 text-xs">
         {/* Language & Accessibility */}
         <section className="space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6] flex items-center gap-1.5">
-            <Globe className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
+            <Globe className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
             <span>Bahasa & Aksesibilitas</span>
           </h3>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Bahasa Antarmuka</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Bahasa Antarmuka</span>
             <div className="flex gap-1">
               {(['id', 'en'] as LanguageCode[]).map((code) => (
                 <button
                   key={code}
                   type="button"
                   onClick={() => onChangeLang(code)}
-                  className={`px-3 py-1 rounded-[4px] border-2 font-bold ${
+                  className={`px-3 py-1 rounded-xl border font-bold ${
                     lang === code
-                      ? 'bg-[#8B112B] border-[#111111] dark:border-[#F4EFE6] text-white'
-                      : 'bg-[#F6F2EB] dark:bg-[#221B24] border-[#111111]/30 dark:border-[#4A313C] text-[#111111] dark:text-[#F4EFE6]'
+                      ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
+                      : 'bg-[#F2F2F2] dark:bg-[#2B3328] border-[#252A24]/30 dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2]'
                   }`}
                 >
                   {code === 'id' ? 'Indonesia' : 'English'}
@@ -1271,7 +1271,7 @@ export function SettingsModal({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Ukuran Teks</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Ukuran Teks</span>
             <div className="flex gap-1">
               {([
                 { k: 'sm', label: 'Kecil' },
@@ -1282,10 +1282,10 @@ export function SettingsModal({
                   key={item.k}
                   type="button"
                   onClick={() => onChangeTextScale(item.k)}
-                  className={`px-3 py-1 rounded-[4px] border-2 font-bold ${
+                  className={`px-3 py-1 rounded-xl border font-bold ${
                     textScale === item.k
-                      ? 'bg-[#8B112B] border-[#111111] dark:border-[#F4EFE6] text-white'
-                      : 'bg-[#F6F2EB] dark:bg-[#221B24] border-[#111111]/30 dark:border-[#4A313C] text-[#111111] dark:text-[#F4EFE6]'
+                      ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
+                      : 'bg-[#F2F2F2] dark:bg-[#2B3328] border-[#252A24]/30 dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2]'
                   }`}
                 >
                   {item.label}
@@ -1295,32 +1295,32 @@ export function SettingsModal({
           </div>
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Mode Kontras Tinggi</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Mode Kontras Tinggi</span>
             <input
               type="checkbox"
               checked={highContrast}
               onChange={onToggleHighContrast}
-              className="h-4 w-4 accent-[#8B112B]"
+              className="h-4 w-4 accent-[#D96868]"
             />
           </label>
         </section>
 
         {/* Notifications */}
-        <section className="pt-4 border-t-2 border-[#111111]/15 dark:border-[#3D2933] space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6] flex items-center gap-1.5">
-            <Bell className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+        <section className="pt-4 border-t-2 border-[#252A24]/15 dark:border-[#364032] space-y-3">
+          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
+            <Bell className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
             <span>Notifikasi & Nada</span>
           </h3>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Notifikasi Browser</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Notifikasi Browser</span>
             {notifPermission === 'granted' ? (
               <span className="text-emerald-700 dark:text-emerald-400 font-bold">Aktif</span>
             ) : (
               <button
                 type="button"
                 onClick={() => void handleEnableBrowserNotif()}
-                className="px-3 py-1 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] text-white font-bold brutal-press"
+                className="px-3 py-1 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] text-white font-bold brutal-press"
               >
                 Izinkan Notifikasi
               </button>
@@ -1328,11 +1328,11 @@ export function SettingsModal({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Nada Dering Pesan</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Nada Dering Pesan</span>
             <select
               value={notificationTone}
               onChange={(e) => onChangeTone(e.target.value as NotificationTone)}
-              className="h-8 px-2.5 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-[#111111] dark:text-[#F4EFE6] font-semibold"
+              className="h-8 px-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2] font-semibold"
             >
               <option value="lunola">Lunola Chime</option>
               <option value="crystal">Crystal Bell</option>
@@ -1342,20 +1342,20 @@ export function SettingsModal({
           </div>
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">Getaran Pesan Masuk</span>
+            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Getaran Pesan Masuk</span>
             <input
               type="checkbox"
               checked={vibrateEnabled}
               onChange={onToggleVibrate}
-              className="h-4 w-4 accent-[#8B112B]"
+              className="h-4 w-4 accent-[#D96868]"
             />
           </label>
         </section>
 
         {/* Privacy */}
-        <section className="pt-4 border-t-2 border-[#111111]/15 dark:border-[#3D2933] space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6] flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+        <section className="pt-4 border-t-2 border-[#252A24]/15 dark:border-[#364032] space-y-3">
+          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
             <span>Privasi & Kontrol Kontak</span>
           </h3>
 
@@ -1367,13 +1367,13 @@ export function SettingsModal({
             ] as const
           ).map((item) => (
             <div key={item.key} className="flex items-center justify-between gap-3">
-              <span className="text-[#52494D] dark:text-[#CBBBC2] font-medium">{item.label}</span>
+              <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">{item.label}</span>
               <select
                 value={privacy[item.key]}
                 onChange={(e) =>
                   void onUpdatePrivacy({ [item.key]: e.target.value as PrivacyScope })
                 }
-                className="h-8 px-2.5 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-[#111111] dark:text-[#F4EFE6] font-semibold"
+                className="h-8 px-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2] font-semibold"
               >
                 <option value="everyone">Semua Orang</option>
                 <option value="contacts">Kontak Saya</option>
@@ -1384,26 +1384,26 @@ export function SettingsModal({
 
           {/* Blocked Users */}
           <div className="pt-2">
-            <div className="text-[#111111] dark:text-[#F4EFE6] font-bold mb-1.5 flex items-center gap-1.5">
+            <div className="text-[#252A24] dark:text-[#F2F2F2] font-bold mb-1.5 flex items-center gap-1.5">
               <Ban className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
               <span>Pengguna Diblokir ({blockedIds.length})</span>
             </div>
             {blockedIds.length === 0 ? (
-              <p className="text-[#52494D] dark:text-[#B9A7AE]">Tidak ada pengguna yang diblokir.</p>
+              <p className="text-[#5E645C] dark:text-[#A3AD9E]">Tidak ada pengguna yang diblokir.</p>
             ) : (
               <div className="space-y-1.5">
                 {blockedIds.map((uid) => (
                   <div
                     key={uid}
-                    className="flex items-center justify-between p-2 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border border-[#111111]/20 dark:border-[#4A313C]"
+                    className="flex items-center justify-between p-2 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#252A24]/20 dark:border-[#3C4738]"
                   >
-                    <span className="text-[#111111] dark:text-[#F4EFE6] font-semibold">
+                    <span className="text-[#252A24] dark:text-[#F2F2F2] font-semibold">
                       {users[uid]?.displayName || uid}
                     </span>
                     <button
                       type="button"
                       onClick={() => void onUnblockUser(uid)}
-                      className="text-[#8B112B] dark:text-[#FF5C7A] hover:underline font-bold"
+                      className="text-[#D96868] dark:text-[#E58383] hover:underline font-bold"
                     >
                       Buka Blokir
                     </button>
@@ -1455,13 +1455,13 @@ export function ReportModal({
     >
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Kategori Pelanggaran
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as ModerationReport['category'])}
-            className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2]"
           >
             <option value="spam">Spam atau Promosi Berlebihan</option>
             <option value="scam">Penipuan / Phishing</option>
@@ -1471,7 +1471,7 @@ export function ReportModal({
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
             Penjelasan Singkat
           </label>
           <textarea
@@ -1480,14 +1480,14 @@ export function ReportModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Jelaskan pelanggaran yang Anda temukan untuk ditinjau moderator..."
-            className="w-full p-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] resize-none focus:outline-none focus:border-[#8B112B]"
+            className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
           />
         </div>
 
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-[4px] bg-amber-600 hover:bg-amber-700 border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-amber-600 hover:bg-amber-700 border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Flag className="w-4 h-4" />
           <span>{busy ? 'Mengirim...' : 'Kirim Laporan ke Moderator'}</span>
@@ -1553,14 +1553,14 @@ private val lunolaUrl = "${currentUrl}"
       onClose={onClose}
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-1 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1">
           <button
             type="button"
             onClick={() => setTab('docker')}
-            className={`py-2 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1.5 ${
+            className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'docker'
-                ? 'bg-[#8B112B] text-white'
-                : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+                ? 'bg-[#D96868] text-white'
+                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
             }`}
           >
             <Server className="w-3.5 h-3.5" />
@@ -1569,10 +1569,10 @@ private val lunolaUrl = "${currentUrl}"
           <button
             type="button"
             onClick={() => setTab('wasmer')}
-            className={`py-2 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1.5 ${
+            className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'wasmer'
-                ? 'bg-[#8B112B] text-white'
-                : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+                ? 'bg-[#D96868] text-white'
+                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
             }`}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -1581,10 +1581,10 @@ private val lunolaUrl = "${currentUrl}"
           <button
             type="button"
             onClick={() => setTab('android')}
-            className={`py-2 rounded-[3px] text-xs font-bold flex items-center justify-center gap-1.5 ${
+            className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'android'
-                ? 'bg-[#8B112B] text-white'
-                : 'text-[#52494D] dark:text-[#B9A7AE] hover:text-[#111111] dark:hover:text-[#F4EFE6]'
+                ? 'bg-[#D96868] text-white'
+                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -1592,11 +1592,11 @@ private val lunolaUrl = "${currentUrl}"
           </button>
         </div>
 
-        <div className="p-3.5 rounded-[4px] bg-[#111111] border-2 border-[#111111] dark:border-[#4A313C] text-[#F4EFE6] font-mono text-xs overflow-x-auto relative brutal-shadow-sm">
+        <div className="p-3.5 rounded-xl bg-[#252A24] border border-[#E3E1DC] dark:border-[#3C4738] text-[#F2F2F2] font-mono text-xs overflow-x-auto relative brutal-shadow-sm">
           <button
             type="button"
             onClick={copySnippet}
-            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-[3px] bg-[#8B112B] hover:bg-[#6E0C21] border border-[#F4EFE6]/60 text-white text-[11px] font-bold flex items-center gap-1"
+            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-[#D96868] hover:bg-[#C45454] border border-[#F2F2F2]/60 text-white text-[11px] font-bold flex items-center gap-1"
           >
             {copied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
             <span>{copied ? 'Disalin' : 'Salin'}</span>
@@ -1604,12 +1604,12 @@ private val lunolaUrl = "${currentUrl}"
           <pre className="whitespace-pre-wrap leading-relaxed pr-16">{snippets[tab]}</pre>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
           <span>
-            Endpoint aktif: <code className="font-mono font-bold text-[#8B112B] dark:text-[#FF5C7A]">{currentUrl}</code>
+            Endpoint aktif: <code className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">{currentUrl}</code>
           </span>
           <span>
-            Mode klien: <strong className="text-[#111111] dark:text-[#F4EFE6]">{inAndroid ? 'Android WebView' : 'Web / PWA'}</strong>
+            Mode klien: <strong className="text-[#252A24] dark:text-[#F2F2F2]">{inAndroid ? 'Android WebView' : 'Web / PWA'}</strong>
           </span>
         </div>
       </div>

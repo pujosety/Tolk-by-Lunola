@@ -155,17 +155,17 @@ export function DrawerMenu({
   return (
     <div className={`fixed inset-0 z-50 flex ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#111111]/60 backdrop-blur-[1px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#252A24]/60 backdrop-blur-[1px]`}
         onClick={onClose}
       />
 
       <div
         className={`${
           closing ? 'p5-drawer-left-out' : 'p5-drawer-left'
-        } relative z-10 w-[308px] max-w-[86vw] h-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg flex flex-col`}
+        } relative z-10 w-[308px] max-w-[86vw] h-full bg-[#FBF9F6] dark:bg-[#1E241C] border-r-2 border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex flex-col`}
       >
         {/* Persona 5 Diagonal Maroon Profile Header */}
-        <div className="pt-safe-5 px-5 pb-4 p5-maroon-banner text-[#FFFDF9] border-b-2 border-[#111111] dark:border-[#F4EFE6]">
+        <div className="pt-safe-5 px-5 pb-4 p5-maroon-banner text-[#FBF9F6] border-b-2 border-[#E3E1DC] dark:border-[#F2F2F2]">
           <div className="flex items-start justify-between">
             <button
               type="button"
@@ -175,7 +175,7 @@ export function DrawerMenu({
               }}
               aria-label="Ubah foto profil"
               title="Ubah foto profil"
-              className="rounded-[4px] focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform"
+              className="rounded-xl focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform"
             >
               <Avatar
                 name={user.displayName}
@@ -189,7 +189,7 @@ export function DrawerMenu({
                 type="button"
                 onClick={onToggleDarkMode}
                 aria-label={darkMode ? t(lang, 'lightMode') : t(lang, 'darkMode')}
-                className="h-9 w-9 rounded-[4px] border-2 border-[#111111] bg-[#FFFDF9] text-[#111111] hover:bg-[#111111] hover:text-[#FFFDF9] brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-xl border border-[#E3E1DC] bg-[#FBF9F6] text-[#252A24] hover:bg-[#252A24] hover:text-[#FBF9F6] brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
@@ -197,7 +197,7 @@ export function DrawerMenu({
                 type="button"
                 onClick={onClose}
                 aria-label="Tutup menu"
-                className="h-9 w-9 rounded-[4px] border-2 border-[#111111] bg-[#111111] text-[#FFFDF9] hover:bg-[#FFFDF9] hover:text-[#111111] brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-xl border border-[#E3E1DC] bg-[#252A24] text-[#FBF9F6] hover:bg-[#FBF9F6] hover:text-[#252A24] brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -205,12 +205,12 @@ export function DrawerMenu({
           </div>
 
           <div className="mt-3.5">
-            <div className="p5-skew inline-block bg-[#111111] text-[#FFFDF9] px-2.5 py-0.5 max-w-full">
+            <div className="p5-skew inline-block bg-[#252A24] text-[#FBF9F6] px-2.5 py-0.5 max-w-full">
               <span className="p5-unskew font-display font-extrabold text-lg leading-tight truncate block">
                 {user.displayName}
               </span>
             </div>
-            <div className="mt-1 text-xs text-[#FCE4E9] font-mono truncate">
+            <div className="mt-1 text-xs text-[#F9DADA] font-mono truncate">
               @{user.username}
               {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
             </div>
@@ -219,7 +219,7 @@ export function DrawerMenu({
 
         {/* PWA Install CTA */}
         {!isInstalled && (isInstallable || isIOS) && (
-          <div className="px-4 py-3 bg-[#FDF2F4] dark:bg-[#26121A] border-b-2 border-[#111111] dark:border-[#3D2933]">
+          <div className="px-4 py-3 bg-[#FCEAEA] dark:bg-[#2B2424] border-b-2 border-[#E3E1DC] dark:border-[#364032]">
             <button
               type="button"
               onClick={() => {
@@ -229,13 +229,13 @@ export function DrawerMenu({
                   setShowIOSGuide((v) => !v);
                 }
               }}
-              className="w-full py-2 px-3 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] text-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press p5-slash-btn text-xs font-bold flex items-center justify-center gap-2"
+              className="w-full py-2 px-3 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press p5-slash-btn text-xs font-bold flex items-center justify-center gap-2"
             >
               <Download className="w-4 h-4" />
               <span>{t(lang, 'installApp')} (PWA)</span>
             </button>
             {showIOSGuide && isIOS && (
-              <p className="p5-panel-reveal mt-2 text-[11px] text-[#52494D] dark:text-[#D5C3C9] leading-relaxed">
+              <p className="p5-panel-reveal mt-2 text-[11px] text-[#5E645C] dark:text-[#C6CEC2] leading-relaxed">
                 Di Safari iOS, ketuk tombol <strong>Bagikan</strong> di bilah bawah lalu pilih{' '}
                 <strong>Tambahkan ke Layar Utama</strong>.
               </p>
@@ -250,10 +250,10 @@ export function DrawerMenu({
               key={item.label}
               type="button"
               onClick={item.onClick}
-              className={`p5-row-motion w-full px-3 py-2.5 rounded-[4px] flex items-center gap-3 text-left border-2 ${
+              className={`p5-row-motion w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-left border ${
                 item.accent
-                  ? 'border-[#8B112B] bg-[#FDF2F4] dark:bg-[#2A131C] text-[#8B112B] dark:text-[#FF5C7A] hover:bg-[#8B112B] hover:text-[#FFFDF9]'
-                  : 'border-transparent text-[#111111] dark:text-[#F4EFE6] hover:border-[#111111] dark:hover:border-[#8B112B] hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]'
+                  ? 'border-[#D96868] bg-[#FCEAEA] dark:bg-[#2E2223] text-[#D96868] dark:text-[#E58383] hover:bg-[#D96868] hover:text-[#FBF9F6]'
+                  : 'border-transparent text-[#252A24] dark:text-[#F2F2F2] hover:border-[#E3E1DC] dark:hover:border-[#D96868] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
               }`}
             >
               <span className="shrink-0">{item.icon}</span>
@@ -266,7 +266,7 @@ export function DrawerMenu({
             </button>
           ))}
 
-          <div className="my-2 border-t-2 border-[#111111]/15 dark:border-[#3D2933]" />
+          <div className="my-2 border-t-2 border-[#252A24]/15 dark:border-[#364032]" />
 
           <button
             type="button"
@@ -274,7 +274,7 @@ export function DrawerMenu({
               onClose();
               onLogout();
             }}
-            className="w-full px-3 py-2.5 rounded-[4px] flex items-center gap-3 text-left text-[#B91C1C] dark:text-[#FF6B81] border-2 border-transparent hover:border-[#B91C1C] hover:bg-[#FEF2F2] dark:hover:bg-[#2B1217] transition-colors"
+            className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-left text-[#B91C1C] dark:text-[#FF6B81] border border-transparent hover:border-[#B91C1C] hover:bg-[#FEF2F2] dark:hover:bg-[#2B1217] transition-colors"
           >
             <LogOut className="w-5 h-5" />
             <span className="text-sm font-semibold">{t(lang, 'logout')}</span>
@@ -282,8 +282,8 @@ export function DrawerMenu({
         </nav>
 
         {/* Footer */}
-        <div className="pt-3 pb-safe-3 px-4 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[11px] text-[#52494D] dark:text-[#B9A7AE] flex items-center justify-between gap-2">
-          <div className="px-2 py-1 rounded-[3px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm flex items-center">
+        <div className="pt-3 pb-safe-3 px-4 border-t-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] text-[11px] text-[#5E645C] dark:text-[#A3AD9E] flex items-center justify-between gap-2">
+          <div className="px-2 py-1 rounded-lg bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm flex items-center">
             <img
               src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
               alt="Tolk by Lunola"

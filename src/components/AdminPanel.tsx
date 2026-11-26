@@ -196,17 +196,17 @@ export function AdminPanel({
       <div
         className={`${
           closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-        } fixed inset-0 z-50 bg-[#111111]/70 backdrop-blur-[2px] flex items-center justify-center p-4`}
+        } fixed inset-0 z-50 bg-[#252A24]/70 backdrop-blur-[2px] flex items-center justify-center p-4`}
       >
         <div
           className={`${
             closing ? 'p5-modal-out' : 'p5-modal-impact'
-          } w-full max-w-md rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg overflow-hidden`}
+          } w-full max-w-md rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden`}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14]">
+          <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17]">
             <div className="flex items-center gap-2.5">
-              <Lock className="w-5 h-5 text-[#8B112B] dark:text-[#FF5C7A]" />
-              <h2 className="font-display font-extrabold text-xl text-[#111111] dark:text-[#F4EFE6]">
+              <Lock className="w-5 h-5 text-[#D96868] dark:text-[#E58383]" />
+              <h2 className="font-display font-extrabold text-xl text-[#252A24] dark:text-[#F2F2F2]">
                 {needsInitialClaim ? 'Klaim Awal Admin Tolk by Lunola' : 'Autentikasi Admin Panel'}
               </h2>
             </div>
@@ -214,21 +214,21 @@ export function AdminPanel({
               type="button"
               onClick={onClose}
               aria-label="Tutup dialog"
-              className="h-8 w-8 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#FFFDF9] dark:bg-[#221B24] text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white flex items-center justify-center"
+              className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white flex items-center justify-center"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           <form onSubmit={handleAdminAuth} className="p-5 space-y-4">
-            <p className="text-xs text-[#52494D] dark:text-[#CBBBC2] leading-relaxed">
+            <p className="text-xs text-[#5E645C] dark:text-[#CBBBC2] leading-relaxed">
               {needsInitialClaim
                 ? 'Belum ada kode sandi admin yang ditetapkan. Buat kode sandi Super Admin (minimal 8 karakter) untuk mengamankan Admin Panel; hash disimpan dengan scrypt di server dan dikunci setelah diklaim.'
                 : 'Masukkan kode sandi admin server untuk membuka konsol manajemen dengan prinsip least-privilege RBAC.'}
             </p>
 
             <div>
-              <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
                 {needsInitialClaim ? 'Tetapkan Kode Sandi Admin Baru' : 'Kode Sandi Admin'}
               </label>
               <input
@@ -238,19 +238,19 @@ export function AdminPanel({
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="Minimal 8 karakter"
-                className="w-full h-10 px-3.5 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                className="w-full h-10 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
               />
             </div>
 
             {!needsInitialClaim && (
               <div>
-                <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">
+                <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
                   Masuk Sebagai Role (Least Privilege)
                 </label>
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value as AdminRole)}
-                  className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                  className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                 >
                   <option value="super_admin">Super Admin (Akses Penuh)</option>
                   <option value="administrator">Administrator (Platform & Pengguna)</option>
@@ -267,7 +267,7 @@ export function AdminPanel({
             <button
               type="submit"
               disabled={authBusy}
-              className="w-full h-11 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors"
+              className="w-full h-11 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors"
             >
               {authBusy ? 'Memverifikasi...' : needsInitialClaim ? 'Klaim & Buka Admin Panel' : 'Buka Admin Panel'}
             </button>
@@ -281,14 +281,14 @@ export function AdminPanel({
     <div
       className={`${
         closing ? 'p5-modal-out pointer-events-none' : 'p5-modal-impact'
-      } fixed inset-0 z-50 bg-[#F4EFE6] dark:bg-[#0D0B0E] flex flex-col md:flex-row overflow-hidden`}
+      } fixed inset-0 z-50 bg-[#F2F2F2] dark:bg-[#151914] flex flex-col md:flex-row overflow-hidden`}
     >
       {/* Left Admin Navigation (10 Modules) */}
-      <aside className="w-full md:w-64 shrink-0 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 md:border-b-0 md:border-r-2 border-[#111111] dark:border-[#3D2933] flex flex-col">
-        <div className="pt-safe-2 pb-2 px-3.5 min-h-16 flex items-center justify-between gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] p5-maroon-banner shrink-0">
+      <aside className="w-full md:w-64 shrink-0 bg-[#FBF9F6] dark:bg-[#1E241C] border-b-2 md:border-b-0 md:border-r-2 border-[#E3E1DC] dark:border-[#364032] flex flex-col">
+        <div className="pt-safe-2 pb-2 px-3.5 min-h-16 flex items-center justify-between gap-2 border-b-2 border-[#E3E1DC] dark:border-[#364032] p5-maroon-banner shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <div className="px-2 py-0.5 rounded-[3px] bg-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm flex items-center gap-1.5">
+              <div className="px-2 py-0.5 rounded-lg bg-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm flex items-center gap-1.5">
                 <img
                   src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
                   alt="Tolk"
@@ -300,7 +300,7 @@ export function AdminPanel({
                   className="h-4 w-auto object-contain"
                 />
               </div>
-              <span className="p5-skew inline-block px-1.5 py-0.5 bg-[#111111] text-[#FFFDF9] text-[10px] font-display font-extrabold uppercase tracking-wider">
+              <span className="p5-skew inline-block px-1.5 py-0.5 bg-[#252A24] text-[#FBF9F6] text-[10px] font-display font-extrabold uppercase tracking-wider">
                 <span className="p5-unskew">Admin</span>
               </span>
             </div>
@@ -312,7 +312,7 @@ export function AdminPanel({
             type="button"
             onClick={onClose}
             aria-label="Tutup Admin Panel"
-            className="h-8 w-8 rounded-[4px] border-2 border-[#F4EFE6] bg-[#111111]/80 text-[#F4EFE6] hover:bg-[#111111] flex items-center justify-center shrink-0"
+            className="h-8 w-8 rounded-xl border border-[#F2F2F2] bg-[#252A24]/80 text-[#F2F2F2] hover:bg-[#252A24] flex items-center justify-center shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -326,10 +326,10 @@ export function AdminPanel({
                 key={item.key}
                 type="button"
                 onClick={() => setMenu(item.key)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[4px] border-2 text-xs font-bold whitespace-nowrap shrink-0 transition-colors text-left brutal-press ${
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 transition-colors text-left brutal-press ${
                   active
-                    ? 'bg-[#8B112B] border-[#111111] dark:border-[#F4EFE6] text-white brutal-shadow-sm'
-                    : 'border-transparent text-[#52494D] dark:text-[#CBBBC2] hover:border-[#111111] dark:hover:border-[#4A313C] hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]'
+                    ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white brutal-shadow-sm'
+                    : 'border-transparent text-[#5E645C] dark:text-[#CBBBC2] hover:border-[#E3E1DC] dark:hover:border-[#3C4738] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
                 }`}
               >
                 {item.icon}
@@ -342,15 +342,15 @@ export function AdminPanel({
 
       {/* Main Admin Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 px-6 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center justify-between gap-4 shrink-0">
-          <div className="font-display font-extrabold text-lg text-[#111111] dark:text-[#F4EFE6] truncate">
-            Admin Panel / <span className="text-[#8B112B] dark:text-[#FF5C7A]">{ADMIN_MENUS.find((m) => m.key === menu)?.label}</span>
+        <header className="h-16 px-6 bg-[#FBF9F6] dark:bg-[#1E241C] border-b-2 border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-4 shrink-0">
+          <div className="font-display font-extrabold text-lg text-[#252A24] dark:text-[#F2F2F2] truncate">
+            Admin Panel / <span className="text-[#D96868] dark:text-[#E58383]">{ADMIN_MENUS.find((m) => m.key === menu)?.label}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={refreshSection}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] bg-[#F6F2EB] dark:bg-[#221B24] text-xs font-bold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#8B112B] hover:text-white brutal-press"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-press"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Segarkan</span>
@@ -372,17 +372,17 @@ export function AdminPanel({
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Live Activity Chart */}
-                  <div className="lg:col-span-2 p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm">
+                  <div className="lg:col-span-2 p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+                        <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                           Aktivitas Pesan 24 Jam Terakhir
                         </h3>
-                        <p className="text-xs text-[#52494D] dark:text-[#B9A7AE]">
+                        <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E]">
                           Dihitung langsung dari riwayat pesan server
                         </p>
                       </div>
-                      <Activity className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
+                      <Activity className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
                     </div>
                     <div className="grid grid-cols-6 gap-3 items-end h-44 pt-4">
                       {overview.trafficSeries.map((pt) => {
@@ -390,14 +390,14 @@ export function AdminPanel({
                         const pct = Math.max(8, Math.round((pt.messages / maxVal) * 100));
                         return (
                           <div key={pt.label} className="flex flex-col items-center gap-2 h-full justify-end">
-                            <span className="font-mono text-[11px] font-bold tabular-nums text-[#52494D] dark:text-[#B9A7AE]">
+                            <span className="font-mono text-[11px] font-bold tabular-nums text-[#5E645C] dark:text-[#A3AD9E]">
                               {pt.messages}
                             </span>
                             <div
-                              className="w-full rounded-t-[3px] bg-[#8B112B] border-2 border-[#111111] dark:border-[#F4EFE6] transition-all"
+                              className="w-full rounded-t-[3px] bg-[#D96868] border border-[#E3E1DC] dark:border-[#F2F2F2] transition-all"
                               style={{ height: `${pct}%` }}
                             />
-                            <span className="font-mono text-[11px] font-semibold text-[#52494D] dark:text-[#B9A7AE]">{pt.label}</span>
+                            <span className="font-mono text-[11px] font-semibold text-[#5E645C] dark:text-[#A3AD9E]">{pt.label}</span>
                           </div>
                         );
                       })}
@@ -405,8 +405,8 @@ export function AdminPanel({
                   </div>
 
                   {/* Quick Infrastructure Health */}
-                  <div className="p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-3">
-                    <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+                  <div className="p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-3">
+                    <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                       Status Layanan & Penyimpanan
                     </h3>
                     <StatusRow label="Engine" value={overview.server.tinodeMode} />
@@ -425,23 +425,23 @@ export function AdminPanel({
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="relative flex-1 min-w-[240px] max-w-md">
-                    <Search className="w-4 h-4 text-[#52494D] dark:text-[#B9A7AE] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       placeholder="Cari username, ID, atau email..."
-                      className="w-full h-10 pl-9 pr-3 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                      className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                     />
                   </div>
-                  <div className="text-xs text-[#52494D] dark:text-[#B9A7AE] font-mono font-bold tabular-nums">
+                  <div className="text-xs text-[#5E645C] dark:text-[#A3AD9E] font-mono font-bold tabular-nums">
                     {adminUsers.length} akun terdaftar
                   </div>
                 </div>
 
-                <div className="rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm overflow-x-auto">
+                <div className="rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[#52494D] dark:text-[#B9A7AE]">
+                    <thead className="border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] text-[#5E645C] dark:text-[#A3AD9E]">
                       <tr>
                         <th className="py-3 px-4 font-bold uppercase tracking-wide">Pengguna</th>
                         <th className="py-3 px-4 font-bold uppercase tracking-wide">Role</th>
@@ -450,15 +450,15 @@ export function AdminPanel({
                         <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Tindakan</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#111111]/15 dark:divide-[#3D2933]">
+                    <tbody className="divide-y divide-[#111111]/15 dark:divide-[#364032]">
                       {adminUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]">
+                        <tr key={u.id} className="hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]">
                           <td className="py-3 px-4">
-                            <div className="font-bold text-[#111111] dark:text-[#F4EFE6] flex items-center gap-1.5">
+                            <div className="font-bold text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
                               <span>{u.displayName}</span>
-                              {u.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#8B112B] dark:text-[#FF5C7A]" />}
+                              {u.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#D96868] dark:text-[#E58383]" />}
                             </div>
-                            <div className="font-mono text-[11px] text-[#52494D] dark:text-[#B9A7AE]">
+                            <div className="font-mono text-[11px] text-[#5E645C] dark:text-[#A3AD9E]">
                               @{u.username} · {u.id}
                             </div>
                           </td>
@@ -477,7 +477,7 @@ export function AdminPanel({
                                   onNotify(err instanceof Error ? err.message : 'Gagal ubah role');
                                 }
                               }}
-                              className="px-2 py-1 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-semibold"
+                              className="px-2 py-1 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-semibold"
                             >
                               {Object.entries(ROLE_LABELS).map(([k, label]) => (
                                 <option key={k} value={k}>
@@ -508,7 +508,7 @@ export function AdminPanel({
                                   await api.adminUpdateUser(token, u.id, { verified: !u.verified });
                                   refreshSection();
                                 }}
-                                className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold hover:bg-[#8B112B] hover:text-white"
+                                className="px-2.5 py-1 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] font-bold hover:bg-[#D96868] hover:text-white"
                               >
                                 {u.verified ? 'Batal Verifikasi' : 'Verifikasi'}
                               </button>
@@ -529,7 +529,7 @@ export function AdminPanel({
                                     },
                                   })
                                 }
-                                className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold hover:bg-[#8B112B] hover:text-white"
+                                className="px-2.5 py-1 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] font-bold hover:bg-[#D96868] hover:text-white"
                               >
                                 {u.status === 'active' ? 'Suspend' : 'Aktifkan'}
                               </button>
@@ -540,7 +540,7 @@ export function AdminPanel({
                                   downloadJson(`tolk-user-${u.username}.json`, exported);
                                   onNotify('Ekspor data pengguna diunduh');
                                 }}
-                                className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold hover:bg-[#8B112B] hover:text-white"
+                                className="px-2.5 py-1 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] font-bold hover:bg-[#D96868] hover:text-white"
                               >
                                 Ekspor
                               </button>
@@ -557,7 +557,7 @@ export function AdminPanel({
                                       },
                                     })
                                   }
-                                  className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold text-[#8B112B] dark:text-[#FF8DA6] hover:bg-[#8B112B] hover:text-white"
+                                  className="px-2.5 py-1 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] font-bold text-[#D96868] dark:text-[#FF8DA6] hover:bg-[#D96868] hover:text-white"
                                 >
                                   Hapus
                                 </button>
@@ -575,12 +575,12 @@ export function AdminPanel({
             {/* 3. MODERATION & REPORTS */}
             {menu === 'moderation' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-[4px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] text-xs text-[#52494D] dark:text-[#CBBBC2]">
+                <div className="p-4 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] text-xs text-[#5E645C] dark:text-[#CBBBC2]">
                   Kebijakan Privasi Moderasi: Admin dan moderator hanya meninjau metadata serta konten yang dilaporkan secara eksplisit oleh pengguna, tanpa akses otomatis ke percakapan pribadi.
                 </div>
 
                 {reports.length === 0 ? (
-                  <p className="text-sm text-[#52494D] dark:text-[#B9A7AE] text-center py-10">
+                  <p className="text-sm text-[#5E645C] dark:text-[#A3AD9E] text-center py-10">
                     Antrean laporan kosong.
                   </p>
                 ) : (
@@ -588,27 +588,27 @@ export function AdminPanel({
                     {reports.map((rep) => (
                       <div
                         key={rep.id}
-                        className="p-4 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-3"
+                        className="p-4 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
-                            <div className="text-sm font-bold text-[#111111] dark:text-[#F4EFE6]">
+                            <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2]">
                               {rep.targetLabel}
                             </div>
-                            <div className="text-xs text-[#52494D] dark:text-[#B9A7AE] mt-0.5">
+                            <div className="text-xs text-[#5E645C] dark:text-[#A3AD9E] mt-0.5">
                               Tipe: {rep.targetType} · Kategori: {rep.category} · Status:{' '}
-                              <span className="font-mono font-bold text-[#8B112B] dark:text-[#FF5C7A]">
+                              <span className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">
                                 {rep.status}
                               </span>
                             </div>
                           </div>
-                          <span className="font-mono text-[11px] text-[#52494D] dark:text-[#B9A7AE]">
+                          <span className="font-mono text-[11px] text-[#5E645C] dark:text-[#A3AD9E]">
                             {formatTimeShort(rep.createdAt)}
                           </span>
                         </div>
-                        <p className="text-xs text-[#111111] dark:text-[#F4EFE6]">{rep.reason}</p>
+                        <p className="text-xs text-[#252A24] dark:text-[#F2F2F2]">{rep.reason}</p>
                         {rep.moderatorNote && (
-                          <div className="text-xs text-[#52494D] dark:text-[#B9A7AE]">
+                          <div className="text-xs text-[#5E645C] dark:text-[#A3AD9E]">
                             Catatan moderator: {rep.moderatorNote}
                           </div>
                         )}
@@ -622,7 +622,7 @@ export function AdminPanel({
                               });
                               refreshSection();
                             }}
-                            className="px-3 py-1.5 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-bold hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]"
+                            className="px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]"
                           >
                             Tandai Reviewing
                           </button>
@@ -635,7 +635,7 @@ export function AdminPanel({
                               });
                               refreshSection();
                             }}
-                            className="px-3 py-1.5 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-bold hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]"
+                            className="px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]"
                           >
                             Selesaikan (Resolved)
                           </button>
@@ -654,7 +654,7 @@ export function AdminPanel({
                                 },
                               })
                             }
-                            className="px-3 py-1.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] text-white text-xs font-bold brutal-press"
+                            className="px-3 py-1.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] text-white text-xs font-bold brutal-press"
                           >
                             Hapus / Bekukan Konten
                           </button>
@@ -668,9 +668,9 @@ export function AdminPanel({
 
             {/* 4. GROUPS & CHANNELS */}
             {menu === 'groups' && (
-              <div className="rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm overflow-x-auto">
+              <div className="rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[#52494D] dark:text-[#B9A7AE]">
+                  <thead className="border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] text-[#5E645C] dark:text-[#A3AD9E]">
                     <tr>
                       <th className="py-3 px-4 font-bold uppercase tracking-wide">Nama</th>
                       <th className="py-3 px-4 font-bold uppercase tracking-wide">Tipe</th>
@@ -680,12 +680,12 @@ export function AdminPanel({
                       <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Tindakan</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#3D2933]">
+                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#364032]">
                     {groups.map((g) => (
-                      <tr key={g.id} className="hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]">
+                      <tr key={g.id} className="hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]">
                         <td className="py-3 px-4">
-                          <div className="font-bold text-[#111111] dark:text-[#F4EFE6]">{g.title}</div>
-                          <div className="font-mono text-[11px] text-[#52494D] dark:text-[#B9A7AE]">@{g.handle || g.id}</div>
+                          <div className="font-bold text-[#252A24] dark:text-[#F2F2F2]">{g.title}</div>
+                          <div className="font-mono text-[11px] text-[#5E645C] dark:text-[#A3AD9E]">@{g.handle || g.id}</div>
                         </td>
                         <td className="py-3 px-4 capitalize font-semibold">{g.type}</td>
                         <td className="py-3 px-4 text-right font-mono font-bold tabular-nums">{g.memberIds.length}</td>
@@ -701,7 +701,7 @@ export function AdminPanel({
                               onNotify(`Status ${g.title} diperbarui`);
                               refreshSection();
                             }}
-                            className="px-2.5 py-1 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] font-bold hover:bg-[#8B112B] hover:text-white"
+                            className="px-2.5 py-1 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] font-bold hover:bg-[#D96868] hover:text-white"
                           >
                             {g.suspended ? 'Aktifkan' : 'Bekukan'}
                           </button>
@@ -717,21 +717,21 @@ export function AdminPanel({
             {menu === 'stories' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {stories.length === 0 ? (
-                  <p className="text-xs text-[#52494D] dark:text-[#B9A7AE] col-span-full py-10 text-center">
+                  <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E] col-span-full py-10 text-center">
                     Tidak ada Stories aktif saat ini.
                   </p>
                 ) : (
                   stories.map((s) => (
                     <div
                       key={s.id}
-                      className="p-4 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm flex flex-col justify-between gap-3"
+                      className="p-4 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm flex flex-col justify-between gap-3"
                     >
                       <div>
-                        <div className="flex items-center justify-between text-xs text-[#52494D] dark:text-[#B9A7AE] mb-2">
+                        <div className="flex items-center justify-between text-xs text-[#5E645C] dark:text-[#A3AD9E] mb-2">
                           <span className="font-mono font-bold">{s.kind} · {s.privacy}</span>
                           <span className="font-mono font-bold tabular-nums">{s.viewerIds.length} penonton</span>
                         </div>
-                        <p className="text-sm font-medium text-[#111111] dark:text-[#F4EFE6] line-clamp-3">
+                        <p className="text-sm font-medium text-[#252A24] dark:text-[#F2F2F2] line-clamp-3">
                           {s.text || 'Media status'}
                         </p>
                       </div>
@@ -742,7 +742,7 @@ export function AdminPanel({
                           onNotify('Status dihapus');
                           refreshSection();
                         }}
-                        className="inline-flex items-center justify-center gap-1.5 py-2 rounded-[4px] border-2 border-[#8B112B] text-[#8B112B] dark:text-[#FF5C7A] text-xs font-bold hover:bg-[#8B112B] hover:text-white brutal-press"
+                        className="inline-flex items-center justify-center gap-1.5 py-2 rounded-xl border border-[#D96868] text-[#D96868] dark:text-[#E58383] text-xs font-bold hover:bg-[#D96868] hover:text-white brutal-press"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Hapus Status</span>
@@ -755,12 +755,12 @@ export function AdminPanel({
 
             {/* 6. NOTIFICATIONS & ANNOUNCEMENTS */}
             {menu === 'announcements' && (
-              <div className="max-w-xl p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-4">
+              <div className="max-w-xl p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-4">
                 <div>
-                  <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+                  <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                     Kirim Pengumuman Resmi Tolk by Lunola
                   </h3>
-                  <p className="text-xs text-[#52494D] dark:text-[#B9A7AE] mt-0.5">
+                  <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E] mt-0.5">
                     Pesan akan disiarkan ke Channel Resmi Tolk by Lunola dan opsional disematkan sebagai banner global.
                   </p>
                 </div>
@@ -769,14 +769,14 @@ export function AdminPanel({
                   value={announcementText}
                   onChange={(e) => setAnnouncementText(e.target.value)}
                   placeholder="Tulis pengumuman resmi atau info pemeliharaan sistem..."
-                  className="w-full p-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6] focus:outline-none focus:border-[#8B112B]"
+                  className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
                 />
-                <label className="flex items-center gap-2 text-xs font-semibold text-[#111111] dark:text-[#F4EFE6]">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2]">
                   <input
                     type="checkbox"
                     checked={pinGlobalBanner}
                     onChange={(e) => setPinGlobalBanner(e.target.checked)}
-                    className="accent-[#8B112B]"
+                    className="accent-[#D96868]"
                   />
                   <span>Tampilkan juga sebagai banner pengumuman global di aplikasi</span>
                 </label>
@@ -789,7 +789,7 @@ export function AdminPanel({
                     setAnnouncementText('');
                     onNotify('Pengumuman resmi berhasil disiarkan');
                   }}
-                  className="px-5 py-2.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold"
                 >
                   Siarkan Pengumuman
                 </button>
@@ -799,8 +799,8 @@ export function AdminPanel({
             {/* 7. SERVER & STORAGE */}
             {menu === 'server' && overview && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-3">
-                  <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+                <div className="p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-3">
+                  <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                     Kesehatan Server & Infrastruktur
                   </h3>
                   <StatusRow label="Layanan Chat" value={overview.server.tinodeMode} />
@@ -812,10 +812,10 @@ export function AdminPanel({
                   <StatusRow label="Domain & Sertifikat TLS" value={overview.server.tlsStatus} />
                 </div>
 
-                <div className="p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-4">
+                <div className="p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A]" />
-                    <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+                    <Database className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+                    <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                       Penyimpanan Media & Backup
                     </h3>
                   </div>
@@ -837,7 +837,7 @@ export function AdminPanel({
                       onNotify('Backup database (tanpa kredensial) berhasil diunduh');
                       refreshSection();
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-xs font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold"
                   >
                     <Download className="w-4 h-4" />
                     <span>Unduh Snapshot Backup JSON</span>
@@ -848,8 +848,8 @@ export function AdminPanel({
 
             {/* 8. ANALYTICS & REPORTS */}
             {menu === 'analytics' && overview && (
-              <div className="p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-4">
-                <h3 className="font-display font-extrabold text-base text-[#111111] dark:text-[#F4EFE6]">
+              <div className="p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-4">
+                <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2]">
                   Ringkasan Pertumbuhan & Aktivitas Platform
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -875,20 +875,20 @@ export function AdminPanel({
                     onNotify(err instanceof Error ? err.message : 'Gagal menyimpan pengaturan');
                   }
                 }}
-                className="max-w-2xl p-5 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm space-y-4"
+                className="max-w-2xl p-5 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm space-y-4"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">Nama Aplikasi / Branding</label>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">Nama Aplikasi / Branding</label>
                     <input
                       type="text"
                       value={settingsDraft.appName}
                       onChange={(e) => setSettingsDraft({ ...settingsDraft, appName: e.target.value })}
-                      className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6]"
+                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">Batas Ukuran Upload (MB)</label>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">Batas Ukuran Upload (MB)</label>
                     <input
                       type="number"
                       min={1}
@@ -897,11 +897,11 @@ export function AdminPanel({
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, maxUploadMb: Number(e.target.value) })
                       }
-                      className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6]"
+                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">Durasi Stories (Jam)</label>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">Durasi Stories (Jam)</label>
                     <input
                       type="number"
                       min={1}
@@ -910,11 +910,11 @@ export function AdminPanel({
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, storyExpiryHours: Number(e.target.value) })
                       }
-                      className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6]"
+                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">Rate Limit (Req / Menit)</label>
+                    <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">Rate Limit (Req / Menit)</label>
                     <input
                       type="number"
                       min={20}
@@ -923,13 +923,13 @@ export function AdminPanel({
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, rateLimitPerMin: Number(e.target.value) })
                       }
-                      className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono text-[#111111] dark:text-[#F4EFE6]"
+                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#111111] dark:text-[#F4EFE6] mb-1">Banner Pengumuman Global</label>
+                  <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">Banner Pengumuman Global</label>
                   <input
                     type="text"
                     value={settingsDraft.globalAnnouncement}
@@ -937,30 +937,30 @@ export function AdminPanel({
                       setSettingsDraft({ ...settingsDraft, globalAnnouncement: e.target.value })
                     }
                     placeholder="Kosongkan jika tidak ada banner aktif"
-                    className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm text-[#111111] dark:text-[#F4EFE6]"
+                    className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2]"
                   />
                 </div>
 
                 <div className="space-y-2 pt-1 text-xs font-semibold">
-                  <label className="flex items-center gap-2 text-[#111111] dark:text-[#F4EFE6]">
+                  <label className="flex items-center gap-2 text-[#252A24] dark:text-[#F2F2F2]">
                     <input
                       type="checkbox"
                       checked={settingsDraft.allowRegistration}
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, allowRegistration: e.target.checked })
                       }
-                      className="accent-[#8B112B]"
+                      className="accent-[#D96868]"
                     />
                     <span>Izinkan pendaftaran akun baru</span>
                   </label>
-                  <label className="flex items-center gap-2 text-[#111111] dark:text-[#F4EFE6]">
+                  <label className="flex items-center gap-2 text-[#252A24] dark:text-[#F2F2F2]">
                     <input
                       type="checkbox"
                       checked={settingsDraft.pushEnabled}
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, pushEnabled: e.target.checked })
                       }
-                      className="accent-[#8B112B]"
+                      className="accent-[#D96868]"
                     />
                     <span>Aktifkan Push Notification Web & Android</span>
                   </label>
@@ -971,7 +971,7 @@ export function AdminPanel({
                       onChange={(e) =>
                         setSettingsDraft({ ...settingsDraft, maintenanceMode: e.target.checked })
                       }
-                      className="accent-[#8B112B]"
+                      className="accent-[#D96868]"
                     />
                     <span>Maintenance Mode (tampilkan pemberitahuan pemeliharaan)</span>
                   </label>
@@ -979,7 +979,7 @@ export function AdminPanel({
 
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold"
                 >
                   Simpan Pengaturan Platform
                 </button>
@@ -988,9 +988,9 @@ export function AdminPanel({
 
             {/* 10. AUDIT LOGS */}
             {menu === 'audit' && (
-              <div className="rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm overflow-x-auto">
+              <div className="rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[#52494D] dark:text-[#B9A7AE]">
+                  <thead className="border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] text-[#5E645C] dark:text-[#A3AD9E]">
                     <tr>
                       <th className="py-3 px-4 font-bold uppercase tracking-wide">Waktu</th>
                       <th className="py-3 px-4 font-bold uppercase tracking-wide">Aktor</th>
@@ -999,20 +999,20 @@ export function AdminPanel({
                       <th className="py-3 px-4 font-bold uppercase tracking-wide">Detail</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#3D2933]">
+                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#364032]">
                     {auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-[#F6F2EB] dark:hover:bg-[#221B24]">
-                        <td className="py-2.5 px-4 font-mono tabular-nums text-[#52494D] dark:text-[#B9A7AE] whitespace-nowrap">
+                      <tr key={log.id} className="hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]">
+                        <td className="py-2.5 px-4 font-mono tabular-nums text-[#5E645C] dark:text-[#A3AD9E] whitespace-nowrap">
                           {formatTimeShort(log.createdAt)}
                         </td>
-                        <td className="py-2.5 px-4 whitespace-nowrap text-[#111111] dark:text-[#F4EFE6] font-semibold">
-                          {log.actorName} <span className="font-mono text-[#52494D] dark:text-[#B9A7AE]">({log.actorRole})</span>
+                        <td className="py-2.5 px-4 whitespace-nowrap text-[#252A24] dark:text-[#F2F2F2] font-semibold">
+                          {log.actorName} <span className="font-mono text-[#5E645C] dark:text-[#A3AD9E]">({log.actorRole})</span>
                         </td>
-                        <td className="py-2.5 px-4 font-mono font-bold text-[#8B112B] dark:text-[#FF5C7A] whitespace-nowrap">
+                        <td className="py-2.5 px-4 font-mono font-bold text-[#D96868] dark:text-[#E58383] whitespace-nowrap">
                           {log.action}
                         </td>
-                        <td className="py-2.5 px-4 font-bold text-[#111111] dark:text-[#F4EFE6]">{log.target}</td>
-                        <td className="py-2.5 px-4 text-[#52494D] dark:text-[#B9A7AE]">{log.details}</td>
+                        <td className="py-2.5 px-4 font-bold text-[#252A24] dark:text-[#F2F2F2]">{log.target}</td>
+                        <td className="py-2.5 px-4 text-[#5E645C] dark:text-[#A3AD9E]">{log.details}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1028,24 +1028,24 @@ export function AdminPanel({
         <div
           className={`${
             confirmRetained.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-          } fixed inset-0 z-50 bg-[#111111]/70 flex items-center justify-center p-4`}
+          } fixed inset-0 z-50 bg-[#252A24]/70 flex items-center justify-center p-4`}
         >
           <div
             className={`${
               confirmRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
-            } w-full max-w-sm rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] p-5 space-y-4 brutal-shadow-lg`}
+            } w-full max-w-sm rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] p-5 space-y-4 brutal-shadow-lg`}
           >
-            <h3 className="font-display font-extrabold text-lg text-[#111111] dark:text-[#F4EFE6]">
+            <h3 className="font-display font-extrabold text-lg text-[#252A24] dark:text-[#F2F2F2]">
               Konfirmasi Tindakan Admin
             </h3>
-            <p className="text-xs text-[#52494D] dark:text-[#CBBBC2] leading-relaxed">
+            <p className="text-xs text-[#5E645C] dark:text-[#CBBBC2] leading-relaxed">
               {confirmRetained.renderedValue.label}
             </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmAction(null)}
-                className="px-3.5 py-2 rounded-[4px] border-2 border-[#111111] dark:border-[#4A313C] text-xs font-bold text-[#111111] dark:text-[#F4EFE6] hover:bg-[#F6F2EB] dark:hover:bg-[#221B24] brutal-press"
+                className="px-3.5 py-2 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] brutal-press"
               >
                 Batal
               </button>
@@ -1056,7 +1056,7 @@ export function AdminPanel({
                   setConfirmAction(null);
                   if (target) await target.onConfirm();
                 }}
-                className="px-3.5 py-2 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-white text-xs font-bold"
+                className="px-3.5 py-2 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold"
               >
                 Konfirmasi
               </button>
@@ -1078,21 +1078,21 @@ function KpiCard({
   sub: string;
 }) {
   return (
-    <div className="p-4 rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#3D2933] brutal-shadow-sm">
-      <div className="text-xs font-bold uppercase tracking-wide text-[#52494D] dark:text-[#B9A7AE]">{label}</div>
-      <div className="mt-1.5 font-display font-extrabold text-3xl font-mono tabular-nums text-[#8B112B] dark:text-[#FF5C7A]">
+    <div className="p-4 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#364032] brutal-shadow-sm">
+      <div className="text-xs font-bold uppercase tracking-wide text-[#5E645C] dark:text-[#A3AD9E]">{label}</div>
+      <div className="mt-1.5 font-display font-extrabold text-3xl font-mono tabular-nums text-[#D96868] dark:text-[#E58383]">
         {value}
       </div>
-      <div className="mt-1 text-[11px] font-medium text-[#52494D] dark:text-[#B9A7AE] truncate">{sub}</div>
+      <div className="mt-1 text-[11px] font-medium text-[#5E645C] dark:text-[#A3AD9E] truncate">{sub}</div>
     </div>
   );
 }
 
 function StatusRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5 border-b border-[#111111]/15 dark:border-[#3D2933] last:border-0 text-xs">
-      <span className="text-[#52494D] dark:text-[#B9A7AE] font-medium">{label}</span>
-      <span className="font-mono font-bold text-[#111111] dark:text-[#F4EFE6] text-right truncate max-w-[60%]">
+    <div className="flex items-center justify-between gap-3 py-1.5 border-b border-[#252A24]/15 dark:border-[#364032] last:border-0 text-xs">
+      <span className="text-[#5E645C] dark:text-[#A3AD9E] font-medium">{label}</span>
+      <span className="font-mono font-bold text-[#252A24] dark:text-[#F2F2F2] text-right truncate max-w-[60%]">
         {value}
       </span>
     </div>

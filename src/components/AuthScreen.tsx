@@ -41,36 +41,36 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto chat-canvas-bg text-[#111111] dark:text-[#F4EFE6] flex items-center justify-center p-4 sm:p-6">
+    <div className="h-full w-full overflow-y-auto chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2] flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-[440px] p5-modal-impact">
         {/* Official Tolk by Lunola Brand Header */}
         <div className="flex flex-col items-center mb-5">
-          <div className="px-6 py-4 rounded-[6px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg flex items-center justify-center">
+          <div className="px-6 py-4 rounded-3xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex items-center justify-center">
             <img
               src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
               alt="Tolk by Lunola"
               className="h-11 w-auto object-contain select-none"
             />
           </div>
-          <p className="mt-3 text-xs font-mono font-bold tracking-wide text-[#52494D] dark:text-[#C9B8BE] text-center">
+          <p className="mt-3 text-xs font-mono font-bold tracking-wide text-[#5E645C] dark:text-[#B7C0B3] text-center">
             Komunikasi Real-Time · Web, PWA & Android
           </p>
         </div>
 
         {/* Auth Card */}
-        <div className="rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg overflow-hidden">
+        <div className="rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden">
           {/* Mode Tabs */}
-          <div className="grid grid-cols-2 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14]">
+          <div className="grid grid-cols-2 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17]">
             <button
               type="button"
               onClick={() => {
                 setMode('login');
                 setError('');
               }}
-              className={`py-3 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors border-r border-[#111111] dark:border-[#3D2933] ${
+              className={`py-3 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors border-r border-[#E3E1DC] dark:border-[#364032] ${
                 mode === 'login'
-                  ? 'bg-[#8B112B] text-[#FFFDF9]'
-                  : 'text-[#52494D] dark:text-[#B9A7AE] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
+                  ? 'bg-[#D96868] text-[#FBF9F6]'
+                  : 'text-[#5E645C] dark:text-[#A3AD9E] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
               }`}
             >
               <Lock className="w-3.5 h-3.5" />
@@ -84,8 +84,8 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
               }}
               className={`py-3 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
                 mode === 'register'
-                  ? 'bg-[#8B112B] text-[#FFFDF9]'
-                  : 'text-[#52494D] dark:text-[#B9A7AE] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
+                  ? 'bg-[#D96868] text-[#FBF9F6]'
+                  : 'text-[#5E645C] dark:text-[#A3AD9E] hover:bg-[#EDE6DA] dark:hover:bg-[#1F1822]'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -95,7 +95,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
 
           <div className="p-5 sm:p-6">
             {notice && (
-              <div className="mb-4 px-3 py-2.5 rounded-[4px] bg-amber-100 dark:bg-amber-950/50 border-2 border-[#111111] dark:border-amber-500/60 text-xs font-semibold text-[#111111] dark:text-amber-200">
+              <div className="mb-4 px-3 py-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-[#E3E1DC] dark:border-amber-500/60 text-xs font-semibold text-[#252A24] dark:text-amber-200">
                 {notice}
               </div>
             )}
@@ -104,7 +104,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
               <h1 className="font-display font-extrabold text-xl leading-tight">
                 {mode === 'login' ? 'Selamat Datang Kembali' : 'Buat Akun Tolk by Lunola'}
               </h1>
-              <p className="mt-1 text-xs text-[#52494D] dark:text-[#B9A7AE]">
+              <p className="mt-1 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
                 {mode === 'login'
                   ? 'Masuk dengan username atau email Anda untuk mulai berkirim pesan.'
                   : 'Daftar akun pribadi untuk chat, grup, panggilan suara/video, dan Stories 24 jam.'}
@@ -124,7 +124,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Nama lengkap atau panggilan"
-                      className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm focus:outline-none focus:border-[#8B112B]"
+                      className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
                     />
                   </div>
                   <div>
@@ -138,7 +138,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="nama@domain.com"
-                        className="w-full h-10 pl-9 pr-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm focus:outline-none focus:border-[#8B112B]"
+                        className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
                       />
                     </div>
                   </div>
@@ -158,7 +158,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder={mode === 'login' ? 'username atau nama@domain.com' : 'huruf_angka_garisbawah'}
-                    className="w-full h-10 pl-9 pr-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm font-mono focus:outline-none focus:border-[#8B112B]"
+                    className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono focus:outline-none focus:border-[#D96868]"
                   />
                 </div>
               </div>
@@ -176,7 +176,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimal 6 karakter"
-                    className="w-full h-10 pl-9 pr-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm focus:outline-none focus:border-[#8B112B]"
+                    className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
                   />
                 </div>
               </div>
@@ -192,13 +192,13 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Ceritakan sedikit tentang Anda"
-                    className="w-full h-10 px-3 rounded-[4px] bg-[#F6F2EB] dark:bg-[#221B24] border-2 border-[#111111] dark:border-[#4A313C] text-sm focus:outline-none focus:border-[#8B112B]"
+                    className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm focus:outline-none focus:border-[#D96868]"
                   />
                 </div>
               )}
 
               {error && (
-                <div className="px-3 py-2 rounded-[4px] bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-600 text-xs font-bold text-rose-700 dark:text-rose-300">
+                <div className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-600 text-xs font-bold text-rose-700 dark:text-rose-300">
                   {error}
                 </div>
               )}
@@ -206,7 +206,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full h-11 rounded-[4px] bg-[#8B112B] hover:bg-[#6E0C21] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm brutal-press text-[#FFFDF9] text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full h-11 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-[#FBF9F6] text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
                 <span>{busy ? 'Memproses...' : mode === 'login' ? 'Masuk Sekarang' : 'Buat Akun'}</span>
                 {!busy && <ArrowRight className="w-4 h-4" />}
@@ -214,7 +214,7 @@ export function AuthScreen({ onLogin, onRegister, notice }: AuthScreenProps) {
             </form>
 
             <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-[#2E222A] flex items-center gap-2 text-[11px] text-[#6B5F64] dark:text-[#A39199]">
-              <ShieldCheck className="w-4 h-4 text-[#8B112B] dark:text-[#FF5C7A] shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
               <span>Akses publik memerlukan akun terdaftar. Kata sandi dienkripsi di server.</span>
             </div>
           </div>
