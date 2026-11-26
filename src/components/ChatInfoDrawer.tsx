@@ -179,7 +179,7 @@ export function ChatInfoDrawer({
         } fixed inset-y-0 right-0 z-40 w-[336px] max-w-[90vw] lg:static lg:z-0 lg:w-[336px] shrink-0 bg-[#FFFDF9] dark:bg-[#161218] border-l-2 border-[#111111] dark:border-[#3D2933] flex flex-col brutal-shadow-lg lg:shadow-none`}
       >
       {/* Header */}
-      <div className="h-[62px] px-4 flex items-center justify-between border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] shrink-0">
+      <div className="pt-safe-2 pb-2 min-h-[62px] px-4 flex items-center justify-between border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] shrink-0">
         <span className="font-display font-extrabold text-lg tracking-wide text-[#111111] dark:text-[#F4EFE6]">
           {chat.type === 'group'
             ? 'Info Grup'

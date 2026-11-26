@@ -285,7 +285,7 @@ export function AdminPanel({
     >
       {/* Left Admin Navigation (10 Modules) */}
       <aside className="w-full md:w-64 shrink-0 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 md:border-b-0 md:border-r-2 border-[#111111] dark:border-[#3D2933] flex flex-col">
-        <div className="px-3.5 h-16 flex items-center justify-between gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] p5-maroon-banner shrink-0">
+        <div className="pt-safe-2 pb-2 px-3.5 min-h-16 flex items-center justify-between gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] p5-maroon-banner shrink-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <div className="px-2 py-0.5 rounded-[3px] bg-[#FFFDF9] border-2 border-[#111111] brutal-shadow-sm flex items-center gap-1.5">

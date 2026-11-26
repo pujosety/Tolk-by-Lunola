@@ -675,7 +675,7 @@ export function ChatWindow({
       )}
 
       {/* Chat Top Bar */}
-      <header className="pt-safe h-[62px] px-3 sm:px-4 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center justify-between gap-2 shrink-0 z-10">
+      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FFFDF9] dark:bg-[#161218] border-b-2 border-[#111111] dark:border-[#3D2933] flex items-center justify-between gap-2 shrink-0 z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <button
             type="button"
@@ -1557,7 +1557,7 @@ export function ChatWindow({
       )}
 
       {/* Neo-Brutalist Composer */}
-      <footer className="pb-safe px-3 py-2.5 bg-[#FFFDF9] dark:bg-[#161218] border-t-2 border-[#111111] dark:border-[#3D2933] shrink-0">
+      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFDF9] dark:bg-[#161218] border-t-2 border-[#111111] dark:border-[#3D2933] shrink-0">
         {!canPost ? (
           <div className="py-2 text-center text-xs font-semibold text-[#52494D] dark:text-[#B9A7AE]">
             {chat.suspended
@@ -1697,7 +1697,7 @@ export function ChatWindow({
             alt="Pratinjau gambar"
             className={`${
               lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
-            } max-h-[90vh] max-w-[92vw] rounded-[4px] border-2 border-[#FFFDF9] object-contain`}
+            } max-h-[90dvh] max-w-[92vw] rounded-[4px] border-2 border-[#FFFDF9] object-contain`}
           />
         </div>
       )}

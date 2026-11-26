@@ -297,7 +297,7 @@ function CreateStoryModal({
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto thin-scrollbar">
+        <div className="p-5 space-y-4 max-h-[80dvh] overflow-y-auto thin-scrollbar">
           {/* Preview Canvas */}
           <div
             className="relative rounded-[4px] min-h-[180px] p-5 flex flex-col items-center justify-center text-center overflow-hidden border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm"
@@ -479,7 +479,7 @@ function StoryViewerModal({
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full max-w-md h-[82vh] max-h-[720px] rounded-[6px] border-2 border-[#F4EFE6] overflow-hidden flex flex-col justify-between brutal-shadow-lg`}
+        } relative w-full max-w-md h-[82dvh] max-h-[720px] rounded-[6px] border-2 border-[#F4EFE6] overflow-hidden flex flex-col justify-between brutal-shadow-lg`}
         style={{ backgroundColor: story.bgColor }}
       >
         {/* Top Progress Bars & Author Info */}

@@ -165,7 +165,7 @@ export function DrawerMenu({
         } relative z-10 w-[308px] max-w-[86vw] h-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg flex flex-col`}
       >
         {/* Persona 5 Diagonal Maroon Profile Header */}
-        <div className="pt-safe px-5 pt-5 pb-4 p5-maroon-banner text-[#FFFDF9] border-b-2 border-[#111111] dark:border-[#F4EFE6]">
+        <div className="pt-safe-5 px-5 pb-4 p5-maroon-banner text-[#FFFDF9] border-b-2 border-[#111111] dark:border-[#F4EFE6]">
           <div className="flex items-start justify-between">
             <button
               type="button"
@@ -282,7 +282,7 @@ export function DrawerMenu({
         </nav>
 
         {/* Footer */}
-        <div className="pb-safe px-4 py-3 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[11px] text-[#52494D] dark:text-[#B9A7AE] flex items-center justify-between gap-2">
+        <div className="pt-3 pb-safe-3 px-4 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] text-[11px] text-[#52494D] dark:text-[#B9A7AE] flex items-center justify-between gap-2">
           <div className="px-2 py-1 rounded-[3px] bg-[#FFFDF9] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-sm flex items-center">
             <img
               src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"

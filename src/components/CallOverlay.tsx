@@ -303,7 +303,7 @@ export function CallHistoryModal({
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full max-w-md max-h-[82vh] flex flex-col rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full max-w-md max-h-[82dvh] flex flex-col rounded-[6px] bg-[#FFFDF9] dark:bg-[#161218] border-2 border-[#111111] dark:border-[#F4EFE6] brutal-shadow-lg overflow-hidden`}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14]">
           <div>

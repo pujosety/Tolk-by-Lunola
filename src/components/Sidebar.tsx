@@ -161,7 +161,7 @@ export function Sidebar({
         className="p5-sidebar-swap flex flex-col items-center h-full w-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#3D2933] select-none overflow-hidden"
       >
         {/* Compact Minimized Top Controls */}
-        <div className="pt-safe w-full px-2 pt-3 pb-2.5 flex flex-col items-center gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218] shrink-0">
+        <div className="pt-safe-3 w-full px-2 pb-2.5 flex flex-col items-center gap-2 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218] shrink-0">
           <button
             type="button"
             onClick={onToggleMinimize}
@@ -245,7 +245,7 @@ export function Sidebar({
         </div>
 
         {/* Compact Compose Action */}
-        <div className="pb-safe w-full px-2 py-3 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] flex justify-center shrink-0">
+        <div className="pt-3 pb-safe-3 w-full px-2 border-t-2 border-[#111111] dark:border-[#3D2933] bg-[#F6F2EB] dark:bg-[#120E14] flex justify-center shrink-0">
           <button
             type="button"
             onClick={onOpenNewChat}
@@ -266,7 +266,7 @@ export function Sidebar({
       className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFDF9] dark:bg-[#161218] border-r-2 border-[#111111] dark:border-[#3D2933] select-none overflow-hidden"
     >
       {/* Top Neo-Brutalist Brand & Search Header */}
-      <div className="pt-safe px-3 pt-3 pb-2.5 space-y-2.5 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218]">
+      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b-2 border-[#111111] dark:border-[#3D2933] bg-[#FFFDF9] dark:bg-[#161218]">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button
