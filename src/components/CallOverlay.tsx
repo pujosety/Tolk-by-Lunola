@@ -123,18 +123,18 @@ export function CallOverlay({
     <div
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-50 bg-[#151914]/92 backdrop-blur-md flex items-center justify-center p-4`}
+      } fixed inset-0 z-50 bg-[#0F141E]/92 backdrop-blur-md flex items-center justify-center p-4`}
     >
       <audio ref={remoteAudioRef} autoPlay playsInline />
 
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full max-w-lg rounded-3xl bg-[#1E241C] border border-[#F2F2F2] overflow-hidden brutal-shadow-lg text-[#F2F2F2]`}
+        } relative w-full max-w-lg rounded-3xl bg-[#171E2C] border border-[#F5F7FA] overflow-hidden brutal-shadow-lg text-[#F5F7FA]`}
       >
         {/* Video Canvas when video call active */}
         {activeSession.kind === 'video' && (
-          <div className="relative h-80 bg-[#151914] border-b-2 border-[#364032] flex items-center justify-center">
+          <div className="relative h-80 bg-[#0F141E] border-b-2 border-[#2A364B] flex items-center justify-center">
             {remoteStream ? (
               <video
                 ref={remoteVideoRef}
@@ -150,7 +150,7 @@ export function CallOverlay({
                   color={peerUser?.avatarColor}
                   size="xl"
                 />
-                <span className="text-xs font-medium text-[#A3AD9E]">
+                <span className="text-xs font-medium text-[#94A3B8]">
                   {activeSession.state === 'ringing' ? 'Menghubungkan video...' : 'Menunggu kamera lawan...'}
                 </span>
               </div>
@@ -162,7 +162,7 @@ export function CallOverlay({
                 autoPlay
                 muted
                 playsInline
-                className="absolute bottom-3 right-3 w-28 h-36 rounded-xl object-cover border border-[#F2F2F2] brutal-shadow-sm bg-[#252C22]"
+                className="absolute bottom-3 right-3 w-28 h-36 rounded-xl object-cover border border-[#F5F7FA] brutal-shadow-sm bg-[#1E2738]"
               />
             )}
           </div>
@@ -179,10 +179,10 @@ export function CallOverlay({
             />
           )}
 
-          <h2 className="mt-4 font-display font-extrabold text-2xl tracking-tight text-[#F2F2F2]">
+          <h2 className="mt-4 font-display font-extrabold text-2xl tracking-tight text-[#F5F7FA]">
             {peerUser?.displayName || 'Pengguna Tolk by Lunola'}
           </h2>
-          <p className="mt-1.5 inline-block px-2.5 py-0.5 rounded-lg bg-[#D96868] border border-[#F2F2F2] text-xs text-white font-mono font-bold tabular-nums">
+          <p className="mt-1.5 inline-block px-2.5 py-0.5 rounded-lg bg-[#8C0027] border border-[#F5F7FA] text-xs text-white font-mono font-bold tabular-nums">
             {activeSession.state === 'ringing' && activeSession.direction === 'incoming'
               ? activeSession.kind === 'video'
                 ? 'Panggilan video masuk...'
@@ -202,7 +202,7 @@ export function CallOverlay({
                   type="button"
                   onClick={onReject}
                   aria-label="Tolak panggilan"
-                  className="w-14 h-14 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#F2F2F2] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+                  className="w-14 h-14 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
                 >
                   <PhoneOff className="w-6 h-6" />
                 </button>
@@ -210,7 +210,7 @@ export function CallOverlay({
                   type="button"
                   onClick={onAccept}
                   aria-label="Terima panggilan"
-                  className="w-14 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-[#F2F2F2] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+                  className="w-14 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
                 >
                   {activeSession.kind === 'video' ? <Video className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
                 </button>
@@ -223,8 +223,8 @@ export function CallOverlay({
                   aria-label={micMuted ? 'Aktifkan mikrofon' : 'Bisukan mikrofon'}
                   className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
                     micMuted
-                      ? 'bg-[#F2F2F2] border-[#F2F2F2] text-[#252A24]'
-                      : 'bg-[#2B3328] border-[#3C4738] hover:border-[#F2F2F2] text-[#F2F2F2]'
+                      ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                      : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
                   }`}
                 >
                   {micMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -236,8 +236,8 @@ export function CallOverlay({
                   aria-label={speakerOn ? 'Matikan speaker' : 'Aktifkan speaker'}
                   className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
                     !speakerOn
-                      ? 'bg-[#F2F2F2] border-[#F2F2F2] text-[#252A24]'
-                      : 'bg-[#2B3328] border-[#3C4738] hover:border-[#F2F2F2] text-[#F2F2F2]'
+                      ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                      : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
                   }`}
                 >
                   {speakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
@@ -251,8 +251,8 @@ export function CallOverlay({
                       aria-label={camOff ? 'Nyalakan kamera' : 'Matikan kamera'}
                       className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
                         camOff
-                          ? 'bg-[#F2F2F2] border-[#F2F2F2] text-[#252A24]'
-                          : 'bg-[#2B3328] border-[#3C4738] hover:border-[#F2F2F2] text-[#F2F2F2]'
+                          ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                          : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
                       }`}
                     >
                       {camOff ? <CameraOff className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
@@ -262,7 +262,7 @@ export function CallOverlay({
                       onClick={onSwitchCamera}
                       aria-label="Ganti kamera depan atau belakang"
                       title="Ganti kamera"
-                      className="w-12 h-12 rounded-xl bg-[#2B3328] border border-[#3C4738] hover:border-[#F2F2F2] text-[#F2F2F2] flex items-center justify-center brutal-press transition-colors"
+                      className="w-12 h-12 rounded-xl bg-[#232D40] border border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA] flex items-center justify-center brutal-press transition-colors"
                     >
                       <RefreshCw className="w-5 h-5" />
                     </button>
@@ -273,7 +273,7 @@ export function CallOverlay({
                   type="button"
                   onClick={() => onEnd(elapsedSec)}
                   aria-label="Akhiri panggilan"
-                  className="w-14 h-14 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#F2F2F2] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+                  className="w-14 h-14 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
                 >
                   <PhoneOff className="w-6 h-6" />
                 </button>
@@ -307,20 +307,20 @@ export function CallHistoryModal({
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#252A24]/65 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#161B26]/65 backdrop-blur-[2px]`}
         onClick={onClose}
       />
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full max-w-md max-h-[82dvh] flex flex-col rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full max-w-md max-h-[82dvh] flex flex-col rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17]">
+        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
           <div>
-            <h2 className="font-display font-extrabold text-xl leading-tight text-[#252A24] dark:text-[#F2F2F2]">
+            <h2 className="font-display font-extrabold text-xl leading-tight text-[#161B26] dark:text-[#F5F7FA]">
               Riwayat Panggilan
             </h2>
-            <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+            <p className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
               Panggilan suara & video WebRTC pribadi
             </p>
           </div>
@@ -328,7 +328,7 @@ export function CallHistoryModal({
             type="button"
             onClick={onClose}
             aria-label="Tutup riwayat panggilan"
-            className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white flex items-center justify-center"
+            className="h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
@@ -336,7 +336,7 @@ export function CallHistoryModal({
 
         <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-1.5">
           {calls.length === 0 ? (
-            <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E] text-center py-10">
+            <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] text-center py-10">
               Belum ada riwayat panggilan. Buka chat pribadi lalu tekan ikon telepon atau kamera.
             </p>
           ) : (
@@ -347,7 +347,7 @@ export function CallHistoryModal({
               return (
                 <div
                   key={c.id}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] transition-colors"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-transparent hover:border-[#E6ECF2] dark:hover:border-[#324058] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar
@@ -357,14 +357,14 @@ export function CallHistoryModal({
                       size="sm"
                     />
                     <div className="min-w-0">
-                      <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                      <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                         {peer?.displayName || 'Pengguna'}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+                      <div className="flex items-center gap-1.5 text-xs text-[#5A6578] dark:text-[#94A3B8]">
                         {c.status === 'missed' || c.status === 'rejected' ? (
                           <PhoneMissed className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                         ) : isOutgoing ? (
-                          <PhoneOutgoing className="w-3.5 h-3.5 text-[#D96868] dark:text-[#E58383]" />
+                          <PhoneOutgoing className="w-3.5 h-3.5 text-[#8C0027] dark:text-[#F47296]" />
                         ) : (
                           <PhoneIncoming className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         )}
@@ -384,7 +384,7 @@ export function CallHistoryModal({
                       onStartCall(peerId, c.kind);
                     }}
                     aria-label="Panggil ulang"
-                    className="h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FCEAEA] dark:bg-[#2E2223] text-[#D96868] dark:text-[#E58383] hover:bg-[#D96868] hover:text-white flex items-center justify-center brutal-press"
+                    className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#F47296] hover:bg-[#8C0027] hover:text-white flex items-center justify-center brutal-press"
                   >
                     {c.kind === 'video' ? <Video className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
                   </button>

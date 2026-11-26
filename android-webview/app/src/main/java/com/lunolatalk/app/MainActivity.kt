@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun setStatusBarTheme(isDark: Boolean) {
             runOnUiThread {
-                val bg = if (isDark) Color.parseColor("#151914") else Color.parseColor("#F2F2F2")
+                val bg = if (isDark) Color.parseColor("#0F141E") else Color.parseColor("#F5F7FA")
                 window.statusBarColor = bg
                 window.navigationBarColor = bg
                 val controller = WindowInsetsControllerCompat(window, window.decorView)

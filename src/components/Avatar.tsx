@@ -29,7 +29,7 @@ function getInitials(name: string): string {
 export function Avatar({
   name,
   imageUrl,
-  color = '#D96868',
+  color = '#8C0027',
   size = 'md',
   chatType,
   online = false,
@@ -65,12 +65,12 @@ export function Avatar({
           alt={name}
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
-          className="w-full h-full rounded-2xl object-cover border border-white/80 dark:border-[#384234] brutal-shadow-sm bg-[#F2F2F2] dark:bg-[#232920]"
+          className="w-full h-full rounded-2xl object-cover border border-white/80 dark:border-[#384234] brutal-shadow-sm bg-[#F5F7FA] dark:bg-[#232920]"
         />
       ) : (
         <div
           className="w-full h-full rounded-2xl flex items-center justify-center select-none border border-white/60 dark:border-[#384234] brutal-shadow-sm"
-          style={{ backgroundColor: color === '#0284C7' || color === '#8B112B' ? '#D96868' : color }}
+          style={{ backgroundColor: color === '#0284C7' || color === '#8B112B' ? '#8C0027' : color }}
         >
           {renderFallback()}
         </div>
@@ -79,7 +79,7 @@ export function Avatar({
       {online && (
         <span
           aria-label="Online"
-          className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#6A994E] border-2 border-[#FFFFFF] dark:border-[#1C211A]"
+          className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#F59B00] border-2 border-[#FFFFFF] dark:border-[#1C211A]"
         />
       )}
     </div>

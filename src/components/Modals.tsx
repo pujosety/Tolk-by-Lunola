@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   Ban,
   Bell,
   Camera,
@@ -68,39 +69,51 @@ function ModalShell({
   const { mounted, closing } = useAnimatedPresence(open, 200);
   if (!mounted) return null;
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
+    <div className={`fixed inset-0 z-50 flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#252A24]/65 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/55 backdrop-blur-[2px]`}
         onClick={closable ? onClose : undefined}
       />
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full ${maxWidth} max-h-[88dvh] flex flex-col rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full md:h-auto ${maxWidth} md:max-h-[88dvh] flex flex-col rounded-none md:rounded-3xl bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="flex items-start justify-between px-5 py-4 border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] shrink-0">
-          <div>
-            <h2 className="font-display font-extrabold text-xl leading-tight text-[#252A24] dark:text-[#F2F2F2]">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="mt-0.5 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
-                {subtitle}
-              </p>
+        <div className="pt-safe-2 md:pt-4 pb-3 px-4 md:px-5 flex items-center justify-between gap-3 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {closable && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Kembali"
+                className="md:hidden h-10 w-10 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
             )}
+            <div className="min-w-0">
+              <h2 className="font-display font-extrabold text-lg md:text-xl leading-tight text-[#161B26] dark:text-[#F1F5F9] truncate">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="mt-0.5 text-xs text-[#5A6578] dark:text-[#94A3B8] truncate">
+                  {subtitle}
+                </p>
+              )}
+            </div>
           </div>
           {closable && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Tutup dialog"
-              className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-press flex items-center justify-center shrink-0"
+              className="hidden md:flex h-9 w-9 rounded-2xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press items-center justify-center shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
-        <div className="p-5 overflow-y-auto thin-scrollbar">{children}</div>
+        <div className="flex-1 p-4 md:p-5 pb-safe-3 overflow-y-auto thin-scrollbar">{children}</div>
       </div>
     </div>
   );
@@ -171,7 +184,7 @@ export function AuthModal({
       onClose={onClose}
     >
       <div className="flex items-center justify-center mb-4">
-        <div className="px-3.5 py-2 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm flex items-center gap-2.5">
+        <div className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm flex items-center gap-2.5">
           <img
             src="/assets/aistudio/tolk-symbol_95df402c.svg"
             alt="Tolk symbol"
@@ -185,7 +198,7 @@ export function AuthModal({
         </div>
       </div>
 
-      <div className="flex rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1 mb-4 gap-1">
+      <div className="flex rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1 mb-4 gap-1">
         <button
           type="button"
           onClick={() => {
@@ -194,8 +207,8 @@ export function AuthModal({
           }}
           className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
             mode === 'register'
-              ? 'bg-[#D96868] text-white'
-              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+              ? 'bg-[#8C0027] text-white'
+              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
           }`}
         >
           Daftar Baru
@@ -208,8 +221,8 @@ export function AuthModal({
           }}
           className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
             mode === 'login'
-              ? 'bg-[#D96868] text-white'
-              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+              ? 'bg-[#8C0027] text-white'
+              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
           }`}
         >
           Masuk Akun
@@ -220,7 +233,7 @@ export function AuthModal({
         {mode === 'register' && (
           <>
             <div>
-              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+              <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
                 Nama Tampilan
               </label>
               <input
@@ -230,11 +243,11 @@ export function AuthModal({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Masukkan nama tampilan"
-                className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+                className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+              <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
                 Email (opsional)
               </label>
               <input
@@ -243,14 +256,14 @@ export function AuthModal({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Masukkan alamat email"
-                className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+                className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
               />
             </div>
           </>
         )}
 
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             {mode === 'login' ? 'Username atau Email' : 'Username'}
           </label>
           <input
@@ -260,12 +273,12 @@ export function AuthModal({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder={mode === 'login' ? 'Masukkan username atau email' : 'Masukkan username'}
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Kata Sandi
           </label>
           <div className="relative">
@@ -277,13 +290,13 @@ export function AuthModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full h-10 pl-3 pr-10 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+              className="w-full h-10 pl-3 pr-10 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#D96868] dark:hover:text-[#E58383]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#5A6578] dark:text-[#94A3B8] hover:text-[#8C0027] dark:hover:text-[#F47296]"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -292,7 +305,7 @@ export function AuthModal({
 
         {mode === 'register' && (
           <div>
-            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+            <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
               Bio Singkat (opsional)
             </label>
             <input
@@ -300,7 +313,7 @@ export function AuthModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tulis bio singkat"
-              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
         )}
@@ -310,7 +323,7 @@ export function AuthModal({
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
         >
           {busy ? 'Memproses...' : mode === 'register' ? 'Buat Akun' : 'Masuk'}
         </button>
@@ -320,7 +333,7 @@ export function AuthModal({
 }
 
 const AVATAR_COLOR_SWATCHES = [
-  '#D96868',
+  '#8C0027',
   '#B54B4B',
   '#111111',
   '#9A3412',
@@ -400,7 +413,7 @@ export function ProfileModal({
   const [email, setEmail] = useState(user.email || '');
   const [bio, setBio] = useState(user.bio);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl);
-  const [avatarColor, setAvatarColor] = useState<string>(user.avatarColor || '#D96868');
+  const [avatarColor, setAvatarColor] = useState<string>(user.avatarColor || '#8C0027');
   const [showQr, setShowQr] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -421,7 +434,7 @@ export function ProfileModal({
     setEmail(user.email || '');
     setBio(user.bio);
     setAvatarUrl(user.avatarUrl);
-    setAvatarColor(user.avatarColor || '#D96868');
+    setAvatarColor(user.avatarColor || '#8C0027');
     setError('');
     setCropSrc((prev) => {
       if (prev) URL.revokeObjectURL(prev);
@@ -509,9 +522,9 @@ export function ProfileModal({
 
       {/* Interactive Circular Photo Cropper */}
       {cropSrc ? (
-        <div className="mb-4 p-4 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] space-y-3">
+        <div className="mb-4 p-4 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-display font-extrabold text-[#252A24] dark:text-[#F2F2F2]">
+            <span className="text-xs font-display font-extrabold text-[#161B26] dark:text-[#F5F7FA]">
               Sesuaikan Posisi & Zoom Foto
             </span>
             <button
@@ -521,7 +534,7 @@ export function ProfileModal({
                 setCropOffsetX(0);
                 setCropOffsetY(0);
               }}
-              className="text-[11px] font-bold text-[#D96868] dark:text-[#E58383] hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] hover:underline flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
@@ -549,7 +562,7 @@ export function ProfileModal({
               onPointerUp={() => {
                 dragStartRef.current = null;
               }}
-              className="relative w-44 h-44 rounded-3xl overflow-hidden bg-[#252A24] border border-[#D96868] brutal-shadow-sm cursor-grab active:cursor-grabbing touch-none select-none"
+              className="relative w-44 h-44 rounded-3xl overflow-hidden bg-[#161B26] border border-[#8C0027] brutal-shadow-sm cursor-grab active:cursor-grabbing touch-none select-none"
             >
               <img
                 src={cropSrc}
@@ -564,7 +577,7 @@ export function ProfileModal({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <ZoomIn className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E] shrink-0" />
+            <ZoomIn className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8] shrink-0" />
             <input
               type="range"
               min={1}
@@ -572,14 +585,14 @@ export function ProfileModal({
               step={0.05}
               value={cropZoom}
               onChange={(e) => setCropZoom(Number(e.target.value))}
-              className="flex-1 accent-[#D96868]"
+              className="flex-1 accent-[#8C0027]"
             />
-            <span className="font-mono text-[11px] font-bold text-[#5E645C] dark:text-[#A3AD9E] tabular-nums w-9 text-right">
+            <span className="font-mono text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8] tabular-nums w-9 text-right">
               {cropZoom.toFixed(1)}x
             </span>
           </div>
 
-          <p className="text-[11px] text-[#5E645C] dark:text-[#A3AD9E] text-center">
+          <p className="text-[11px] text-[#5A6578] dark:text-[#94A3B8] text-center">
             Geser gambar di dalam bingkai untuk mengatur posisi wajah.
           </p>
 
@@ -591,7 +604,7 @@ export function ProfileModal({
                 URL.revokeObjectURL(cropSrc);
                 setCropSrc(null);
               }}
-              className="px-3 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FBF9F6] dark:hover:bg-[#1E241C]"
+              className="px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#FFFFFF] dark:hover:bg-[#171E2C]"
             >
               Batal
             </button>
@@ -599,20 +612,20 @@ export function ProfileModal({
               type="button"
               disabled={uploadingPhoto}
               onClick={() => void handleApplyCrop()}
-              className="px-3.5 py-1.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-xs font-bold disabled:opacity-50"
+              className="px-3.5 py-1.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-xs font-bold disabled:opacity-50"
             >
               {uploadingPhoto ? 'Mengunggah...' : 'Terapkan Foto'}
             </button>
           </div>
         </div>
       ) : (
-        <div className="mb-4 p-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] space-y-3">
+        <div className="mb-4 p-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="relative group rounded-xl shrink-0 focus:outline-none focus:ring-2 focus:ring-[#D96868]"
+                className="relative group rounded-xl shrink-0 focus:outline-none focus:ring-2 focus:ring-[#8C0027]"
                 title="Ganti foto profil"
               >
                 <Avatar
@@ -621,22 +634,22 @@ export function ProfileModal({
                   color={avatarColor}
                   size="lg"
                 />
-                <span className="absolute inset-0 rounded-xl bg-[#252A24]/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                <span className="absolute inset-0 rounded-xl bg-[#161B26]/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                   <Camera className="w-5 h-5" />
                 </span>
               </button>
               <div className="min-w-0">
-                <div className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] truncate">
+                <div className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] truncate">
                   {displayName || user.displayName}
                 </div>
-                <div className="font-mono text-xs font-bold text-[#D96868] dark:text-[#E58383]">
+                <div className="font-mono text-xs font-bold text-[#8C0027] dark:text-[#F47296]">
                   @{username || user.username}
                 </div>
                 <div className="mt-1.5 flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
-                    className="text-[11px] font-bold text-[#D96868] dark:text-[#E58383] hover:underline flex items-center gap-1"
+                    className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] hover:underline flex items-center gap-1"
                   >
                     <Camera className="w-3 h-3" />
                     <span>{avatarUrl ? 'Ganti Foto' : 'Unggah Foto'}</span>
@@ -657,7 +670,7 @@ export function ProfileModal({
             <button
               type="button"
               onClick={() => setShowQr((v) => !v)}
-              className="px-2.5 py-1.5 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white flex items-center gap-1.5 shrink-0 brutal-press"
+              className="px-2.5 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center gap-1.5 shrink-0 brutal-press"
             >
               <QrCode className="w-3.5 h-3.5" />
               <span>{showQr ? 'Tutup' : 'QR'}</span>
@@ -665,8 +678,8 @@ export function ProfileModal({
           </div>
 
           {/* Avatar Color Swatches */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t-2 border-[#252A24]/15 dark:border-[#364032]">
-            <span className="text-[11px] font-semibold text-[#5E645C] dark:text-[#A3AD9E]">
+          <div className="flex items-center justify-between gap-2 pt-2.5 border-t-2 border-[#161B26]/15 dark:border-[#2A364B]">
+            <span className="text-[11px] font-semibold text-[#5A6578] dark:text-[#94A3B8]">
               Warna latar inisial:
             </span>
             <div className="flex items-center gap-1.5">
@@ -680,9 +693,9 @@ export function ProfileModal({
                   }}
                   aria-label={`Pilih warna ${hex}`}
                   style={{ backgroundColor: hex }}
-                  className={`w-5 h-5 rounded-lg border border-[#E3E1DC] dark:border-[#F2F2F2] transition-transform ${
+                  className={`w-5 h-5 rounded-lg border border-[#E6ECF2] dark:border-[#F5F7FA] transition-transform ${
                     avatarColor === hex && !avatarUrl
-                      ? 'ring-2 ring-offset-2 ring-[#D96868] dark:ring-offset-[#2B3328] scale-115'
+                      ? 'ring-2 ring-offset-2 ring-[#8C0027] dark:ring-offset-[#232D40] scale-115'
                       : 'hover:scale-110'
                   }`}
                 />
@@ -700,7 +713,7 @@ export function ProfileModal({
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Nama Tampilan
           </label>
           <input
@@ -708,11 +721,11 @@ export function ProfileModal({
             required
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Username Unik
           </label>
           <input
@@ -720,11 +733,11 @@ export function ProfileModal({
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Status Singkat
           </label>
           <input
@@ -732,11 +745,11 @@ export function ProfileModal({
             value={statusText}
             onChange={(e) => setStatusText(e.target.value)}
             placeholder="Masukkan status singkat"
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Email
           </label>
           <input
@@ -744,25 +757,25 @@ export function ProfileModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Masukkan alamat email (opsional)"
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Bio
           </label>
           <textarea
             rows={2}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
+            className="w-full p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] resize-none focus:outline-none focus:border-[#8C0027]"
           />
         </div>
         {error && <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{error}</p>}
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
         >
           {busy ? 'Menyimpan...' : 'Simpan Profil'}
         </button>
@@ -897,14 +910,14 @@ export function CreateChatModal({
       subtitle="Chat pribadi via @username, buat grup komunitas, atau buka channel publik."
       onClose={onClose}
     >
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1 mb-4">
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1 mb-4">
         <button
           type="button"
           onClick={() => setMode('dm')}
           className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'dm'
-              ? 'bg-[#D96868] text-white'
-              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+              ? 'bg-[#8C0027] text-white'
+              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
           }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -915,8 +928,8 @@ export function CreateChatModal({
           onClick={() => setMode('group')}
           className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'group'
-              ? 'bg-[#D96868] text-white'
-              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+              ? 'bg-[#8C0027] text-white'
+              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -927,8 +940,8 @@ export function CreateChatModal({
           onClick={() => setMode('channel')}
           className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
             mode === 'channel'
-              ? 'bg-[#D96868] text-white'
-              : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+              ? 'bg-[#8C0027] text-white'
+              : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
           }`}
         >
           <Radio className="w-3.5 h-3.5" />
@@ -939,19 +952,19 @@ export function CreateChatModal({
       {mode === 'dm' ? (
         <div className="space-y-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau @username..."
-              className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+              className="w-full h-10 pl-9 pr-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-2">
             {filteredUsers.length > 0 && (
               <div className="space-y-1">
-                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E]">
+                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
                   Kontak Anda ({filteredUsers.length})
                 </div>
                 {filteredUsers.map((u) => (
@@ -968,14 +981,14 @@ export function CreateChatModal({
                         setBusy(false);
                       }
                     }}
-                    className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
+                    className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E6ECF2] dark:hover:border-[#324058] flex items-center gap-3 hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] text-left"
                   >
                     <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                      <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                         {u.displayName}
                       </div>
-                      <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                      <div className="text-xs font-mono text-[#8C0027] dark:text-[#F47296] truncate">
                         @{u.username}
                       </div>
                     </div>
@@ -986,11 +999,11 @@ export function CreateChatModal({
 
             {query.trim().length >= 2 && (
               <div className="space-y-1 pt-1">
-                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E]">
+                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
                   {lookingUp ? 'Mencari pengguna...' : 'Tambah Kontak Baru'}
                 </div>
                 {!lookingUp && nonContactMatches.length === 0 && filteredUsers.length === 0 && (
-                  <p className="px-2 py-2 text-xs text-[#787F75] dark:text-[#A3AD9E]">
+                  <p className="px-2 py-2 text-xs text-[#6B768A] dark:text-[#94A3B8]">
                     Pengguna tidak ditemukan.
                   </p>
                 )}
@@ -1004,15 +1017,15 @@ export function CreateChatModal({
                   return (
                     <div
                       key={u.id}
-                      className="w-full p-2.5 rounded-xl border border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2]/70 dark:bg-[#252C22] flex items-center justify-between gap-2"
+                      className="w-full p-2.5 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA]/70 dark:bg-[#1E2738] flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
                         <div className="min-w-0">
-                          <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                          <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                             {u.displayName}
                           </div>
-                          <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                          <div className="text-xs font-mono text-[#8C0027] dark:text-[#F47296] truncate">
                             @{u.username}
                           </div>
                         </div>
@@ -1030,8 +1043,8 @@ export function CreateChatModal({
                         }}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 brutal-press ${
                           outgoingPending
-                            ? 'bg-[#E3E1DC] dark:bg-[#364032] text-[#5E645C] dark:text-[#A3AD9E] cursor-default'
-                            : 'bg-[#6A994E] hover:bg-[#58823F] text-white brutal-shadow-sm'
+                            ? 'bg-[#E6ECF2] dark:bg-[#2A364B] text-[#5A6578] dark:text-[#94A3B8] cursor-default'
+                            : 'bg-[#F59B00] hover:bg-[#D98800] text-white brutal-shadow-sm'
                         }`}
                       >
                         {outgoingPending ? 'Menunggu' : incomingPending ? 'Terima' : '+ Tambah'}
@@ -1043,11 +1056,11 @@ export function CreateChatModal({
             )}
 
             {filteredUsers.length === 0 && query.trim().length < 2 && (
-              <div className="px-3 py-6 text-center rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032]">
-                <p className="text-xs font-bold text-[#252A24] dark:text-[#F2F2F2]">
+              <div className="px-3 py-6 text-center rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B]">
+                <p className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA]">
                   Belum ada kontak
                 </p>
-                <p className="mt-1 text-[11px] text-[#5E645C] dark:text-[#A3AD9E]">
+                <p className="mt-1 text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
                   Ketik minimal 2 huruf @username atau nama di atas untuk mencari dan menambahkan kontak.
                 </p>
               </div>
@@ -1057,7 +1070,7 @@ export function CreateChatModal({
       ) : (
         <form onSubmit={handleSubmitGroupOrChannel} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+            <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
               {mode === 'group' ? 'Nama Grup' : 'Nama Channel Publik'}
             </label>
             <input
@@ -1066,11 +1079,11 @@ export function CreateChatModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={mode === 'group' ? 'Masukkan nama grup' : 'Masukkan nama channel'}
-              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+            <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
               Tautan Undangan (@handle)
             </label>
             <input
@@ -1078,11 +1091,11 @@ export function CreateChatModal({
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               placeholder="Masukkan username handle"
-              className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm font-mono text-[#252A24] dark:text-[#F2F2F2] focus:outline-none focus:border-[#D96868]"
+              className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm font-mono text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+            <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
               Deskripsi
             </label>
             <textarea
@@ -1090,13 +1103,13 @@ export function CreateChatModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tujuan grup atau channel ini..."
-              className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
+              className="w-full p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] resize-none focus:outline-none focus:border-[#8C0027]"
             />
           </div>
 
           {mode === 'group' && (
             <div>
-              <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1.5">
+              <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1.5">
                 Pilih Anggota ({selectedMembers.length})
               </label>
               <div className="max-h-36 overflow-y-auto thin-scrollbar space-y-1">
@@ -1109,8 +1122,8 @@ export function CreateChatModal({
                       onClick={() => toggleMember(u.id)}
                       className={`w-full p-2 rounded-xl border flex items-center justify-between text-left ${
                         checked
-                          ? 'bg-[#FCEAEA] dark:bg-[#2E2223] border-[#D96868] text-[#D96868] dark:text-[#E58383]'
-                          : 'border-transparent hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
+                          ? 'bg-[#EAF4FF] dark:bg-[#1B2436] border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
+                          : 'border-transparent hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -1125,8 +1138,8 @@ export function CreateChatModal({
                       <span
                         className={`h-4 w-4 rounded-lg border flex items-center justify-center ${
                           checked
-                            ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
-                            : 'border-[#252A24]/40 dark:border-[#3C4738]'
+                            ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white'
+                            : 'border-[#161B26]/40 dark:border-[#324058]'
                         }`}
                       >
                         {checked && <Check className="w-3 h-3" />}
@@ -1142,7 +1155,7 @@ export function CreateChatModal({
           <button
             type="submit"
             disabled={busy}
-            className="w-full h-10 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
+            className="w-full h-10 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-50"
           >
             {busy ? 'Membuat...' : mode === 'group' ? 'Buat Grup' : 'Buat Channel'}
           </button>
@@ -1175,7 +1188,7 @@ export function ForwardModal({
       subtitle="Pilih percakapan tujuan untuk meneruskan pesan ini."
       onClose={onClose}
     >
-      <div className="mb-3 p-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-xs text-[#252A24] dark:text-[#F2F2F2] line-clamp-2">
+      <div className="mb-3 p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA] line-clamp-2">
         {message.text || message.attachment?.name || 'Lampiran media'}
       </div>
       <div className="max-h-72 overflow-y-auto thin-scrollbar space-y-1">
@@ -1193,7 +1206,7 @@ export function ForwardModal({
                 setBusyId(null);
               }
             }}
-            className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E3E1DC] dark:hover:border-[#3C4738] flex items-center gap-3 hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328] text-left"
+            className="w-full p-2.5 rounded-xl border border-transparent hover:border-[#E6ECF2] dark:hover:border-[#324058] flex items-center gap-3 hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] text-left"
           >
             <Avatar
               name={chat.title}
@@ -1203,10 +1216,10 @@ export function ForwardModal({
               size="sm"
             />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+              <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                 {chat.title}
               </div>
-              <div className="text-[11px] text-[#5E645C] dark:text-[#A3AD9E] capitalize">
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8] capitalize">
                 {chat.type}
               </div>
             </div>
@@ -1243,34 +1256,34 @@ export function SessionsModal({
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[#5E645C] dark:text-[#A3AD9E]">
-            Total sesi aktif: <strong className="font-mono text-[#252A24] dark:text-[#F2F2F2]">{sessions.length}</strong>
+          <span className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
+            Total sesi aktif: <strong className="font-mono text-[#161B26] dark:text-[#F5F7FA]">{sessions.length}</strong>
           </span>
           <button
             type="button"
             onClick={onRefresh}
-            className="text-xs font-bold text-[#D96868] dark:text-[#E58383] hover:underline"
+            className="text-xs font-bold text-[#8C0027] dark:text-[#F47296] hover:underline"
           >
             Muat ulang
           </button>
         </div>
 
         {loading ? (
-          <p className="text-xs text-[#5E645C] dark:text-[#A3AD9E] text-center py-6">Memuat daftar perangkat...</p>
+          <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] text-center py-6">Memuat daftar perangkat...</p>
         ) : (
           <div className="space-y-2 max-h-72 overflow-y-auto thin-scrollbar">
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] flex items-center justify-between gap-3"
+                className="p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <MonitorSmartphone className="w-5 h-5 text-[#D96868] dark:text-[#E58383] shrink-0" />
+                  <MonitorSmartphone className="w-5 h-5 text-[#8C0027] dark:text-[#F47296] shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                    <div className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                       {s.deviceName} {s.current ? '(Perangkat ini)' : ''}
                     </div>
-                    <div className="font-mono text-[10px] text-[#5E645C] dark:text-[#A3AD9E] truncate">
+                    <div className="font-mono text-[10px] text-[#5A6578] dark:text-[#94A3B8] truncate">
                       {s.platform} · IP {s.ip} · Aktif {formatTimeShort(s.lastActiveAt)}
                     </div>
                   </div>
@@ -1296,7 +1309,7 @@ export function SessionsModal({
             onClose();
             onLogoutCurrent();
           }}
-          className="w-full h-10 rounded-xl border border-[#D96868] text-[#D96868] dark:text-[#E58383] hover:bg-[#D96868] hover:text-white text-xs font-bold flex items-center justify-center gap-2 brutal-press transition-colors"
+          className="w-full h-10 rounded-xl border border-[#8C0027] text-[#8C0027] dark:text-[#F47296] hover:bg-[#8C0027] hover:text-white text-xs font-bold flex items-center justify-center gap-2 brutal-press transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span>Keluar dari Perangkat Ini</span>
@@ -1371,13 +1384,13 @@ export function SettingsModal({
       <div className="space-y-5 text-xs">
         {/* Language & Accessibility */}
         <section className="space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
-            <Globe className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+          <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
+            <Globe className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Bahasa & Aksesibilitas</span>
           </h3>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Bahasa Antarmuka</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Bahasa Antarmuka</span>
             <div className="flex gap-1">
               {(['id', 'en'] as LanguageCode[]).map((code) => (
                 <button
@@ -1386,8 +1399,8 @@ export function SettingsModal({
                   onClick={() => onChangeLang(code)}
                   className={`px-3 py-1 rounded-xl border font-bold ${
                     lang === code
-                      ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
-                      : 'bg-[#F2F2F2] dark:bg-[#2B3328] border-[#252A24]/30 dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2]'
+                      ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white'
+                      : 'bg-[#F5F7FA] dark:bg-[#232D40] border-[#161B26]/30 dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]'
                   }`}
                 >
                   {code === 'id' ? 'Indonesia' : 'English'}
@@ -1397,7 +1410,7 @@ export function SettingsModal({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Ukuran Teks</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Ukuran Teks</span>
             <div className="flex gap-1">
               {([
                 { k: 'sm', label: 'Kecil' },
@@ -1410,8 +1423,8 @@ export function SettingsModal({
                   onClick={() => onChangeTextScale(item.k)}
                   className={`px-3 py-1 rounded-xl border font-bold ${
                     textScale === item.k
-                      ? 'bg-[#D96868] border-[#E3E1DC] dark:border-[#F2F2F2] text-white'
-                      : 'bg-[#F2F2F2] dark:bg-[#2B3328] border-[#252A24]/30 dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2]'
+                      ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white'
+                      : 'bg-[#F5F7FA] dark:bg-[#232D40] border-[#161B26]/30 dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]'
                   }`}
                 >
                   {item.label}
@@ -1421,32 +1434,32 @@ export function SettingsModal({
           </div>
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Mode Kontras Tinggi</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Mode Kontras Tinggi</span>
             <input
               type="checkbox"
               checked={highContrast}
               onChange={onToggleHighContrast}
-              className="h-4 w-4 accent-[#D96868]"
+              className="h-4 w-4 accent-[#8C0027]"
             />
           </label>
         </section>
 
         {/* Notifications */}
-        <section className="pt-4 border-t-2 border-[#252A24]/15 dark:border-[#364032] space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
-            <Bell className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+        <section className="pt-4 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-3">
+          <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
+            <Bell className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Notifikasi & Nada</span>
           </h3>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Notifikasi Browser</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Notifikasi Browser</span>
             {notifPermission === 'granted' ? (
               <span className="text-emerald-700 dark:text-emerald-400 font-bold">Aktif</span>
             ) : (
               <button
                 type="button"
                 onClick={() => void handleEnableBrowserNotif()}
-                className="px-3 py-1 rounded-xl bg-[#D96868] hover:bg-[#C45454] border border-[#E3E1DC] dark:border-[#F2F2F2] text-white font-bold brutal-press"
+                className="px-3 py-1 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] text-white font-bold brutal-press"
               >
                 Izinkan Notifikasi
               </button>
@@ -1454,11 +1467,11 @@ export function SettingsModal({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Nada Dering Pesan</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Nada Dering Pesan</span>
             <select
               value={notificationTone}
               onChange={(e) => onChangeTone(e.target.value as NotificationTone)}
-              className="h-8 px-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2] font-semibold"
+              className="h-8 px-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] font-semibold"
             >
               <option value="lunola">Lunola Chime</option>
               <option value="crystal">Crystal Bell</option>
@@ -1468,20 +1481,20 @@ export function SettingsModal({
           </div>
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">Getaran Pesan Masuk</span>
+            <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Getaran Pesan Masuk</span>
             <input
               type="checkbox"
               checked={vibrateEnabled}
               onChange={onToggleVibrate}
-              className="h-4 w-4 accent-[#D96868]"
+              className="h-4 w-4 accent-[#8C0027]"
             />
           </label>
         </section>
 
         {/* Privacy */}
-        <section className="pt-4 border-t-2 border-[#252A24]/15 dark:border-[#364032] space-y-3">
-          <h3 className="font-display font-extrabold text-base text-[#252A24] dark:text-[#F2F2F2] flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+        <section className="pt-4 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-3">
+          <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Privasi & Kontrol Kontak</span>
           </h3>
 
@@ -1493,13 +1506,13 @@ export function SettingsModal({
             ] as const
           ).map((item) => (
             <div key={item.key} className="flex items-center justify-between gap-3">
-              <span className="text-[#5E645C] dark:text-[#CBBBC2] font-medium">{item.label}</span>
+              <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">{item.label}</span>
               <select
                 value={privacy[item.key]}
                 onChange={(e) =>
                   void onUpdatePrivacy({ [item.key]: e.target.value as PrivacyScope })
                 }
-                className="h-8 px-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2] font-semibold"
+                className="h-8 px-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] font-semibold"
               >
                 <option value="everyone">Semua Orang</option>
                 <option value="contacts">Kontak Saya</option>
@@ -1510,26 +1523,26 @@ export function SettingsModal({
 
           {/* Blocked Users */}
           <div className="pt-2">
-            <div className="text-[#252A24] dark:text-[#F2F2F2] font-bold mb-1.5 flex items-center gap-1.5">
+            <div className="text-[#161B26] dark:text-[#F5F7FA] font-bold mb-1.5 flex items-center gap-1.5">
               <Ban className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
               <span>Pengguna Diblokir ({blockedIds.length})</span>
             </div>
             {blockedIds.length === 0 ? (
-              <p className="text-[#5E645C] dark:text-[#A3AD9E]">Tidak ada pengguna yang diblokir.</p>
+              <p className="text-[#5A6578] dark:text-[#94A3B8]">Tidak ada pengguna yang diblokir.</p>
             ) : (
               <div className="space-y-1.5">
                 {blockedIds.map((uid) => (
                   <div
                     key={uid}
-                    className="flex items-center justify-between p-2 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#252A24]/20 dark:border-[#3C4738]"
+                    className="flex items-center justify-between p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#161B26]/20 dark:border-[#324058]"
                   >
-                    <span className="text-[#252A24] dark:text-[#F2F2F2] font-semibold">
+                    <span className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">
                       {users[uid]?.displayName || uid}
                     </span>
                     <button
                       type="button"
                       onClick={() => void onUnblockUser(uid)}
-                      className="text-[#D96868] dark:text-[#E58383] hover:underline font-bold"
+                      className="text-[#8C0027] dark:text-[#F47296] hover:underline font-bold"
                     >
                       Buka Blokir
                     </button>
@@ -1581,13 +1594,13 @@ export function ReportModal({
     >
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Kategori Pelanggaran
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as ModerationReport['category'])}
-            className="w-full h-10 px-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2]"
+            className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA]"
           >
             <option value="spam">Spam atau Promosi Berlebihan</option>
             <option value="scam">Penipuan / Phishing</option>
@@ -1597,7 +1610,7 @@ export function ReportModal({
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#252A24] dark:text-[#F2F2F2] mb-1">
+          <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1">
             Penjelasan Singkat
           </label>
           <textarea
@@ -1606,14 +1619,14 @@ export function ReportModal({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Jelaskan pelanggaran yang Anda temukan untuk ditinjau moderator..."
-            className="w-full p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] resize-none focus:outline-none focus:border-[#D96868]"
+            className="w-full p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] resize-none focus:outline-none focus:border-[#8C0027]"
           />
         </div>
 
         <button
           type="submit"
           disabled={busy}
-          className="w-full h-10 rounded-xl bg-amber-600 hover:bg-amber-700 border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full h-10 rounded-xl bg-amber-600 hover:bg-amber-700 border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Flag className="w-4 h-4" />
           <span>{busy ? 'Mengirim...' : 'Kirim Laporan ke Moderator'}</span>
@@ -1679,14 +1692,14 @@ private val lunolaUrl = "${currentUrl}"
       onClose={onClose}
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
           <button
             type="button"
             onClick={() => setTab('docker')}
             className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'docker'
-                ? 'bg-[#D96868] text-white'
-                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+                ? 'bg-[#8C0027] text-white'
+                : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
             }`}
           >
             <Server className="w-3.5 h-3.5" />
@@ -1697,8 +1710,8 @@ private val lunolaUrl = "${currentUrl}"
             onClick={() => setTab('wasmer')}
             className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'wasmer'
-                ? 'bg-[#D96868] text-white'
-                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+                ? 'bg-[#8C0027] text-white'
+                : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
             }`}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -1709,8 +1722,8 @@ private val lunolaUrl = "${currentUrl}"
             onClick={() => setTab('android')}
             className={`py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${
               tab === 'android'
-                ? 'bg-[#D96868] text-white'
-                : 'text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#252A24] dark:hover:text-[#F2F2F2]'
+                ? 'bg-[#8C0027] text-white'
+                : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -1718,11 +1731,11 @@ private val lunolaUrl = "${currentUrl}"
           </button>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#252A24] border border-[#E3E1DC] dark:border-[#3C4738] text-[#F2F2F2] font-mono text-xs overflow-x-auto relative brutal-shadow-sm">
+        <div className="p-3.5 rounded-xl bg-[#161B26] border border-[#E6ECF2] dark:border-[#324058] text-[#F5F7FA] font-mono text-xs overflow-x-auto relative brutal-shadow-sm">
           <button
             type="button"
             onClick={copySnippet}
-            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-[#D96868] hover:bg-[#C45454] border border-[#F2F2F2]/60 text-white text-[11px] font-bold flex items-center gap-1"
+            className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-[#8C0027] hover:bg-[#6E001F] border border-[#F5F7FA]/60 text-white text-[11px] font-bold flex items-center gap-1"
           >
             {copied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
             <span>{copied ? 'Disalin' : 'Salin'}</span>
@@ -1730,12 +1743,12 @@ private val lunolaUrl = "${currentUrl}"
           <pre className="whitespace-pre-wrap leading-relaxed pr-16">{snippets[tab]}</pre>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#5A6578] dark:text-[#94A3B8]">
           <span>
-            Endpoint aktif: <code className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">{currentUrl}</code>
+            Endpoint aktif: <code className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">{currentUrl}</code>
           </span>
           <span>
-            Mode klien: <strong className="text-[#252A24] dark:text-[#F2F2F2]">{inAndroid ? 'Android WebView' : 'Web / PWA'}</strong>
+            Mode klien: <strong className="text-[#161B26] dark:text-[#F5F7FA]">{inAndroid ? 'Android WebView' : 'Web / PWA'}</strong>
           </span>
         </div>
       </div>
@@ -1779,16 +1792,16 @@ export function NotificationsModal({
       <div className="space-y-4">
         {/* Platform Announcement */}
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
-            <Megaphone className="w-3.5 h-3.5 text-[#D96868]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8] mb-2">
+            <Megaphone className="w-3.5 h-3.5 text-[#8C0027]" />
             <span>Pengumuman</span>
           </div>
           {announcement ? (
-            <div className="p-3.5 rounded-2xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#D96868]/30 text-xs text-[#252A24] dark:text-[#F2F2F2] leading-relaxed brutal-shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#8C0027]/30 text-xs text-[#161B26] dark:text-[#F5F7FA] leading-relaxed brutal-shadow-sm">
               {announcement}
             </div>
           ) : (
-            <div className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] text-xs text-[#787F75] dark:text-[#A3AD9E]">
+            <div className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] text-xs text-[#6B768A] dark:text-[#94A3B8]">
               Tidak ada pengumuman terbaru.
             </div>
           )}
@@ -1796,12 +1809,12 @@ export function NotificationsModal({
 
         {/* Incoming Friend Requests */}
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
-            <UserPlus className="w-3.5 h-3.5 text-[#6A994E]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8] mb-2">
+            <UserPlus className="w-3.5 h-3.5 text-[#F59B00]" />
             <span>Permintaan Kontak ({incomingPending.length})</span>
           </div>
           {incomingPending.length === 0 ? (
-            <div className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] text-xs text-[#787F75] dark:text-[#A3AD9E]">
+            <div className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] text-xs text-[#6B768A] dark:text-[#94A3B8]">
               Belum ada permintaan kontak masuk.
             </div>
           ) : (
@@ -1812,7 +1825,7 @@ export function NotificationsModal({
                 return (
                   <div
                     key={req.id}
-                    className="p-3 rounded-2xl bg-[#F2F2F2] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-2 brutal-shadow-sm"
+                    className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-2 brutal-shadow-sm"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar
@@ -1822,10 +1835,10 @@ export function NotificationsModal({
                         size="sm"
                       />
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                        <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
                           {sender.displayName}
                         </div>
-                        <div className="text-xs font-mono text-[#D96868] dark:text-[#E58383] truncate">
+                        <div className="text-xs font-mono text-[#8C0027] dark:text-[#F47296] truncate">
                           @{sender.username} · {formatTimeShort(req.createdAt)}
                         </div>
                       </div>
@@ -1842,7 +1855,7 @@ export function NotificationsModal({
                             setBusyId(null);
                           }
                         }}
-                        className="px-2.5 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#364032] bg-[#FBF9F6] dark:bg-[#1E241C] text-xs font-bold text-[#5E645C] dark:text-[#A3AD9E] hover:text-[#D96868]"
+                        className="px-2.5 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] text-xs font-bold text-[#5A6578] dark:text-[#94A3B8] hover:text-[#8C0027]"
                       >
                         Tolak
                       </button>
@@ -1857,7 +1870,7 @@ export function NotificationsModal({
                             setBusyId(null);
                           }
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[#6A994E] hover:bg-[#58823F] text-white text-xs font-bold brutal-shadow-sm brutal-press"
+                        className="px-3 py-1.5 rounded-xl bg-[#F59B00] hover:bg-[#D98800] text-white text-xs font-bold brutal-shadow-sm brutal-press"
                       >
                         Terima
                       </button>
@@ -1872,7 +1885,7 @@ export function NotificationsModal({
         {/* Outgoing Pending */}
         {outgoingPending.length > 0 && (
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#5E645C] dark:text-[#A3AD9E] mb-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8] mb-2">
               Menunggu Persetujuan ({outgoingPending.length})
             </div>
             <div className="space-y-1.5">
@@ -1882,12 +1895,12 @@ export function NotificationsModal({
                 return (
                   <div
                     key={req.id}
-                    className="p-2.5 rounded-xl bg-[#F2F2F2]/70 dark:bg-[#252C22]/70 flex items-center justify-between gap-2 text-xs"
+                    className="p-2.5 rounded-xl bg-[#F5F7FA]/70 dark:bg-[#1E2738]/70 flex items-center justify-between gap-2 text-xs"
                   >
                     <span className="font-semibold truncate">
                       {target.displayName} (@{target.username})
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#E3E1DC] dark:bg-[#364032] text-[11px] font-bold text-[#5E645C] dark:text-[#A3AD9E]">
+                    <span className="px-2 py-0.5 rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8]">
                       Menunggu
                     </span>
                   </div>

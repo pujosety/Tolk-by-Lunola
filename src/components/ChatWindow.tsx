@@ -148,10 +148,10 @@ function VoiceNotePlayer({
         type="button"
         onClick={togglePlay}
         aria-label={playing ? 'Jeda pesan suara' : 'Putar pesan suara'}
-        className={`h-9 w-9 rounded-xl border border-[#E3E1DC] flex items-center justify-center shrink-0 transition-colors ${
+        className={`h-9 w-9 rounded-xl border border-[#E6ECF2] flex items-center justify-center shrink-0 transition-colors ${
           isOwn
-            ? 'bg-[#FBF9F6] text-[#D96868] hover:bg-[#252A24] hover:text-[#FBF9F6]'
-            : 'bg-[#D96868] text-[#FBF9F6] hover:bg-[#C45454]'
+            ? 'bg-[#FFFFFF] text-[#8C0027] hover:bg-[#161B26] hover:text-[#FFFFFF]'
+            : 'bg-[#8C0027] text-[#FFFFFF] hover:bg-[#6E001F]'
         }`}
       >
         {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
@@ -168,11 +168,11 @@ function VoiceNotePlayer({
                 className={`w-[3px] transition-colors ${
                   isOwn
                     ? active
-                      ? 'bg-[#FBF9F6]'
-                      : 'bg-[#FBF9F6]/35'
+                      ? 'bg-[#FFFFFF]'
+                      : 'bg-[#FFFFFF]/35'
                     : active
-                      ? 'bg-[#D96868] dark:bg-[#E58383]'
-                      : 'bg-[#252A24]/25 dark:bg-[#F2F2F2]/30'
+                      ? 'bg-[#8C0027] dark:bg-[#F47296]'
+                      : 'bg-[#161B26]/25 dark:bg-[#F5F7FA]/30'
                 }`}
               />
             );
@@ -181,7 +181,7 @@ function VoiceNotePlayer({
         <div className="flex items-center justify-between">
           <span
             className={`font-mono text-[10px] tabular-nums ${
-              isOwn ? 'text-[#F9DADA]' : 'text-[#5E645C] dark:text-[#A3AD9E]'
+              isOwn ? 'text-[#FFF2A7]' : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             {formatDuration(durationSec)} · Pesan suara
@@ -191,8 +191,8 @@ function VoiceNotePlayer({
             onClick={cycleSpeed}
             className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
               isOwn
-                ? 'border-[#FBF9F6]/50 bg-[#252A24]/30 text-[#FBF9F6]'
-                : 'border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2]'
+                ? 'border-[#FFFFFF]/50 bg-[#161B26]/30 text-[#FFFFFF]'
+                : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
             }`}
           >
             {speed}x
@@ -217,7 +217,7 @@ function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
           className={`underline font-medium break-all ${
             isOwn
               ? 'text-[#FDE68A] decoration-[#FDE68A]/70 hover:text-white'
-              : 'text-[#D96868] dark:text-[#E58383] decoration-[#D96868]/60'
+              : 'text-[#8C0027] dark:text-[#F47296] decoration-[#8C0027]/60'
           }`}
         >
           {part}
@@ -229,7 +229,7 @@ function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
         <span
           key={idx}
           className={`font-mono font-semibold ${
-            isOwn ? 'text-[#FDE68A]' : 'text-[#D96868] dark:text-[#E58383]'
+            isOwn ? 'text-[#FDE68A]' : 'text-[#8C0027] dark:text-[#F47296]'
           }`}
         >
           {part}
@@ -656,18 +656,18 @@ export function ChatWindow({
           onDrop={handleDrop}
           className={`${
             dragPresence.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-          } absolute inset-0 z-40 bg-[#D96868]/20 backdrop-blur-[2px] border-4 border-dashed border-[#D96868] flex items-center justify-center p-6`}
+          } absolute inset-0 z-40 bg-[#8C0027]/20 backdrop-blur-[2px] border-4 border-dashed border-[#8C0027] flex items-center justify-center p-6`}
         >
           <div
             className={`${
               dragPresence.closing ? 'p5-modal-out' : 'p5-modal-impact'
-            } px-6 py-5 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg text-center`}
+            } px-6 py-5 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg text-center`}
           >
-            <UploadCloud className="w-9 h-9 text-[#D96868] dark:text-[#E58383] mx-auto" />
-            <p className="mt-2 font-display font-extrabold text-lg text-[#252A24] dark:text-[#F2F2F2]">
+            <UploadCloud className="w-9 h-9 text-[#8C0027] dark:text-[#F47296] mx-auto" />
+            <p className="mt-2 font-display font-extrabold text-lg text-[#161B26] dark:text-[#F5F7FA]">
               Lepaskan file untuk pratinjau sebelum dikirim
             </p>
-            <p className="mt-0.5 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+            <p className="mt-0.5 text-xs text-[#5A6578] dark:text-[#94A3B8]">
               Foto, video, dokumen PDF/Office, atau audio · maks {maxUploadMb} MB
             </p>
           </div>
@@ -675,13 +675,13 @@ export function ChatWindow({
       )}
 
       {/* Chat Top Bar */}
-      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FBF9F6] dark:bg-[#1E241C] border-b-2 border-[#E3E1DC] dark:border-[#364032] flex items-center justify-between gap-2 shrink-0 z-10">
+      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FFFFFF] dark:bg-[#171E2C] border-b-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-2 shrink-0 z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <button
             type="button"
             onClick={onBackMobile}
             aria-label="Kembali ke daftar chat"
-            className="md:hidden h-10 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#F2F2F2] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
+            className="md:hidden h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#F5F7FA] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -701,7 +701,7 @@ export function ChatWindow({
             />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="font-display font-extrabold text-lg leading-tight text-[#252A24] dark:text-[#F2F2F2] truncate group-hover:text-[#D96868] dark:group-hover:text-[#E58383] transition-colors">
+                <h2 className="font-display font-extrabold text-lg leading-tight text-[#161B26] dark:text-[#F5F7FA] truncate group-hover:text-[#8C0027] dark:group-hover:text-[#F47296] transition-colors">
                   {chat.title}
                 </h2>
                 {chat.selfDestructSec > 0 && (
@@ -711,8 +711,8 @@ export function ChatWindow({
               <p
                 className={`text-xs truncate ${
                   activeTypers.length > 0 || isPeerOnline
-                    ? 'text-[#6A994E] dark:text-[#8FA86C] font-semibold'
-                    : 'text-[#787F75] dark:text-[#A3AD9E]'
+                    ? 'text-[#F59B00] dark:text-[#BEDEFF] font-semibold'
+                    : 'text-[#6B768A] dark:text-[#94A3B8]'
                 }`}
               >
                 {subtitleText}
@@ -729,7 +729,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'voice')}
                 aria-label="Panggilan suara"
                 title="Panggilan Suara WebRTC"
-                className="h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Phone className="w-4 h-4" />
               </button>
@@ -738,7 +738,7 @@ export function ChatWindow({
                 onClick={() => onStartCall(chat.peerUser!.id, 'video')}
                 aria-label="Panggilan video"
                 title="Panggilan Video WebRTC"
-                className="h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+                className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
               >
                 <Video className="w-4 h-4" />
               </button>
@@ -750,9 +750,9 @@ export function ChatWindow({
             disabled={summarizing}
             aria-label={t(lang, 'aiSummarize')}
             title={t(lang, 'aiSummarize')}
-            className="hidden sm:flex h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
+            className="hidden sm:flex h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press items-center justify-center disabled:opacity-50"
           >
-            <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#D96868]' : ''}`} />
+            <Sparkles className={`w-4 h-4 ${summarizing ? 'animate-spin text-[#8C0027]' : ''}`} />
           </button>
           <button
             type="button"
@@ -763,8 +763,8 @@ export function ChatWindow({
             aria-label="Cari di percakapan"
             className={`hidden sm:flex h-9 w-9 rounded-xl border brutal-shadow-sm brutal-press items-center justify-center ${
               searchOpen
-                ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2]'
-                : 'border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white'
+                ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
+                : 'border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
             }`}
           >
             <Search className="w-4 h-4" />
@@ -773,7 +773,7 @@ export function ChatWindow({
             type="button"
             onClick={onOpenInfo}
             aria-label="Detail percakapan"
-            className="h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+            className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
           >
             <Info className="w-4 h-4" />
           </button>
@@ -782,12 +782,12 @@ export function ChatWindow({
               type="button"
               onClick={() => setMobileHeaderMenuOpen((v) => !v)}
               aria-label="Menu percakapan"
-              className="h-9 w-9 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
+              className="h-9 w-9 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
             {mobileHeaderMenuOpen && (
-              <div className="p5-menu-pop absolute right-0 top-11 z-30 w-48 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow py-1">
+              <div className="p5-menu-pop absolute right-0 top-11 z-30 w-48 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow py-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -795,9 +795,9 @@ export function ChatWindow({
                     setSearchOpen((v) => !v);
                     setSearchTerm('');
                   }}
-                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424] flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738] flex items-center gap-2"
                 >
-                  <Search className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+                  <Search className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
                   <span>{searchOpen ? 'Tutup Pencarian' : 'Cari di Percakapan'}</span>
                 </button>
                 <button
@@ -807,9 +807,9 @@ export function ChatWindow({
                     setMobileHeaderMenuOpen(false);
                     void handleTriggerSummarize();
                   }}
-                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424] flex items-center gap-2 disabled:opacity-50"
+                  className="w-full px-3 py-2 text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738] flex items-center gap-2 disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+                  <Sparkles className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
                   <span>{t(lang, 'aiSummarize')}</span>
                 </button>
               </div>
@@ -823,18 +823,18 @@ export function ChatWindow({
         <div
           className={`${
             searchPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2 bg-[#F2F2F2] dark:bg-[#252C22] border-b-2 border-[#E3E1DC] dark:border-[#364032] flex items-center gap-2 z-10`}
+          } px-4 py-2 bg-[#F5F7FA] dark:bg-[#1E2738] border-b-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-2 z-10`}
         >
-          <Search className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
+          <Search className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
           <input
             type="text"
             autoFocus
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Cari teks atau nama file di percakapan ini..."
-            className="flex-1 bg-transparent text-sm text-[#252A24] dark:text-[#F2F2F2] placeholder:text-[#787F75] focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] focus:outline-none"
           />
-          <span className="font-mono text-xs font-bold text-[#D96868] dark:text-[#E58383] tabular-nums">
+          <span className="font-mono text-xs font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums">
             {visibleMessages.length} hasil
           </span>
           <button
@@ -843,7 +843,7 @@ export function ChatWindow({
               setSearchOpen(false);
               setSearchTerm('');
             }}
-            className="p-1 text-[#5E645C] hover:text-[#D96868] brutal-press"
+            className="p-1 text-[#5A6578] hover:text-[#8C0027] brutal-press"
           >
             <X className="w-4 h-4" />
           </button>
@@ -855,11 +855,11 @@ export function ChatWindow({
         <div
           className={`${
             summaryRetained.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2.5 bg-[#FCEAEA] dark:bg-[#2E2223] border-b-2 border-[#E3E1DC] dark:border-[#D96868] flex items-start gap-2.5 z-10`}
+          } px-4 py-2.5 bg-[#EAF4FF] dark:bg-[#1B2436] border-b-2 border-[#E6ECF2] dark:border-[#8C0027] flex items-start gap-2.5 z-10`}
         >
-          <Sparkles className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0 text-xs text-[#252A24] dark:text-[#F2F2F2] whitespace-pre-wrap leading-relaxed">
-            <div className="font-display font-extrabold text-sm text-[#D96868] dark:text-[#E58383] mb-0.5">
+          <Sparkles className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0 text-xs text-[#161B26] dark:text-[#F5F7FA] whitespace-pre-wrap leading-relaxed">
+            <div className="font-display font-extrabold text-sm text-[#8C0027] dark:text-[#F47296] mb-0.5">
               Ringkasan Percakapan (AI)
             </div>
             {summaryRetained.renderedValue}
@@ -867,7 +867,7 @@ export function ChatWindow({
           <button
             type="button"
             onClick={() => setSummaryText(null)}
-            className="p-1 text-[#5E645C] hover:text-[#D96868] brutal-press"
+            className="p-1 text-[#5A6578] hover:text-[#8C0027] brutal-press"
           >
             <X className="w-4 h-4" />
           </button>
@@ -876,13 +876,13 @@ export function ChatWindow({
 
       {/* Pinned Message Banner */}
       {pinnedMessage && (
-        <div className="p5-panel-reveal px-4 py-2 bg-[#FBF9F6] dark:bg-[#252C22] border-b-2 border-[#E3E1DC] dark:border-[#364032] flex items-center gap-3 z-10">
-          <Pin className="w-3.5 h-3.5 text-[#D96868] dark:text-[#E58383] shrink-0" />
+        <div className="p5-panel-reveal px-4 py-2 bg-[#FFFFFF] dark:bg-[#1E2738] border-b-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-3 z-10">
+          <Pin className="w-3.5 h-3.5 text-[#8C0027] dark:text-[#F47296] shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-bold text-[#D96868] dark:text-[#E58383]">
+            <div className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
               Pesan Disematkan
             </div>
-            <div className="text-xs text-[#5E645C] dark:text-[#C6CEC2] truncate">
+            <div className="text-xs text-[#5A6578] dark:text-[#CBD5E1] truncate">
               {pinnedMessage.text || pinnedMessage.attachment?.name || 'Lampiran media'}
             </div>
           </div>
@@ -890,7 +890,7 @@ export function ChatWindow({
             type="button"
             onClick={() => void onPinMessage(null)}
             aria-label="Lepas sematan pesan"
-            className="p-1 text-[#5E645C] hover:text-[#D96868]"
+            className="p-1 text-[#5A6578] hover:text-[#8C0027]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -899,7 +899,7 @@ export function ChatWindow({
 
       {/* Scheduled Messages Strip */}
       {scheduledMessages.length > 0 && (
-        <div className="px-4 py-1.5 bg-[#FEF3C7] dark:bg-[#3A1E08] border-b-2 border-[#E3E1DC] dark:border-amber-500 flex items-center justify-between gap-2 text-xs text-[#252A24] dark:text-amber-200 font-semibold z-10">
+        <div className="px-4 py-1.5 bg-[#FEF3C7] dark:bg-[#3A1E08] border-b-2 border-[#E6ECF2] dark:border-amber-500 flex items-center justify-between gap-2 text-xs text-[#161B26] dark:text-amber-200 font-semibold z-10">
           <span className="flex items-center gap-1.5 truncate">
             <CalendarClock className="w-3.5 h-3.5 shrink-0" />
             <span>
@@ -921,16 +921,16 @@ export function ChatWindow({
         onClick={() => setActiveMenuMsgId(null)}
       >
         {loading ? (
-          <div className="h-full flex items-center justify-center text-xs font-semibold text-[#5E645C] dark:text-[#A3AD9E]">
+          <div className="h-full flex items-center justify-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
             Memuat riwayat pesan...
           </div>
         ) : visibleMessages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
-            <div className="px-6 py-5 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow text-center max-w-xs">
-              <p className="font-display font-extrabold text-lg text-[#252A24] dark:text-[#F2F2F2]">
+            <div className="px-6 py-5 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow text-center max-w-xs">
+              <p className="font-display font-extrabold text-lg text-[#161B26] dark:text-[#F5F7FA]">
                 Belum ada pesan di sini
               </p>
-              <p className="mt-1 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+              <p className="mt-1 text-xs text-[#5A6578] dark:text-[#94A3B8]">
                 Kirim teks, seret dokumen, tempel gambar (Ctrl+V), atau rekam pesan suara.
               </p>
             </div>
@@ -945,7 +945,7 @@ export function ChatWindow({
             if (msg.systemEvent) {
               return (
                 <div key={msg.id} className="my-2.5 flex justify-center">
-                  <span className="px-3 py-1 rounded-lg bg-[#FBF9F6] dark:bg-[#252C22] border border-[#E3E1DC] dark:border-[#3C4738] text-[11px] font-semibold text-[#252A24] dark:text-[#E2E6DF]">
+                  <span className="px-3 py-1 rounded-lg bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[11px] font-semibold text-[#161B26] dark:text-[#E2E8F0]">
                     {msg.text}
                   </span>
                 </div>
@@ -968,7 +968,7 @@ export function ChatWindow({
               <div key={msg.id}>
                 {showDateDivider && (
                   <div className="my-3.5 flex justify-center">
-                    <span className="p5-skew inline-block px-3.5 py-0.5 bg-[#252A24] text-[#FBF9F6] border border-[#D96868] brutal-shadow-sm">
+                    <span className="p5-skew inline-block px-3.5 py-0.5 bg-[#161B26] text-[#FFFFFF] border border-[#8C0027] brutal-shadow-sm">
                       <span className="p5-unskew font-display font-bold text-xs tracking-wider">
                         {formatDateDivider(msg.createdAt)}
                       </span>
@@ -998,13 +998,13 @@ export function ChatWindow({
                     <div
                       className={`rounded-xl px-3.5 py-2.5 border brutal-shadow-sm ${
                         isOwn
-                          ? 'bg-[#D96868] text-white border-[#C45454]/30 dark:border-[#E58383]/25'
-                          : 'bg-[#FBF9F6] dark:bg-[#252C22] text-[#252A24] dark:text-[#F2F2F2] border-white/80 dark:border-[#364032]'
+                          ? 'bg-[#8C0027] text-white border-[#6E001F]/30 dark:border-[#F47296]/25'
+                          : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] border-white/80 dark:border-[#2A364B]'
                       }`}
                     >
                       {/* Group Sender Name */}
                       {showSenderName && (
-                        <div className="text-xs font-display font-extrabold text-[#D96868] dark:text-[#E58383] mb-0.5">
+                        <div className="text-xs font-display font-extrabold text-[#8C0027] dark:text-[#F47296] mb-0.5">
                           {sender?.displayName || 'Pengguna'}
                         </div>
                       )}
@@ -1013,7 +1013,7 @@ export function ChatWindow({
                       {msg.forwardedFrom && (
                         <div
                           className={`text-[11px] mb-1 flex items-center gap-1 font-semibold ${
-                            isOwn ? 'text-[#FDE68A]' : 'text-[#D96868] dark:text-[#E58383]'
+                            isOwn ? 'text-[#FDE68A]' : 'text-[#8C0027] dark:text-[#F47296]'
                           }`}
                         >
                           <Forward className="w-3 h-3" />
@@ -1026,8 +1026,8 @@ export function ChatWindow({
                         <div
                           className={`mb-1.5 px-2.5 py-1.5 rounded-lg border text-xs ${
                             isOwn
-                              ? 'bg-[#252A24]/25 border-[#FBF9F6]/35 text-[#FBF9F6]'
-                              : 'bg-[#F2F2F2] dark:bg-[#261D2A] border-[#252A24]/25 dark:border-[#3C4738]'
+                              ? 'bg-[#161B26]/25 border-[#FFFFFF]/35 text-[#FFFFFF]'
+                              : 'bg-[#F5F7FA] dark:bg-[#261D2A] border-[#161B26]/25 dark:border-[#324058]'
                           }`}
                         >
                           <div className="font-bold text-[11px]">
@@ -1042,13 +1042,13 @@ export function ChatWindow({
                         <div
                           className={`mb-1.5 px-2.5 py-1.5 rounded-lg border text-xs ${
                             isOwn
-                              ? 'bg-[#252A24]/25 border-[#FBF9F6]/35 text-[#FBF9F6]'
-                              : 'bg-[#F2F2F2] dark:bg-[#261D2A] border-[#252A24]/25 dark:border-[#3C4738]'
+                              ? 'bg-[#161B26]/25 border-[#FFFFFF]/35 text-[#FFFFFF]'
+                              : 'bg-[#F5F7FA] dark:bg-[#261D2A] border-[#161B26]/25 dark:border-[#324058]'
                           }`}
                         >
                           <div
                             className={`font-bold text-[11px] truncate ${
-                              isOwn ? 'text-[#FDE68A]' : 'text-[#D96868] dark:text-[#E58383]'
+                              isOwn ? 'text-[#FDE68A]' : 'text-[#8C0027] dark:text-[#F47296]'
                             }`}
                           >
                             {users[repliedMsg.senderId]?.displayName || 'Pengguna'}
@@ -1064,7 +1064,7 @@ export function ChatWindow({
                         <button
                           type="button"
                           onClick={() => setLightboxImage(msg.attachment!.url)}
-                          className="block mb-1.5 rounded-lg overflow-hidden border border-[#E3E1DC] bg-[#252A24]"
+                          className="block mb-1.5 rounded-lg overflow-hidden border border-[#E6ECF2] bg-[#161B26]"
                         >
                           <img
                             src={msg.attachment.url}
@@ -1077,7 +1077,7 @@ export function ChatWindow({
 
                       {/* Video Attachment */}
                       {msg.attachment?.kind === 'video' && (
-                        <div className="mb-1.5 rounded-lg overflow-hidden border border-[#E3E1DC] bg-black">
+                        <div className="mb-1.5 rounded-lg overflow-hidden border border-[#E6ECF2] bg-black">
                           <video
                             src={msg.attachment.url}
                             controls
@@ -1103,13 +1103,13 @@ export function ChatWindow({
                           download={msg.attachment.name}
                           className={`mb-1.5 p-2.5 rounded-lg border flex items-center gap-3 transition-colors ${
                             isOwn
-                              ? 'bg-[#252A24]/25 border-[#FBF9F6]/35 hover:bg-[#252A24]/40'
-                              : 'bg-[#F2F2F2] dark:bg-[#2B3328] border-[#252A24]/30 dark:border-[#3C4738] hover:border-[#D96868]'
+                              ? 'bg-[#161B26]/25 border-[#FFFFFF]/35 hover:bg-[#161B26]/40'
+                              : 'bg-[#F5F7FA] dark:bg-[#232D40] border-[#161B26]/30 dark:border-[#324058] hover:border-[#8C0027]'
                           }`}
                         >
                           <div
-                            className={`h-9 w-9 rounded-lg border border-[#E3E1DC] flex items-center justify-center shrink-0 ${
-                              isOwn ? 'bg-[#FBF9F6] text-[#D96868]' : 'bg-[#D96868] text-[#FBF9F6]'
+                            className={`h-9 w-9 rounded-lg border border-[#E6ECF2] flex items-center justify-center shrink-0 ${
+                              isOwn ? 'bg-[#FFFFFF] text-[#8C0027]' : 'bg-[#8C0027] text-[#FFFFFF]'
                             }`}
                           >
                             <FileText className="w-4 h-4" />
@@ -1151,7 +1151,7 @@ export function ChatWindow({
                       {/* Footer Metadata */}
                       <div
                         className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] select-none ${
-                          isOwn ? 'text-[#F9DADA]/90' : 'text-[#787F75] dark:text-[#8F9A8A]'
+                          isOwn ? 'text-[#FFF2A7]/90' : 'text-[#6B768A] dark:text-[#7E8DA4]'
                         }`}
                       >
                         {msg.expiresAt && (
@@ -1173,7 +1173,7 @@ export function ChatWindow({
                           isReadByOther ? (
                             <CheckCheck className="w-3.5 h-3.5 text-[#FDE68A]" />
                           ) : (
-                            <Check className="w-3.5 h-3.5 text-[#F9DADA]/75" />
+                            <Check className="w-3.5 h-3.5 text-[#FFF2A7]/75" />
                           )
                         )}
                       </div>
@@ -1195,8 +1195,8 @@ export function ChatWindow({
                               onClick={() => void onToggleReaction(msg.id, r.emoji)}
                               className={`px-2 py-0.5 rounded-lg text-xs flex items-center gap-1 border transition-colors ${
                                 reactedByMe
-                                  ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2]'
-                                  : 'bg-[#FBF9F6] dark:bg-[#252C22] text-[#252A24] dark:text-[#F2F2F2] border-[#E3E1DC] dark:border-[#3C4738] hover:border-[#D96868]'
+                                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
+                                  : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027]'
                               }`}
                             >
                               <span>{r.emoji}</span>
@@ -1219,7 +1219,7 @@ export function ChatWindow({
                       aria-label="Opsi pesan"
                       className={`absolute top-1.5 ${
                         isOwn ? '-left-9' : '-right-9'
-                      } h-7 w-7 rounded-lg border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity`}
+                      } h-7 w-7 rounded-lg border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity`}
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
@@ -1232,9 +1232,9 @@ export function ChatWindow({
                           menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
                         } absolute z-30 top-8 ${
                           isOwn ? 'right-0' : 'left-0'
-                        } w-52 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow p-1.5`}
+                        } w-52 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow p-1.5`}
                       >
-                        <div className="flex items-center justify-between px-1 py-1 border-b-2 border-[#252A24]/15 dark:border-[#364032] mb-1">
+                        <div className="flex items-center justify-between px-1 py-1 border-b-2 border-[#161B26]/15 dark:border-[#2A364B] mb-1">
                           {QUICK_REACTIONS.map((emoji) => (
                             <button
                               key={emoji}
@@ -1243,7 +1243,7 @@ export function ChatWindow({
                                 void onToggleReaction(msg.id, emoji);
                                 setActiveMenuMsgId(null);
                               }}
-                              className="h-7 w-7 rounded-lg hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center justify-center text-sm"
+                              className="h-7 w-7 rounded-lg hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center justify-center text-sm"
                             >
                               {emoji}
                             </button>
@@ -1258,7 +1258,7 @@ export function ChatWindow({
                             setActiveMenuMsgId(null);
                             inputRef.current?.focus();
                           }}
-                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center gap-2"
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
                         >
                           <Reply className="w-3.5 h-3.5" />
                           <span>Balas</span>
@@ -1270,7 +1270,7 @@ export function ChatWindow({
                             onForwardMessage(msg);
                             setActiveMenuMsgId(null);
                           }}
-                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center gap-2"
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
                         >
                           <Forward className="w-3.5 h-3.5" />
                           <span>Teruskan</span>
@@ -1280,7 +1280,7 @@ export function ChatWindow({
                           <button
                             type="button"
                             onClick={() => void handleTriggerTranslate(msg)}
-                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#D96868] dark:text-[#E58383] hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center gap-2"
+                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#8C0027] dark:text-[#F47296] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
                           >
                             <Languages className="w-3.5 h-3.5" />
                             <span>{t(lang, 'aiTranslate')}</span>
@@ -1293,7 +1293,7 @@ export function ChatWindow({
                             void onPinMessage(chat.pinnedMessageId === msg.id ? null : msg.id);
                             setActiveMenuMsgId(null);
                           }}
-                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center gap-2"
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
                         >
                           <Pin className="w-3.5 h-3.5" />
                           <span>
@@ -1311,7 +1311,7 @@ export function ChatWindow({
                               setActiveMenuMsgId(null);
                               inputRef.current?.focus();
                             }}
-                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] flex items-center gap-2"
+                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                             <span>Edit Pesan</span>
@@ -1358,19 +1358,19 @@ export function ChatWindow({
 
       {/* Mention Autocomplete Popover */}
       {mentionCandidates.length > 0 && (
-        <div className="p5-panel-reveal mx-3 mb-1 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow overflow-hidden z-20">
+        <div className="p5-panel-reveal mx-3 mb-1 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow overflow-hidden z-20">
           {mentionCandidates.map((u) => (
             <button
               key={u.id}
               type="button"
               onClick={() => insertMention(u.username)}
-              className="p5-row-motion w-full px-3 py-2 flex items-center gap-2.5 hover:bg-[#FCEAEA] dark:hover:bg-[#2E2223] text-left"
+              className="p5-row-motion w-full px-3 py-2 flex items-center gap-2.5 hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] text-left"
             >
               <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="xs" />
-              <span className="text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2]">
+              <span className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
                 {u.displayName}
               </span>
-              <span className="font-mono text-[11px] text-[#D96868] dark:text-[#E58383]">
+              <span className="font-mono text-[11px] text-[#8C0027] dark:text-[#F47296]">
                 @{u.username}
               </span>
             </button>
@@ -1383,7 +1383,7 @@ export function ChatWindow({
         <div
           className={`${
             fileBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2.5 bg-[#FBF9F6] dark:bg-[#1E241C] border-t-2 border-[#E3E1DC] dark:border-[#364032] space-y-1.5`}
+          } px-4 py-2.5 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] space-y-1.5`}
         >
           {pendingFile && (
             <div className="flex items-center gap-3">
@@ -1391,25 +1391,25 @@ export function ChatWindow({
                 <img
                   src={pendingPreviewUrl}
                   alt={pendingFile.name}
-                  className="h-12 w-12 rounded-xl object-cover border border-[#E3E1DC] shrink-0"
+                  className="h-12 w-12 rounded-xl object-cover border border-[#E6ECF2] shrink-0"
                 />
               ) : pendingPreviewUrl && pendingFile.type.startsWith('video/') ? (
                 <video
                   src={pendingPreviewUrl}
-                  className="h-12 w-12 rounded-xl object-cover border border-[#E3E1DC] shrink-0"
+                  className="h-12 w-12 rounded-xl object-cover border border-[#E6ECF2] shrink-0"
                   muted
                 />
               ) : (
-                <div className="h-12 w-12 rounded-xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#E3E1DC] text-[#D96868] flex items-center justify-center shrink-0">
+                <div className="h-12 w-12 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#E6ECF2] text-[#8C0027] flex items-center justify-center shrink-0">
                   <FileText className="w-5 h-5" />
                 </div>
               )}
 
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                <div className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] truncate">
                   {pendingFile.name}
                 </div>
-                <div className="font-mono text-[11px] text-[#787F75] dark:text-[#A3AD9E]">
+                <div className="font-mono text-[11px] text-[#6B768A] dark:text-[#94A3B8]">
                   {formatBytes(pendingFile.size)} · Siap dikirim
                 </div>
               </div>
@@ -1418,7 +1418,7 @@ export function ChatWindow({
                 type="button"
                 onClick={clearPendingFile}
                 aria-label="Hapus pratinjau file"
-                className="p-1.5 text-[#5E645C] hover:text-[#D96868]"
+                className="p-1.5 text-[#5A6578] hover:text-[#8C0027]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1427,13 +1427,13 @@ export function ChatWindow({
 
           {uploadProgress !== null && (
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] overflow-hidden">
+              <div className="flex-1 h-2 bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] overflow-hidden">
                 <div
-                  className="h-full bg-[#D96868] transition-all"
+                  className="h-full bg-[#8C0027] transition-all"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <span className="font-mono text-[11px] font-bold text-[#D96868] dark:text-[#E58383] tabular-nums">
+              <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums">
                 {uploadProgress}%
               </span>
             </div>
@@ -1446,7 +1446,7 @@ export function ChatWindow({
                 <button
                   type="button"
                   onClick={() => void handleSend()}
-                  className="inline-flex items-center gap-1 font-bold text-[#D96868] dark:text-[#E58383] hover:underline shrink-0"
+                  className="inline-flex items-center gap-1 font-bold text-[#8C0027] dark:text-[#F47296] hover:underline shrink-0"
                 >
                   <RefreshCw className="w-3 h-3" />
                   <span>Coba Lagi</span>
@@ -1462,17 +1462,17 @@ export function ChatWindow({
         <div
           className={`${
             replyBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2 bg-[#FCEAEA] dark:bg-[#2B2424] border-t-2 border-[#E3E1DC] dark:border-[#364032] flex items-center gap-3`}
+          } px-4 py-2 bg-[#EAF4FF] dark:bg-[#1E2738] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-3`}
         >
           {editingMsg ? (
-            <Edit2 className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
+            <Edit2 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
           ) : scheduledFor ? (
             <CalendarClock className="w-4 h-4 text-amber-600 shrink-0" />
           ) : (
-            <Reply className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
+            <Reply className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-[#D96868] dark:text-[#E58383]">
+            <div className="text-xs font-bold text-[#8C0027] dark:text-[#F47296]">
               {editingMsg
                 ? 'Edit pesan'
                 : scheduledFor
@@ -1486,7 +1486,7 @@ export function ChatWindow({
                     ? `Membalas ${users[replyTo.senderId]?.displayName || 'Pengguna'}`
                     : 'Balasan'}
             </div>
-            <div className="text-xs text-[#5E645C] dark:text-[#C6CEC2] truncate">
+            <div className="text-xs text-[#5A6578] dark:text-[#CBD5E1] truncate">
               {editingMsg
                 ? editingMsg.text
                 : replyTo
@@ -1501,7 +1501,7 @@ export function ChatWindow({
               setEditingMsg(null);
               setScheduledFor(null);
             }}
-            className="p-1 text-[#5E645C] hover:text-[#D96868] brutal-press"
+            className="p-1 text-[#5A6578] hover:text-[#8C0027] brutal-press"
           >
             <X className="w-4 h-4" />
           </button>
@@ -1513,10 +1513,10 @@ export function ChatWindow({
         <div
           className={`${
             schedulePresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2 bg-[#F2F2F2] dark:bg-[#252C22] border-t-2 border-[#E3E1DC] dark:border-[#364032] flex flex-wrap items-center gap-2 text-xs`}
+          } px-4 py-2 bg-[#F5F7FA] dark:bg-[#1E2738] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] flex flex-wrap items-center gap-2 text-xs`}
         >
-          <Clock className="w-3.5 h-3.5 text-[#D96868] dark:text-[#E58383]" />
-          <span className="font-bold text-[#252A24] dark:text-[#F2F2F2]">Jadwalkan:</span>
+          <Clock className="w-3.5 h-3.5 text-[#8C0027] dark:text-[#F47296]" />
+          <span className="font-bold text-[#161B26] dark:text-[#F5F7FA]">Jadwalkan:</span>
           {[
             { label: '+1 mnt', ms: 60_000 },
             { label: '+5 mnt', ms: 5 * 60_000 },
@@ -1529,7 +1529,7 @@ export function ChatWindow({
                 setScheduledFor(Date.now() + preset.ms);
                 setScheduleOpen(false);
               }}
-              className="px-2.5 py-1 rounded-lg bg-[#FBF9F6] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] hover:bg-[#D96868] hover:text-white font-semibold"
+              className="px-2.5 py-1 rounded-lg bg-[#FFFFFF] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] hover:bg-[#8C0027] hover:text-white font-semibold"
             >
               {preset.label}
             </button>
@@ -1544,12 +1544,12 @@ export function ChatWindow({
                 setScheduledFor(ts);
               }
             }}
-            className="h-7 px-2 rounded-lg bg-[#FBF9F6] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2]"
+            className="h-7 px-2 rounded-lg bg-[#FFFFFF] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]"
           />
           <button
             type="button"
             onClick={() => setScheduleOpen(false)}
-            className="ml-auto text-[#5E645C] hover:text-[#D96868]"
+            className="ml-auto text-[#5A6578] hover:text-[#8C0027]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -1557,9 +1557,9 @@ export function ChatWindow({
       )}
 
       {/* Neo-Brutalist Composer */}
-      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FBF9F6] dark:bg-[#1E241C] border-t-2 border-[#E3E1DC] dark:border-[#364032] shrink-0">
+      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] shrink-0">
         {!canPost ? (
-          <div className="py-2 text-center text-xs font-semibold text-[#5E645C] dark:text-[#A3AD9E]">
+          <div className="py-2 text-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
             {chat.suspended
               ? 'Grup atau channel ini sedang ditangguhkan oleh administrator.'
               : chat.type === 'channel'
@@ -1567,10 +1567,10 @@ export function ChatWindow({
                 : 'Mode pengumuman aktif — hanya admin & moderator yang dapat mengirim pesan.'}
           </div>
         ) : recording ? (
-          <div className="p5-panel-reveal flex items-center justify-between gap-3 h-11 px-3 rounded-xl bg-[#FCEAEA] dark:bg-[#2E2223] border border-[#D96868] brutal-shadow-sm">
+          <div className="p5-panel-reveal flex items-center justify-between gap-3 h-11 px-3 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#8C0027] brutal-shadow-sm">
             <div className="flex items-center gap-2.5">
-              <span className="h-3 w-3 rounded-md bg-[#D96868] animate-pulse" />
-              <span className="font-mono text-sm font-bold text-[#D96868] dark:text-[#E58383] tabular-nums">
+              <span className="h-3 w-3 rounded-md bg-[#8C0027] animate-pulse" />
+              <span className="font-mono text-sm font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums">
                 Merekam {formatDuration(recordSec)}
               </span>
             </div>
@@ -1578,14 +1578,14 @@ export function ChatWindow({
               <button
                 type="button"
                 onClick={cancelVoiceRecording}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#5E645C] dark:text-[#C6CEC2] hover:bg-black/10"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/10"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={stopVoiceRecording}
-                className="h-9 px-3.5 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm brutal-press text-xs font-bold flex items-center gap-1.5"
+                className="h-9 px-3.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] brutal-shadow-sm brutal-press text-xs font-bold flex items-center gap-1.5"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
                 <span>Kirim Suara</span>
@@ -1611,7 +1611,7 @@ export function ChatWindow({
               disabled={sending}
               aria-label="Lampirkan file atau media"
               title="Lampirkan foto, video, atau dokumen"
-              className="h-11 w-10 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+              className="h-11 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
             >
               <Paperclip className="w-4 h-4" />
             </button>
@@ -1624,8 +1624,8 @@ export function ChatWindow({
               title={t(lang, 'scheduleMessage')}
               className={`h-11 w-10 rounded-xl border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 ${
                 scheduledFor
-                  ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC]'
-                  : 'border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white'
+                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
+                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
               }`}
             >
               <CalendarClock className="w-4 h-4" />
@@ -1644,7 +1644,7 @@ export function ChatWindow({
                 }
               }}
               placeholder={t(lang, 'writeMessage')}
-              className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738] text-sm text-[#252A24] dark:text-[#F2F2F2] placeholder:text-[#787F75] dark:placeholder:text-[#8F9A8A] resize-none focus:outline-none focus:border-[#D96868] dark:focus:border-[#D96868]"
+              className="flex-1 max-h-32 min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027]"
             />
 
             {draftText.trim() || pendingFile ? (
@@ -1653,7 +1653,7 @@ export function ChatWindow({
                 type="submit"
                 disabled={sending}
                 aria-label="Kirim pesan"
-                className={`h-11 px-4 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
+                className={`h-11 px-4 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
                   sendKick > 0 ? 'p5-send-recoil p5-impact-ring' : ''
                 }`}
               >
@@ -1667,7 +1667,7 @@ export function ChatWindow({
                 disabled={sending}
                 aria-label="Rekam pesan suara"
                 title="Rekam pesan suara"
-                className="h-11 w-11 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
+                className="h-11 w-11 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
               >
                 <Mic className="w-5 h-5" />
               </button>
@@ -1682,13 +1682,13 @@ export function ChatWindow({
           onClick={() => setLightboxImage(null)}
           className={`${
             lightboxRetained.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-          } fixed inset-0 z-50 bg-[#252A24]/92 flex items-center justify-center p-4`}
+          } fixed inset-0 z-50 bg-[#161B26]/92 flex items-center justify-center p-4`}
         >
           <button
             type="button"
             onClick={() => setLightboxImage(null)}
             aria-label="Tutup pratinjau gambar"
-            className="absolute top-4 right-4 h-10 w-10 rounded-xl border border-[#FBF9F6] bg-[#D96868] text-[#FBF9F6] brutal-press flex items-center justify-center hover:bg-[#C45454]"
+            className="absolute top-4 right-4 h-10 w-10 rounded-xl border border-[#FFFFFF] bg-[#8C0027] text-[#FFFFFF] brutal-press flex items-center justify-center hover:bg-[#6E001F]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1697,7 +1697,7 @@ export function ChatWindow({
             alt="Pratinjau gambar"
             className={`${
               lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
-            } max-h-[90dvh] max-w-[92vw] rounded-xl border border-[#FBF9F6] object-contain`}
+            } max-h-[90dvh] max-w-[92vw] rounded-xl border border-[#FFFFFF] object-contain`}
           />
         </div>
       )}

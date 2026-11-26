@@ -169,18 +169,18 @@ export function ChatInfoDrawer({
     <>
       <div
         onClick={onClose}
-        className={`lg:hidden fixed inset-0 z-30 bg-[#252A24]/55 backdrop-blur-[1px] ${
+        className={`lg:hidden fixed inset-0 z-30 bg-[#161B26]/55 backdrop-blur-[1px] ${
           closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
         }`}
       />
       <aside
         className={`${
           closing ? 'p5-drawer-right-out pointer-events-none' : 'p5-drawer-right'
-        } fixed inset-y-0 right-0 z-40 w-[336px] max-w-[90vw] lg:static lg:z-0 lg:w-[336px] shrink-0 bg-[#FBF9F6] dark:bg-[#1E241C] border-l-2 border-[#E3E1DC] dark:border-[#364032] flex flex-col brutal-shadow-lg lg:shadow-none`}
+        } fixed inset-y-0 right-0 z-40 w-[336px] max-w-[90vw] lg:static lg:z-0 lg:w-[336px] shrink-0 bg-[#FFFFFF] dark:bg-[#171E2C] border-l-2 border-[#E6ECF2] dark:border-[#2A364B] flex flex-col brutal-shadow-lg lg:shadow-none`}
       >
       {/* Header */}
-      <div className="pt-safe-2 pb-2 min-h-[62px] px-4 flex items-center justify-between border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] shrink-0">
-        <span className="font-display font-extrabold text-lg tracking-wide text-[#252A24] dark:text-[#F2F2F2]">
+      <div className="pt-safe-2 pb-2 min-h-[62px] px-4 flex items-center justify-between border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] shrink-0">
+        <span className="font-display font-extrabold text-lg tracking-wide text-[#161B26] dark:text-[#F5F7FA]">
           {chat.type === 'group'
             ? 'Info Grup'
             : chat.type === 'channel'
@@ -198,7 +198,7 @@ export function ChatInfoDrawer({
                 setEditingGroup((v) => !v);
               }}
               aria-label="Edit info grup"
-              className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white brutal-press flex items-center justify-center"
+              className="h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center"
             >
               <Edit3 className="w-4 h-4" />
             </button>
@@ -207,7 +207,7 @@ export function ChatInfoDrawer({
             type="button"
             onClick={onClose}
             aria-label="Tutup panel info"
-            className="h-8 w-8 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] bg-[#FBF9F6] dark:bg-[#2B3328] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#252A24] hover:text-white brutal-press flex items-center justify-center"
+            className="h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#161B26] hover:text-white brutal-press flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
@@ -216,7 +216,7 @@ export function ChatInfoDrawer({
 
       <div className="flex-1 overflow-y-auto thin-scrollbar">
         {/* Identity Summary */}
-        <div className="p-5 flex flex-col items-center text-center border-b-2 border-[#252A24]/15 dark:border-[#364032]">
+        <div className="p-5 flex flex-col items-center text-center border-b-2 border-[#161B26]/15 dark:border-[#2A364B]">
           <Avatar
             name={chat.title}
             imageUrl={chat.avatarUrl}
@@ -225,10 +225,10 @@ export function ChatInfoDrawer({
             online={isPeerOnline}
             size="lg"
           />
-          <h3 className="mt-3 font-display font-extrabold text-xl text-[#252A24] dark:text-[#F2F2F2]">
+          <h3 className="mt-3 font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
             {chat.title}
           </h3>
-          <p className="mt-0.5 text-xs text-[#787F75] dark:text-[#A3AD9E]">
+          <p className="mt-0.5 text-xs text-[#6B768A] dark:text-[#94A3B8]">
             {chat.type === 'dm' && chat.peerUser
               ? isPeerOnline
                 ? 'Online'
@@ -241,13 +241,13 @@ export function ChatInfoDrawer({
           </p>
 
           {chat.peerUser?.statusText && (
-            <p className="mt-1 text-xs text-[#D96868] dark:text-[#E58383] font-semibold">
+            <p className="mt-1 text-xs text-[#8C0027] dark:text-[#F47296] font-semibold">
               {chat.peerUser.statusText}
             </p>
           )}
 
           {chat.description && (
-            <p className="mt-2.5 text-xs text-[#5E645C] dark:text-[#C6CEC2] leading-relaxed max-w-[260px]">
+            <p className="mt-2.5 text-xs text-[#5A6578] dark:text-[#CBD5E1] leading-relaxed max-w-[260px]">
               {chat.description}
             </p>
           )}
@@ -257,7 +257,7 @@ export function ChatInfoDrawer({
               <button
                 type="button"
                 onClick={handleCopyInvite}
-                className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-[#D96868] dark:text-[#E58383] hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-[#8C0027] dark:text-[#F47296] hover:underline"
               >
                 <span>@{chat.handle || chat.peerUser?.username}</span>
                 {copiedHandle ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -265,7 +265,7 @@ export function ChatInfoDrawer({
               <button
                 type="button"
                 onClick={() => setShowInviteQr((v) => !v)}
-                className="p-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#D96868] hover:text-white"
+                className="p-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white"
                 title="Tampilkan QR Undangan"
               >
                 <QrCode className="w-4 h-4" />
@@ -287,7 +287,7 @@ export function ChatInfoDrawer({
           {editingGroup && isGroupAdmin && (
             <form
               onSubmit={handleSaveGroup}
-              className="mt-4 w-full text-left space-y-2.5 p-3 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC] dark:border-[#3C4738]"
+              className="mt-4 w-full text-left space-y-2.5 p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]"
             >
               <input
                 type="text"
@@ -295,22 +295,22 @@ export function ChatInfoDrawer({
                 onChange={(e) => setEditTitle(e.target.value)}
                 required
                 placeholder="Nama grup / channel"
-                className="w-full h-9 px-3 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#3C4738] text-xs text-[#252A24] dark:text-[#F2F2F2]"
+                className="w-full h-9 px-3 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA]"
               />
               <textarea
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
                 rows={2}
                 placeholder="Deskripsi"
-                className="w-full p-2.5 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#3C4738] text-xs text-[#252A24] dark:text-[#F2F2F2] resize-none"
+                className="w-full p-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA] resize-none"
               />
               {chat.type === 'group' && (
-                <label className="flex items-center gap-2 text-xs text-[#252A24] dark:text-[#F2F2F2]">
+                <label className="flex items-center gap-2 text-xs text-[#161B26] dark:text-[#F5F7FA]">
                   <input
                     type="checkbox"
                     checked={editAdminOnly}
                     onChange={(e) => setEditAdminOnly(e.target.checked)}
-                    className="accent-[#D96868]"
+                    className="accent-[#8C0027]"
                   />
                   <span>Hanya admin & moderator yang dapat mengirim pesan</span>
                 </label>
@@ -319,14 +319,14 @@ export function ChatInfoDrawer({
                 <button
                   type="button"
                   onClick={() => setEditingGroup(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-[#5E645C] dark:text-[#A3AD9E]"
+                  className="px-3 py-1.5 text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={savingGroup}
-                  className="px-3 py-1.5 rounded-xl bg-[#D96868] text-[#FBF9F6] border border-[#E3E1DC] text-xs font-bold brutal-shadow-sm brutal-press"
+                  className="px-3 py-1.5 rounded-xl bg-[#8C0027] text-[#FFFFFF] border border-[#E6ECF2] text-xs font-bold brutal-shadow-sm brutal-press"
                 >
                   {savingGroup ? 'Menyimpan...' : 'Simpan'}
                 </button>
@@ -336,17 +336,17 @@ export function ChatInfoDrawer({
         </div>
 
         {/* Quick Actions */}
-        <div className="p-3 space-y-1 border-b-2 border-[#252A24]/15 dark:border-[#364032]">
+        <div className="p-3 space-y-1 border-b-2 border-[#161B26]/15 dark:border-[#2A364B]">
           <button
             type="button"
             onClick={onTogglePinChat}
-            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]"
+            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]"
           >
             <span className="flex items-center gap-2.5">
-              <Pin className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+              <Pin className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
               <span>{chat.isPinnedByUser ? 'Lepas Sematan Chat' : 'Sematkan di Atas'}</span>
             </span>
-            <span className="font-mono text-[11px] font-bold text-[#D96868] dark:text-[#E58383]">
+            <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
               {chat.isPinnedByUser ? 'Aktif' : 'Mati'}
             </span>
           </button>
@@ -354,13 +354,13 @@ export function ChatInfoDrawer({
           <button
             type="button"
             onClick={onToggleArchiveChat}
-            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]"
+            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]"
           >
             <span className="flex items-center gap-2.5">
-              <Archive className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E]" />
+              <Archive className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8]" />
               <span>{chat.isArchivedByUser ? 'Keluarkan dari Arsip' : 'Arsipkan Chat'}</span>
             </span>
-            <span className="font-mono text-[11px] text-[#787F75] dark:text-[#8F9A8A]">
+            <span className="font-mono text-[11px] text-[#6B768A] dark:text-[#7E8DA4]">
               {chat.isArchivedByUser ? 'Diarsipkan' : 'Aktif'}
             </span>
           </button>
@@ -368,24 +368,24 @@ export function ChatInfoDrawer({
           <button
             type="button"
             onClick={onToggleMarkUnread}
-            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]"
+            className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]"
           >
             <span className="flex items-center gap-2.5">
-              <MailOpen className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E]" />
+              <MailOpen className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8]" />
               <span>Tandai Belum Dibaca</span>
             </span>
-            <span className="font-mono text-[11px] font-bold text-[#D96868] dark:text-[#E58383]">
+            <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
               {chat.markedUnreadByUser ? 'Ya' : 'Tidak'}
             </span>
           </button>
 
           {/* Timed Mute */}
           <div className="px-3 py-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] mb-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] mb-2">
               {chat.isMutedByUser ? (
-                <BellOff className="w-4 h-4 text-[#D96868] dark:text-[#E58383]" />
+                <BellOff className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
               ) : (
-                <Bell className="w-4 h-4 text-[#5E645C] dark:text-[#A3AD9E]" />
+                <Bell className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8]" />
               )}
               <span>Notifikasi & Bisukan</span>
             </div>
@@ -410,8 +410,8 @@ export function ChatInfoDrawer({
                     onClick={() => onSetMuteDuration(opt.value)}
                     className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-colors ${
                       selected
-                        ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2]'
-                        : 'bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#E2E6DF] border-[#252A24]/25 dark:border-[#3C4738] hover:border-[#D96868]'
+                        ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
+                        : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#E2E8F0] border-[#161B26]/25 dark:border-[#324058] hover:border-[#8C0027]'
                     }`}
                   >
                     {opt.label}
@@ -423,7 +423,7 @@ export function ChatInfoDrawer({
 
           {/* Self-Destruct Timer */}
           <div className="px-3 py-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] mb-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] mb-2">
               <Timer className="w-4 h-4 text-amber-600" />
               <span>Hapus Pesan Otomatis</span>
             </div>
@@ -435,8 +435,8 @@ export function ChatInfoDrawer({
                   onClick={() => onSetTimer(opt.value)}
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-colors ${
                     chat.selfDestructSec === opt.value
-                      ? 'bg-[#D96868] text-[#FBF9F6] border-[#E3E1DC] dark:border-[#F2F2F2]'
-                      : 'bg-[#F2F2F2] dark:bg-[#2B3328] text-[#252A24] dark:text-[#E2E6DF] border-[#252A24]/25 dark:border-[#3C4738] hover:border-[#D96868]'
+                      ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
+                      : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#E2E8F0] border-[#161B26]/25 dark:border-[#324058] hover:border-[#8C0027]'
                   }`}
                 >
                   {opt.label}
@@ -447,15 +447,15 @@ export function ChatInfoDrawer({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] px-1">
+        <div className="flex border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] px-1">
           {chat.type === 'group' && (
             <button
               type="button"
               onClick={() => setTab('members')}
               className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
                 tab === 'members'
-                  ? 'border-[#D96868] text-[#D96868] dark:text-[#E58383]'
-                  : 'border-transparent text-[#5E645C] dark:text-[#A3AD9E]'
+                  ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
+                  : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
               }`}
             >
               Anggota ({chat.memberIds.length})
@@ -466,8 +466,8 @@ export function ChatInfoDrawer({
             onClick={() => setTab('media')}
             className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
               tab === 'media'
-                ? 'border-[#D96868] text-[#D96868] dark:text-[#E58383]'
-                : 'border-transparent text-[#5E645C] dark:text-[#A3AD9E]'
+                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
+                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             Media ({mediaMessages.length})
@@ -477,8 +477,8 @@ export function ChatInfoDrawer({
             onClick={() => setTab('files')}
             className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
               tab === 'files'
-                ? 'border-[#D96868] text-[#D96868] dark:text-[#E58383]'
-                : 'border-transparent text-[#5E645C] dark:text-[#A3AD9E]'
+                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
+                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             File ({fileMessages.length})
@@ -488,8 +488,8 @@ export function ChatInfoDrawer({
             onClick={() => setTab('voice')}
             className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
               tab === 'voice'
-                ? 'border-[#D96868] text-[#D96868] dark:text-[#E58383]'
-                : 'border-transparent text-[#5E645C] dark:text-[#A3AD9E]'
+                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
+                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             Suara ({voiceMessages.length})
@@ -508,7 +508,7 @@ export function ChatInfoDrawer({
                 return (
                   <div
                     key={uid}
-                    className="p-2 rounded-xl flex items-center gap-2.5 hover:bg-[#FCEAEA] dark:hover:bg-[#2B2424]"
+                    className="p-2 rounded-xl flex items-center gap-2.5 hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]"
                   >
                     <button
                       type="button"
@@ -525,16 +525,16 @@ export function ChatInfoDrawer({
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                        <div className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] truncate">
                           {member.displayName}
                         </div>
-                        <div className="text-[11px] text-[#787F75] dark:text-[#8F9A8A] font-mono truncate">
+                        <div className="text-[11px] text-[#6B768A] dark:text-[#7E8DA4] font-mono truncate">
                           @{member.username}
                         </div>
                       </div>
                     </button>
                     {isAdmin ? (
-                      <span className="text-[10px] font-bold text-[#D96868] dark:text-[#E58383]">
+                      <span className="text-[10px] font-bold text-[#8C0027] dark:text-[#F47296]">
                         Admin
                       </span>
                     ) : isMod ? (
@@ -547,7 +547,7 @@ export function ChatInfoDrawer({
                             type="button"
                             onClick={() => void onToggleModerator(uid, false)}
                             title="Cabut Moderator"
-                            className="p-1 text-[#787F75] hover:text-[#D96868]"
+                            className="p-1 text-[#6B768A] hover:text-[#8C0027]"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -559,7 +559,7 @@ export function ChatInfoDrawer({
                           type="button"
                           onClick={() => void onToggleModerator(uid, true)}
                           title="Jadikan Moderator"
-                          className="p-1 text-[#787F75] hover:text-[#D96868]"
+                          className="p-1 text-[#6B768A] hover:text-[#8C0027]"
                         >
                           <Shield className="w-3.5 h-3.5" />
                         </button>
@@ -574,7 +574,7 @@ export function ChatInfoDrawer({
           {tab === 'media' && (
             <>
               {mediaMessages.length === 0 ? (
-                <p className="text-xs text-[#787F75] dark:text-[#8F9A8A] text-center py-8">
+                <p className="text-xs text-[#6B768A] dark:text-[#7E8DA4] text-center py-8">
                   Belum ada foto atau video di percakapan ini.
                 </p>
               ) : (
@@ -585,7 +585,7 @@ export function ChatInfoDrawer({
                       href={m.attachment?.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="aspect-square rounded-xl overflow-hidden border border-[#E3E1DC] dark:border-[#3C4738] bg-[#F2F2F2] dark:bg-[#2B3328] block"
+                      className="aspect-square rounded-xl overflow-hidden border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] block"
                     >
                       {m.attachment?.kind === 'video' ? (
                         <video
@@ -610,7 +610,7 @@ export function ChatInfoDrawer({
           {tab === 'files' && (
             <>
               {fileMessages.length === 0 ? (
-                <p className="text-xs text-[#787F75] dark:text-[#8F9A8A] text-center py-8">
+                <p className="text-xs text-[#6B768A] dark:text-[#7E8DA4] text-center py-8">
                   Belum ada dokumen atau file di percakapan ini.
                 </p>
               ) : (
@@ -620,14 +620,14 @@ export function ChatInfoDrawer({
                       key={m.id}
                       href={m.attachment?.url}
                       download={m.attachment?.name}
-                      className="p-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC]/25 dark:border-[#3C4738] flex items-center gap-2.5 hover:border-[#D96868]"
+                      className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2]/25 dark:border-[#324058] flex items-center gap-2.5 hover:border-[#8C0027]"
                     >
-                      <FileText className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
+                      <FileText className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold text-[#252A24] dark:text-[#F2F2F2] truncate">
+                        <div className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] truncate">
                           {m.attachment?.name}
                         </div>
-                        <div className="font-mono text-[10px] text-[#787F75] dark:text-[#8F9A8A]">
+                        <div className="font-mono text-[10px] text-[#6B768A] dark:text-[#7E8DA4]">
                           {formatBytes(m.attachment?.size || 0)}
                         </div>
                       </div>
@@ -641,7 +641,7 @@ export function ChatInfoDrawer({
           {tab === 'voice' && (
             <>
               {voiceMessages.length === 0 ? (
-                <p className="text-xs text-[#787F75] dark:text-[#8F9A8A] text-center py-8">
+                <p className="text-xs text-[#6B768A] dark:text-[#7E8DA4] text-center py-8">
                   Belum ada pesan suara di percakapan ini.
                 </p>
               ) : (
@@ -649,15 +649,15 @@ export function ChatInfoDrawer({
                   {voiceMessages.map((m) => (
                     <div
                       key={m.id}
-                      className="p-2.5 rounded-xl bg-[#F2F2F2] dark:bg-[#2B3328] border border-[#E3E1DC]/25 dark:border-[#3C4738] flex items-center justify-between gap-2"
+                      className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2]/25 dark:border-[#324058] flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <Mic className="w-4 h-4 text-[#D96868] dark:text-[#E58383] shrink-0" />
-                        <span className="text-xs font-medium text-[#252A24] dark:text-[#F2F2F2] truncate">
+                        <Mic className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
+                        <span className="text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] truncate">
                           {users[m.senderId]?.displayName || 'Pengguna'}
                         </span>
                       </div>
-                      <span className="font-mono text-[11px] text-[#787F75] dark:text-[#8F9A8A] tabular-nums">
+                      <span className="font-mono text-[11px] text-[#6B768A] dark:text-[#7E8DA4] tabular-nums">
                         {formatDuration(m.attachment?.durationSec)}
                       </span>
                     </div>
@@ -670,7 +670,7 @@ export function ChatInfoDrawer({
 
         {/* Safety Actions */}
         {chat.type !== 'saved' && (
-          <div className="p-3 border-t-2 border-[#252A24]/15 dark:border-[#364032] space-y-1">
+          <div className="p-3 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-1">
             {chat.type === 'dm' && chat.peerUser && (
               <>
                 <button
@@ -747,7 +747,7 @@ export function ChatInfoDrawer({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="flex-1 py-1.5 rounded-xl border border-[#E3E1DC] dark:border-[#3C4738] text-xs font-bold"
+                      className="flex-1 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold"
                     >
                       Batal
                     </button>

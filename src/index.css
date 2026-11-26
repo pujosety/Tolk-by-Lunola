@@ -6,20 +6,22 @@
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-maroon-50: #FCEAEA;
-  --color-maroon-100: #F9DADA;
-  --color-maroon-200: #F2BABA;
-  --color-maroon-500: #E58383;
-  --color-maroon-600: #D96868;
-  --color-maroon-700: #C45454;
-  --color-maroon-800: #A84242;
-  --color-maroon-900: #7D2E2E;
-  --color-sage-100: #EEF3E6;
-  --color-sage-500: #8FA86C;
-  --color-sage-600: #6A994E;
-  --color-ink: #252A24;
-  --color-paper: #F2F2F2;
-  --color-cream: #FBF9F6;
+  --color-maroon-50: #FDF0F3;
+  --color-maroon-100: #FADCE4;
+  --color-maroon-200: #F4B4C5;
+  --color-maroon-500: #B51844;
+  --color-maroon-600: #8C0027;
+  --color-maroon-700: #6E001F;
+  --color-maroon-800: #520017;
+  --color-maroon-900: #380010;
+  --color-sky-100: #EAF4FF;
+  --color-sky-300: #BEDEFF;
+  --color-butter-100: #FFF9D6;
+  --color-butter-300: #FFF2A7;
+  --color-amber-500: #F59B00;
+  --color-ink: #161B26;
+  --color-paper: #F5F7FA;
+  --color-cream: #FFFFFF;
 }
 
 :root {
@@ -50,75 +52,67 @@
   }
 }
 
-/* 3D Pastel Claymorphism soft sculpted ambient canvas */
+/* Playful Crisp App Canvas (Sky #BEDEFF + Butter #FFF2A7 ambient wash) */
 .chat-canvas-bg {
-  background-color: #F2F2F2;
+  background-color: #F5F7FA;
   background-image:
-    radial-gradient(circle at 14% 18%, rgba(217, 104, 104, 0.08) 0%, transparent 42%),
-    radial-gradient(circle at 86% 22%, rgba(143, 168, 108, 0.11) 0%, transparent 45%),
-    radial-gradient(circle at 52% 88%, rgba(106, 153, 78, 0.07) 0%, transparent 48%);
+    radial-gradient(circle at 12% 14%, rgba(190, 222, 255, 0.55) 0%, transparent 45%),
+    radial-gradient(circle at 88% 18%, rgba(255, 242, 167, 0.45) 0%, transparent 42%),
+    radial-gradient(circle at 50% 90%, rgba(190, 222, 255, 0.35) 0%, transparent 48%);
   transition: background-color 280ms var(--ease-p5-smooth);
 }
 
 .dark .chat-canvas-bg {
-  background-color: #151914;
+  background-color: #0F141E;
   background-image:
-    radial-gradient(circle at 14% 18%, rgba(217, 104, 104, 0.08) 0%, transparent 42%),
-    radial-gradient(circle at 86% 22%, rgba(143, 168, 108, 0.10) 0%, transparent 45%),
-    radial-gradient(circle at 52% 88%, rgba(106, 153, 78, 0.08) 0%, transparent 48%);
+    radial-gradient(circle at 14% 18%, rgba(140, 0, 39, 0.16) 0%, transparent 42%),
+    radial-gradient(circle at 86% 22%, rgba(190, 222, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 52% 88%, rgba(245, 155, 0, 0.07) 0%, transparent 48%);
 }
 
-/* 3D Pastel Claymorphism sculpted shadows + inner highlight */
+/* Crisp elevated card shadows (Apple HIG x Playful Pastel) */
 .brutal-shadow-sm {
   box-shadow:
-    0 3px 10px rgba(37, 42, 36, 0.07),
-    0 1px 3px rgba(37, 42, 36, 0.05),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.8);
+    0 2px 8px rgba(22, 27, 38, 0.05),
+    0 1px 2px rgba(22, 27, 38, 0.04);
 }
 .dark .brutal-shadow-sm {
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.32),
-    0 1px 3px rgba(0, 0, 0, 0.22),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.07);
+    0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .brutal-shadow {
   box-shadow:
-    0 8px 20px rgba(37, 42, 36, 0.09),
-    0 2px 6px rgba(37, 42, 36, 0.05),
-    inset 0 2px 3px rgba(255, 255, 255, 0.85);
+    0 6px 18px rgba(22, 27, 38, 0.07),
+    0 2px 6px rgba(22, 27, 38, 0.04);
 }
 .dark .brutal-shadow {
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.38),
-    0 2px 6px rgba(0, 0, 0, 0.25),
-    inset 0 1px 2px rgba(255, 255, 255, 0.08);
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .brutal-shadow-maroon {
   box-shadow:
-    0 8px 22px rgba(217, 104, 104, 0.22),
-    0 2px 6px rgba(106, 153, 78, 0.12),
-    inset 0 2px 3px rgba(255, 255, 255, 0.7);
+    0 8px 22px rgba(140, 0, 39, 0.22),
+    0 2px 6px rgba(245, 155, 0, 0.12);
 }
 .dark .brutal-shadow-maroon {
   box-shadow:
-    0 8px 22px rgba(217, 104, 104, 0.2),
-    0 2px 6px rgba(0, 0, 0, 0.35),
-    inset 0 1px 2px rgba(255, 255, 255, 0.08);
+    0 8px 22px rgba(140, 0, 39, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .brutal-shadow-lg {
   box-shadow:
-    0 18px 40px rgba(37, 42, 36, 0.12),
-    0 6px 14px rgba(37, 42, 36, 0.06),
-    inset 0 2px 4px rgba(255, 255, 255, 0.9);
+    0 18px 42px rgba(22, 27, 38, 0.1),
+    0 6px 14px rgba(22, 27, 38, 0.05);
 }
 .dark .brutal-shadow-lg {
   box-shadow:
-    0 20px 44px rgba(0, 0, 0, 0.48),
-    0 6px 14px rgba(0, 0, 0, 0.3),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.08);
+    0 20px 44px rgba(0, 0, 0, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.32);
 }
 
 /* Smooth 3D clay hover lift + soft tactile press */
@@ -183,13 +177,14 @@
   }
 }
 
-/* 3D Pastel Sculpted Coral-Sage Header Banner */
+/* Playful Sky-Butter-Burgundy Header Banner */
 .p5-maroon-banner {
-  background-color: #D96868;
+  background-color: #8C0027;
   background-image:
-    radial-gradient(circle at 85% 18%, rgba(143, 168, 108, 0.45) 0%, transparent 55%),
-    linear-gradient(135deg, #D96868 0%, #DF7A7A 58%, #8FA86C 100%);
-  box-shadow: inset 0 -2px 6px rgba(37, 42, 36, 0.08);
+    radial-gradient(circle at 88% 16%, rgba(245, 155, 0, 0.42) 0%, transparent 50%),
+    radial-gradient(circle at 12% 88%, rgba(190, 222, 255, 0.25) 0%, transparent 48%),
+    linear-gradient(135deg, #8C0027 0%, #A9103B 62%, #D4581C 100%);
+  box-shadow: inset 0 -2px 8px rgba(15, 20, 30, 0.12);
 }
 
 /* Smooth rounded pill (replaces comic skew) */

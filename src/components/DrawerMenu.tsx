@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
+  ArrowLeft,
   Bookmark,
+  ChevronRight,
   Download,
   LogIn,
   LogOut,
@@ -66,6 +68,7 @@ export function DrawerMenu({
 
   const menuItems: Array<{
     icon: React.ReactNode;
+    iconBg: string;
     label: string;
     subtitle?: string;
     onClick: () => void;
@@ -73,6 +76,7 @@ export function DrawerMenu({
   }> = [
     {
       icon: <Users className="w-5 h-5" />,
+      iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'newGroup'),
       onClick: () => {
         onClose();
@@ -81,6 +85,7 @@ export function DrawerMenu({
     },
     {
       icon: <Radio className="w-5 h-5" />,
+      iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'newChannel'),
       onClick: () => {
         onClose();
@@ -89,6 +94,7 @@ export function DrawerMenu({
     },
     {
       icon: <Bookmark className="w-5 h-5" />,
+      iconBg: 'bg-[#F59B00] text-white',
       label: t(lang, 'savedMessages'),
       onClick: () => {
         onClose();
@@ -97,6 +103,7 @@ export function DrawerMenu({
     },
     {
       icon: <Phone className="w-5 h-5" />,
+      iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'calls'),
       onClick: () => {
         onClose();
@@ -105,6 +112,7 @@ export function DrawerMenu({
     },
     {
       icon: <MonitorSmartphone className="w-5 h-5" />,
+      iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'devices'),
       onClick: () => {
         onClose();
@@ -113,6 +121,7 @@ export function DrawerMenu({
     },
     {
       icon: <Sliders className="w-5 h-5" />,
+      iconBg: 'bg-[#E6ECF2] dark:bg-[#2B364B] text-[#161B26] dark:text-[#F1F5F9]',
       label: t(lang, 'settings'),
       subtitle: 'Bahasa, Aksesibilitas, Privasi, Notifikasi',
       onClick: () => {
@@ -124,6 +133,7 @@ export function DrawerMenu({
       ? [
           {
             icon: <Shield className="w-5 h-5" />,
+            iconBg: 'bg-[#8C0027] text-white',
             label: t(lang, 'adminPanel'),
             subtitle: 'Dashboard, RBAC, Moderasi, Audit Log',
             accent: true,
@@ -136,6 +146,7 @@ export function DrawerMenu({
       : []),
     {
       icon: <UserCircle2 className="w-5 h-5" />,
+      iconBg: 'bg-[#BEDEFF] text-[#161B26]',
       label: t(lang, 'editProfile'),
       onClick: () => {
         onClose();
@@ -144,6 +155,7 @@ export function DrawerMenu({
     },
     {
       icon: <LogIn className="w-5 h-5" />,
+      iconBg: 'bg-[#FFF2A7] text-[#161B26]',
       label: t(lang, 'switchAccount'),
       onClick: () => {
         onClose();
@@ -155,18 +167,42 @@ export function DrawerMenu({
   return (
     <div className={`fixed inset-0 z-50 flex ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#252A24]/60 backdrop-blur-[1px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/55 backdrop-blur-[2px]`}
         onClick={onClose}
       />
 
       <div
         className={`${
           closing ? 'p5-drawer-left-out' : 'p5-drawer-left'
-        } relative z-10 w-[308px] max-w-[86vw] h-full bg-[#FBF9F6] dark:bg-[#1E241C] border-r-2 border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex flex-col`}
+        } relative z-10 w-full md:w-[332px] h-full bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border-r md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg flex flex-col`}
       >
-        {/* Persona 5 Diagonal Maroon Profile Header */}
-        <div className="pt-safe-5 px-5 pb-4 p5-maroon-banner text-[#FBF9F6] border-b-2 border-[#E3E1DC] dark:border-[#F2F2F2]">
-          <div className="flex items-start justify-between">
+        {/* Mobile Full-Page Top Bar + Profile Hero */}
+        <div className="pt-safe-3 px-4 pb-4 p5-maroon-banner text-white shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Kembali"
+              className="h-10 px-3 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold flex items-center gap-1.5 brutal-press"
+            >
+              <ArrowLeft className="w-4 h-4 md:hidden" />
+              <X className="w-4 h-4 hidden md:block" />
+              <span className="md:hidden">Kembali</span>
+            </button>
+            <span className="font-display font-extrabold text-base tracking-wide md:hidden">
+              Menu
+            </span>
+            <button
+              type="button"
+              onClick={onToggleDarkMode}
+              aria-label={darkMode ? t(lang, 'lightMode') : t(lang, 'darkMode')}
+              className="h-10 w-10 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-white brutal-press flex items-center justify-center"
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
+
+          <div className="mt-4 flex items-center gap-3.5">
             <button
               type="button"
               onClick={() => {
@@ -174,8 +210,7 @@ export function DrawerMenu({
                 onOpenProfile();
               }}
               aria-label="Ubah foto profil"
-              title="Ubah foto profil"
-              className="rounded-xl focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform"
+              className="rounded-2xl focus:outline-none focus:ring-2 focus:ring-white/80 hover:scale-[1.03] transition-transform shrink-0"
             >
               <Avatar
                 name={user.displayName}
@@ -184,42 +219,21 @@ export function DrawerMenu({
                 size="lg"
               />
             </button>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={onToggleDarkMode}
-                aria-label={darkMode ? t(lang, 'lightMode') : t(lang, 'darkMode')}
-                className="h-9 w-9 rounded-xl border border-[#E3E1DC] bg-[#FBF9F6] text-[#252A24] hover:bg-[#252A24] hover:text-[#FBF9F6] brutal-shadow-sm brutal-press flex items-center justify-center"
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Tutup menu"
-                className="h-9 w-9 rounded-xl border border-[#E3E1DC] bg-[#252A24] text-[#FBF9F6] hover:bg-[#FBF9F6] hover:text-[#252A24] brutal-shadow-sm brutal-press flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-3.5">
-            <div className="p5-skew inline-block bg-[#252A24] text-[#FBF9F6] px-2.5 py-0.5 max-w-full">
-              <span className="p5-unskew font-display font-extrabold text-lg leading-tight truncate block">
+            <div className="min-w-0 flex-1">
+              <div className="font-display font-extrabold text-xl leading-tight truncate text-white">
                 {user.displayName}
-              </span>
-            </div>
-            <div className="mt-1 text-xs text-[#F9DADA] font-mono truncate">
-              @{user.username}
-              {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
+              </div>
+              <div className="mt-0.5 text-xs text-[#FFF2A7] font-mono truncate">
+                @{user.username}
+                {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
+              </div>
             </div>
           </div>
         </div>
 
         {/* PWA Install CTA */}
         {!isInstalled && (isInstallable || isIOS) && (
-          <div className="px-4 py-3 bg-[#FCEAEA] dark:bg-[#2B2424] border-b-2 border-[#E3E1DC] dark:border-[#364032]">
+          <div className="px-4 py-3 bg-[#FFF9D6] dark:bg-[#1E2738] border-b border-[#E6ECF2] dark:border-[#2A364B]">
             <button
               type="button"
               onClick={() => {
@@ -229,13 +243,13 @@ export function DrawerMenu({
                   setShowIOSGuide((v) => !v);
                 }
               }}
-              className="w-full py-2 px-3 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm brutal-press p5-slash-btn text-xs font-bold flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-3 rounded-2xl bg-[#F59B00] hover:bg-[#D98800] text-white brutal-shadow-sm brutal-press p5-slash-btn text-xs font-bold flex items-center justify-center gap-2"
             >
               <Download className="w-4 h-4" />
               <span>{t(lang, 'installApp')} (PWA)</span>
             </button>
             {showIOSGuide && isIOS && (
-              <p className="p5-panel-reveal mt-2 text-[11px] text-[#5E645C] dark:text-[#C6CEC2] leading-relaxed">
+              <p className="p5-panel-reveal mt-2 text-[11px] text-[#5A6578] dark:text-[#CBD5E1] leading-relaxed">
                 Di Safari iOS, ketuk tombol <strong>Bagikan</strong> di bilah bawah lalu pilih{' '}
                 <strong>Tambahkan ke Layar Utama</strong>.
               </p>
@@ -243,30 +257,41 @@ export function DrawerMenu({
           </div>
         )}
 
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 thin-scrollbar">
-          {menuItems.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={item.onClick}
-              className={`p5-row-motion w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-left border ${
-                item.accent
-                  ? 'border-[#D96868] bg-[#FCEAEA] dark:bg-[#2E2223] text-[#D96868] dark:text-[#E58383] hover:bg-[#D96868] hover:text-[#FBF9F6]'
-                  : 'border-transparent text-[#252A24] dark:text-[#F2F2F2] hover:border-[#E3E1DC] dark:hover:border-[#D96868] hover:bg-[#F2F2F2] dark:hover:bg-[#2B3328]'
-              }`}
-            >
-              <span className="shrink-0">{item.icon}</span>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold leading-tight">{item.label}</div>
-                {item.subtitle && (
-                  <div className="text-[11px] opacity-75 truncate">{item.subtitle}</div>
-                )}
-              </div>
-            </button>
-          ))}
-
-          <div className="my-2 border-t-2 border-[#252A24]/15 dark:border-[#364032]" />
+        {/* Grouped Apple HIG-Style Menu Cards */}
+        <nav className="flex-1 overflow-y-auto p-3.5 space-y-2.5 thin-scrollbar">
+          <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm overflow-hidden divide-y divide-[#E6ECF2] dark:divide-[#2A364B]">
+            {menuItems.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onClick}
+                className={`w-full px-3.5 py-3 flex items-center justify-between gap-3 text-left transition-colors ${
+                  item.accent
+                    ? 'bg-[#FFF9D6]/60 dark:bg-[#1B2436] hover:bg-[#FFF2A7]/70 dark:hover:bg-[#232D40]'
+                    : 'hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738]'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 brutal-shadow-sm ${item.iconBg}`}
+                  >
+                    {item.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9] leading-tight truncate">
+                      {item.label}
+                    </div>
+                    {item.subtitle && (
+                      <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8] truncate mt-0.5">
+                        {item.subtitle}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#94A3B8] shrink-0" />
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"
@@ -274,16 +299,16 @@ export function DrawerMenu({
               onClose();
               onLogout();
             }}
-            className="w-full px-3 py-2.5 rounded-xl flex items-center gap-3 text-left text-[#B91C1C] dark:text-[#FF6B81] border border-transparent hover:border-[#B91C1C] hover:bg-[#FEF2F2] dark:hover:bg-[#2B1217] transition-colors"
+            className="w-full px-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-center gap-2 text-[#8C0027] dark:text-[#F47296] hover:bg-[#FDF0F3] dark:hover:bg-[#2B1822] font-bold text-sm brutal-shadow-sm transition-colors"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm font-semibold">{t(lang, 'logout')}</span>
+            <LogOut className="w-4 h-4" />
+            <span>{t(lang, 'logout')}</span>
           </button>
         </nav>
 
         {/* Footer */}
-        <div className="pt-3 pb-safe-3 px-4 border-t-2 border-[#E3E1DC] dark:border-[#364032] bg-[#F2F2F2] dark:bg-[#191E17] text-[11px] text-[#5E645C] dark:text-[#A3AD9E] flex items-center justify-between gap-2">
-          <div className="px-2 py-1 rounded-lg bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm flex items-center">
+        <div className="pt-3 pb-safe-3 px-4 border-t border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] text-[11px] text-[#5A6578] dark:text-[#94A3B8] flex items-center justify-between gap-2">
+          <div className="px-2.5 py-1 rounded-xl bg-[#F5F7FA] border border-[#E6ECF2] flex items-center">
             <img
               src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
               alt="Tolk by Lunola"

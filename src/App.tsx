@@ -1161,15 +1161,15 @@ export function App() {
 
   if (bootstrapping) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#252A24] dark:text-[#F2F2F2] px-6">
-        <div className="p5-impact-slam px-7 py-6 rounded-3xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg flex flex-col items-center">
+      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] px-6">
+        <div className="p5-impact-slam px-7 py-6 rounded-3xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg flex flex-col items-center">
           <img
             src="/assets/aistudio/tolk-stacked_d5d93707.svg"
             alt="Tolk by Lunola"
             className="h-32 w-auto object-contain select-none"
           />
         </div>
-        <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#5E645C] dark:text-[#B7C0B3] p5-panel-reveal">
+        <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#5A6578] dark:text-[#CBD5E1] p5-panel-reveal">
           {t(lang, 'connecting')}
         </p>
       </div>
@@ -1178,16 +1178,16 @@ export function App() {
 
   if (bootError) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-[#F2F2F2] dark:bg-[#151914] text-[#252A24] dark:text-[#F2F2F2] px-6 text-center">
-        <div className="p-6 rounded-xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow max-w-sm">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-[#F5F7FA] dark:bg-[#0F141E] text-[#161B26] dark:text-[#F5F7FA] px-6 text-center">
+        <div className="p-6 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow max-w-sm">
           <p className="font-display font-extrabold text-xl">Gagal memuat Tolk by Lunola</p>
-          <p className="mt-1 text-xs text-[#5E645C] dark:text-[#A3AD9E]">
+          <p className="mt-1 text-xs text-[#5A6578] dark:text-[#94A3B8]">
             {bootError}
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 rounded-xl bg-[#D96868] hover:bg-[#C45454] text-[#FBF9F6] border border-[#E3E1DC] brutal-shadow-sm brutal-press text-xs font-bold"
+            className="mt-4 px-4 py-2 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] brutal-shadow-sm brutal-press text-xs font-bold"
           >
             Muat Ulang
           </button>
@@ -1216,18 +1216,18 @@ export function App() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#F2F2F2] dark:bg-[#151914]">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#F5F7FA] dark:bg-[#0F141E]">
       {/* Offline Indicator (PWA) */}
       {!isOnline && (
-        <div className="p5-panel-reveal px-4 py-1.5 bg-[#252A24] text-[#FBF9F6] border-b-2 border-[#D96868] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
-          <WifiOff className="w-3.5 h-3.5 text-[#E58383]" />
+        <div className="p5-panel-reveal px-4 py-1.5 bg-[#161B26] text-[#FFFFFF] border-b-2 border-[#8C0027] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
+          <WifiOff className="w-3.5 h-3.5 text-[#F47296]" />
           <span>{t(lang, 'offlineBanner')}</span>
         </div>
       )}
 
       {/* Maintenance Notice */}
       {settings?.maintenanceMode && (
-        <div className="p5-panel-reveal px-4 py-1.5 bg-amber-500 text-[#252A24] border-b-2 border-[#E3E1DC] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
+        <div className="p5-panel-reveal px-4 py-1.5 bg-amber-500 text-[#161B26] border-b-2 border-[#E6ECF2] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>Mode Maintenance sedang aktif — beberapa fungsi mungkin dibatasi sementara.</span>
         </div>
@@ -1238,7 +1238,7 @@ export function App() {
         <div
           className={`${
             globalBannerPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-1.5 bg-[#D96868] text-[#FBF9F6] border-b-2 border-[#E3E1DC] text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-30`}
+          } px-4 py-1.5 bg-[#8C0027] text-[#FFFFFF] border-b-2 border-[#E6ECF2] text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-30`}
         >
           <div className="flex items-center gap-2 min-w-0">
             <Megaphone className="w-3.5 h-3.5 shrink-0" />
@@ -1398,19 +1398,19 @@ export function App() {
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
-              <div className="p5-impact-slam px-6 py-6 rounded-3xl bg-[#FBF9F6] dark:bg-[#1E241C] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-lg max-w-sm flex flex-col items-center">
-                <div className="px-4 py-3 mb-3 rounded-xl bg-[#FBF9F6] border border-[#E3E1DC] dark:border-[#F2F2F2] brutal-shadow-sm">
+              <div className="p5-impact-slam px-6 py-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg max-w-sm flex flex-col items-center">
+                <div className="px-4 py-3 mb-3 rounded-xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm">
                   <img
                     src="/assets/aistudio/tolk-stacked_d5d93707.svg"
                     alt="Tolk by Lunola"
                     className="h-24 w-auto object-contain select-none"
                   />
                 </div>
-                <h2 className="font-display font-extrabold text-xl text-[#252A24] dark:text-[#F2F2F2]">
+                <h2 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA]">
                   Pilih percakapan untuk mulai
                 </h2>
-                <p className="mt-1.5 text-xs text-[#5E645C] dark:text-[#A3AD9E] leading-relaxed">
-                  Gunakan <span className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">Ctrl + K</span> untuk mencari cepat, <span className="font-mono font-bold text-[#D96868] dark:text-[#E58383]">Ctrl + B</span> untuk memperkecil sidebar, atau mulai panggilan WebRTC.
+                <p className="mt-1.5 text-xs text-[#5A6578] dark:text-[#94A3B8] leading-relaxed">
+                  Gunakan <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + K</span> untuk mencari cepat, <span className="font-mono font-bold text-[#8C0027] dark:text-[#F47296]">Ctrl + B</span> untuk memperkecil sidebar, atau mulai panggilan WebRTC.
                 </p>
               </div>
             </div>
@@ -1707,7 +1707,7 @@ export function App() {
           key={toastRetained.renderedValue}
           className={`${
             toastRetained.closing ? 'p5-toast-out pointer-events-none' : 'p5-toast-impact'
-          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-xl bg-[#252A24] dark:bg-[#D96868] border border-[#D96868] dark:border-[#F2F2F2] text-[#F2F2F2] text-xs font-bold brutal-shadow-sm`}
+          } fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] text-center px-4 py-2 rounded-xl bg-[#161B26] dark:bg-[#8C0027] border border-[#8C0027] dark:border-[#F5F7FA] text-[#F5F7FA] text-xs font-bold brutal-shadow-sm`}
         >
           {toastRetained.renderedValue}
         </div>
