@@ -732,6 +732,9 @@ async function initDatabaseAndLoadStore(): Promise<StoreData> {
     await pool.execute(
       'CREATE TABLE IF NOT EXISTS tolk_kv (id VARCHAR(64) PRIMARY KEY, data LONGTEXT NOT NULL, updated_at BIGINT NOT NULL)'
     );
+    await pool.execute(
+      'CREATE TABLE IF NOT EXISTS tolk_qr_login (challenge_id VARCHAR(64) PRIMARY KEY, secret VARCHAR(128) NOT NULL, expires_at BIGINT NOT NULL, approved_by_user_id VARCHAR(64) NULL)'
+    );
 
     const [rows] = await pool.execute<mysql.RowDataPacket[]>(
       'SELECT data FROM tolk_kv WHERE id = ? LIMIT 1',
@@ -1362,7 +1365,7 @@ async function startServer(): Promise<void> {
     res.json({ token, user: toPublicUser(user, true) });
   });
 
-  // Desktop QR Code Login (WhatsApp Web-style)
+  // Desktop QR Code Login (WhatsApp Web-style, persisted in MySQL across edge isolates)
   const qrLoginChallenges = new Map<
     string,
     {
@@ -1372,49 +1375,121 @@ async function startServer(): Promise<void> {
     }
   >();
 
-  app.post('/api/auth/qr/create', (_req, res) => {
+  app.post('/api/auth/qr/create', async (_req, res) => {
     const now = Date.now();
+    const challengeId = `qr_${crypto.randomBytes(8).toString('hex')}`;
+    const secret = crypto.randomBytes(16).toString('hex');
+    const expiresAt = now + 180_000;
+
+    if (dbPool) {
+      try {
+        await dbPool.execute('DELETE FROM tolk_qr_login WHERE expires_at < ?', [now]);
+        await dbPool.execute(
+          'INSERT INTO tolk_qr_login (challenge_id, secret, expires_at, approved_by_user_id) VALUES (?, ?, ?, NULL)',
+          [challengeId, secret, expiresAt]
+        );
+        res.json({ challengeId, secret, expiresAt });
+        return;
+      } catch (err) {
+        console.error('MySQL qr create error:', err);
+      }
+    }
+
     for (const [id, entry] of qrLoginChallenges.entries()) {
       if (entry.expiresAt < now) qrLoginChallenges.delete(id);
     }
-    const challengeId = `qr_${crypto.randomBytes(8).toString('hex')}`;
-    const secret = crypto.randomBytes(16).toString('hex');
-    const expiresAt = now + 120_000;
     qrLoginChallenges.set(challengeId, { secret, expiresAt });
     res.json({ challengeId, secret, expiresAt });
   });
 
-  app.get('/api/auth/qr/status', (req, res) => {
+  app.get('/api/auth/qr/status', async (req, res) => {
     const challengeId = typeof req.query.challengeId === 'string' ? req.query.challengeId : '';
     const secret = typeof req.query.secret === 'string' ? req.query.secret : '';
-    const entry = qrLoginChallenges.get(challengeId);
-    if (!entry || entry.secret !== secret || entry.expiresAt < Date.now()) {
-      if (entry && entry.expiresAt < Date.now()) qrLoginChallenges.delete(challengeId);
+    const now = Date.now();
+
+    let entry: { secret: string; expiresAt: number; approvedByUserId?: string | null } | undefined;
+
+    if (dbPool && challengeId) {
+      try {
+        const [rows] = await dbPool.execute<mysql.RowDataPacket[]>(
+          'SELECT secret, expires_at, approved_by_user_id FROM tolk_qr_login WHERE challenge_id = ? LIMIT 1',
+          [challengeId]
+        );
+        if (rows.length > 0) {
+          entry = {
+            secret: String(rows[0].secret),
+            expiresAt: Number(rows[0].expires_at),
+            approvedByUserId: rows[0].approved_by_user_id ? String(rows[0].approved_by_user_id) : null,
+          };
+        }
+      } catch (err) {
+        console.error('MySQL qr status error:', err);
+      }
+    } else {
+      entry = qrLoginChallenges.get(challengeId);
+    }
+
+    if (!entry || entry.secret !== secret || entry.expiresAt < now) {
+      if (dbPool && entry && entry.expiresAt < now) {
+        void dbPool.execute('DELETE FROM tolk_qr_login WHERE challenge_id = ?', [challengeId]).catch(() => {});
+      } else if (entry && entry.expiresAt < now) {
+        qrLoginChallenges.delete(challengeId);
+      }
       res.json({ status: 'expired' });
       return;
     }
+
     if (!entry.approvedByUserId) {
       res.json({ status: 'pending' });
       return;
     }
+
     const user = store.users[entry.approvedByUserId];
-    qrLoginChallenges.delete(challengeId);
+    if (dbPool) {
+      void dbPool.execute('DELETE FROM tolk_qr_login WHERE challenge_id = ?', [challengeId]).catch(() => {});
+    } else {
+      qrLoginChallenges.delete(challengeId);
+    }
+
     if (!user || user.status !== 'active') {
       res.status(403).json({ error: 'Akun tidak tersedia.' });
       return;
     }
-    user.lastSeen = Date.now();
+    user.lastSeen = now;
     ensureDefaultChatsForUser(user.id);
     const { token } = createSessionForUser(user.id, req);
     saveStore(store);
     res.json({ status: 'approved', token, user: toPublicUser(user, true) });
   });
 
-  app.post('/api/auth/qr/approve', requireAuth, (req: AuthedRequest, res) => {
-    const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId : '';
-    const secret = typeof req.body?.secret === 'string' ? req.body.secret : '';
+  app.post('/api/auth/qr/approve', requireAuth, async (req: AuthedRequest, res) => {
+    const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId.trim() : '';
+    const secret = typeof req.body?.secret === 'string' ? req.body.secret.trim() : '';
+    const now = Date.now();
+
+    if (dbPool && challengeId) {
+      try {
+        const [rows] = await dbPool.execute<mysql.RowDataPacket[]>(
+          'SELECT secret, expires_at FROM tolk_qr_login WHERE challenge_id = ? LIMIT 1',
+          [challengeId]
+        );
+        if (rows.length === 0 || String(rows[0].secret) !== secret || Number(rows[0].expires_at) < now) {
+          res.status(400).json({ error: 'Kode QR kedaluwarsa atau tidak valid. Muat ulang QR di desktop.' });
+          return;
+        }
+        await dbPool.execute(
+          'UPDATE tolk_qr_login SET approved_by_user_id = ? WHERE challenge_id = ?',
+          [req.userId!, challengeId]
+        );
+        res.json({ ok: true });
+        return;
+      } catch (err) {
+        console.error('MySQL qr approve error:', err);
+      }
+    }
+
     const entry = qrLoginChallenges.get(challengeId);
-    if (!entry || entry.secret !== secret || entry.expiresAt < Date.now()) {
+    if (!entry || entry.secret !== secret || entry.expiresAt < now) {
       res.status(400).json({ error: 'Kode QR kedaluwarsa atau tidak valid. Muat ulang QR di desktop.' });
       return;
     }

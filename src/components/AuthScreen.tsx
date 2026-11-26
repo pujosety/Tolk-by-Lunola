@@ -65,7 +65,7 @@ export function AuthScreen({
   }, []);
 
   useEffect(() => {
-    if (mode !== 'qr') return;
+    if (mode !== 'qr' || qrExpired) return;
     if (!qrChallenge) {
       void loadQrChallenge();
       return;
@@ -84,7 +84,7 @@ export function AuthScreen({
         .catch(() => {});
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [mode, qrChallenge, loadQrChallenge, onQrLoginSuccess]);
+  }, [mode, qrChallenge, qrExpired, loadQrChallenge, onQrLoginSuccess]);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -236,8 +236,9 @@ export function AuthScreen({
                     onClick={() => {
                       setMode(tabKey);
                       setError('');
-                      if (tabKey === 'qr' && (!qrChallenge || qrExpired)) {
-                        void loadQrChallenge();
+                      if (tabKey === 'qr' && qrExpired) {
+                        setQrChallenge(null);
+                        setQrExpired(false);
                       }
                     }}
                     className={`relative py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-200 z-10 ${
@@ -315,7 +316,10 @@ export function AuthScreen({
                       </span>
                       <button
                         type="button"
-                        onClick={() => void loadQrChallenge()}
+                        onClick={() => {
+                          setQrChallenge(null);
+                          setQrExpired(false);
+                        }}
                         className="px-3.5 py-2 rounded-xl bg-[#8C0027] text-white text-xs font-bold flex items-center gap-1.5 brutal-press"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
