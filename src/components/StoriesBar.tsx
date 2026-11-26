@@ -5,14 +5,18 @@ import {
   AtSign,
   BellOff,
   Camera,
+  ChevronUp,
   Edit3,
   Eye,
-  Heart,
   Image as ImageIcon,
+  Loader2,
+  MoreVertical,
+  Play,
   Plus,
   Radio,
   Repeat2,
   SendHorizontal,
+  Share2,
   Trash2,
   X,
 } from 'lucide-react';
@@ -70,8 +74,10 @@ export function UpdatesView({
 }: UpdatesViewProps) {
   const [creating, setCreating] = useState(false);
   const [reshareSource, setReshareSource] = useState<StoryItem | null>(null);
+  const [showMyStatusList, setShowMyStatusList] = useState(false);
   const [activeAuthorId, setActiveAuthorId] = useState<string | null>(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+  const [openViewersOnMount, setOpenViewersOnMount] = useState(false);
 
   // Group stories by author
   const groupedByAuthor = useMemo(() => {
@@ -98,6 +104,7 @@ export function UpdatesView({
 
   const activeStory = activeAuthorStories[activeStoryIndex] || null;
   const createPresence = useAnimatedPresence(creating, 200);
+  const myStatusPresence = useAnimatedPresence(showMyStatusList, 200);
   const viewerRetained = useRetainedValue(activeStory, 200);
 
   useEffect(() => {
@@ -129,7 +136,12 @@ export function UpdatesView({
     [peerStoryGroups, currentUser.id]
   );
 
-  const renderStoryRow = (uid: string, items: StoryItem[], isUnseen: boolean) => {
+  const orderedPeerGroups = useMemo(
+    () => [...unseenGroups, ...seenGroups],
+    [unseenGroups, seenGroups]
+  );
+
+  const renderStoryCard = (uid: string, items: StoryItem[], isUnseen: boolean) => {
     const author = users[uid];
     if (!author) return null;
     const latest = items[items.length - 1];
@@ -138,20 +150,55 @@ export function UpdatesView({
         key={uid}
         type="button"
         onClick={() => {
+          setOpenViewersOnMount(false);
           setActiveAuthorId(uid);
           setActiveStoryIndex(0);
         }}
-        className="w-full px-3 py-2.5 rounded-2xl hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738] flex items-center justify-between gap-3 text-left transition-colors"
+        style={!latest.mediaUrl ? { backgroundColor: latest.bgColor } : undefined}
+        className="relative w-[116px] h-[168px] shrink-0 snap-start rounded-2xl overflow-hidden bg-[#171E2C] text-left group brutal-press shadow-[0_4px_16px_rgba(15,20,30,0.10)]"
       >
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Background Media / Text Preview */}
+        {latest.mediaUrl && latest.kind === 'image' ? (
+          <StoryImageWithLoader
+            src={latest.mediaUrl}
+            alt={author.displayName}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            spinnerSize="sm"
+          />
+        ) : latest.mediaUrl && latest.kind === 'video' ? (
+          <>
+            <video
+              src={latest.mediaUrl}
+              muted
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <span className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center z-10">
+              <Play className="w-3 h-3 fill-white" />
+            </span>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center px-2.5 text-center">
+            <p className="text-[11px] font-display font-bold text-white/95 line-clamp-4 leading-snug">
+              {latest.text}
+            </p>
+          </div>
+        )}
+
+        {/* Scrims */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/80 z-10" />
+
+        {/* Top-Left Avatar with Status Ring */}
+        <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5">
           <div
-            className={`p-[2.5px] rounded-2xl shrink-0 ${
+            className={`p-[2px] rounded-full ${
               isUnseen
                 ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
-                : 'bg-[#E6ECF2] dark:bg-[#324058]'
+                : 'bg-white/45'
             }`}
           >
-            <div className="p-[1.5px] rounded-[14px] bg-[#FFFFFF] dark:bg-[#171E2C]">
+            <div className="p-[1.5px] rounded-full bg-[#171E2C]">
               <Avatar
                 name={author.displayName}
                 imageUrl={author.avatarUrl}
@@ -160,13 +207,22 @@ export function UpdatesView({
               />
             </div>
           </div>
-          <div className="min-w-0">
-            <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9] truncate">
-              {author.displayName}
-            </div>
-            <div className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
-              {formatTimeShort(latest.createdAt)} · {items.length} pembaruan
-            </div>
+        </div>
+
+        {/* Multi-story count pill */}
+        {items.length > 1 && latest.kind !== 'video' && (
+          <span className="absolute top-2.5 right-2.5 z-20 px-1.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-mono font-bold text-white">
+            {items.length}
+          </span>
+        )}
+
+        {/* Bottom Author Name & Time */}
+        <div className="absolute inset-x-2.5 bottom-2.5 z-20">
+          <div className="text-xs font-bold text-white truncate drop-shadow-sm">
+            {author.displayName}
+          </div>
+          <div className="text-[10px] text-white/75 font-mono truncate">
+            {formatTimeShort(latest.createdAt)}
           </div>
         </div>
       </button>
@@ -195,86 +251,126 @@ export function UpdatesView({
             </div>
           </div>
 
-          {/* My Status Row */}
-          <div className="p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (myStories.length > 0) {
-                  setActiveAuthorId(currentUser.id);
-                  setActiveStoryIndex(0);
-                } else {
-                  setCreating(true);
-                }
-              }}
-              className="flex items-center gap-3 min-w-0 flex-1 text-left"
-            >
-              <div className="relative shrink-0">
-                <div
-                  className={`p-[2.5px] rounded-2xl ${
-                    myStories.length > 0
-                      ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
-                      : 'bg-transparent'
-                  }`}
+          {/* WA-style Horizontal Swipeable Status Cards */}
+          <div
+            data-no-tab-swipe="true"
+            className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory thin-scrollbar pb-1"
+          >
+            {/* My Status Card */}
+            {(() => {
+              const latestOwn = myStories[myStories.length - 1];
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (myStories.length > 0) {
+                      setShowMyStatusList(true);
+                    } else {
+                      setCreating(true);
+                    }
+                  }}
+                  style={
+                    latestOwn && !latestOwn.mediaUrl
+                      ? { backgroundColor: latestOwn.bgColor }
+                      : undefined
+                  }
+                  className="relative w-[116px] h-[168px] shrink-0 snap-start rounded-2xl overflow-hidden bg-[#F5F7FA] dark:bg-[#1E2738] text-left group brutal-press shadow-[0_4px_16px_rgba(15,20,30,0.08)]"
                 >
-                  <div className="p-[1px] rounded-[14px] bg-[#F5F7FA] dark:bg-[#1E2738]">
-                    <Avatar
-                      name={currentUser.displayName}
-                      imageUrl={currentUser.avatarUrl}
-                      color={currentUser.avatarColor}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-                {myStories.length === 0 && (
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#8C0027] text-white border-2 border-[#F5F7FA] dark:border-[#1E2738] flex items-center justify-center">
-                    <Plus className="w-3 h-3" />
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9]">
-                  Status saya
-                </div>
-                <div className="text-xs text-[#5A6578] dark:text-[#94A3B8] truncate">
-                  {myStories.length > 0
-                    ? `${myStories.length} aktif · ${formatTimeShort(myStories[myStories.length - 1].createdAt)}`
-                    : 'Ketuk untuk tambah pembaruan 24 jam'}
-                </div>
-              </div>
-            </button>
+                  {latestOwn ? (
+                    <>
+                      {latestOwn.mediaUrl && latestOwn.kind === 'image' ? (
+                        <StoryImageWithLoader
+                          src={latestOwn.mediaUrl}
+                          alt="Status saya"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          spinnerSize="sm"
+                        />
+                      ) : latestOwn.mediaUrl && latestOwn.kind === 'video' ? (
+                        <video
+                          src={latestOwn.mediaUrl}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center px-2.5 text-center">
+                          <p className="text-[11px] font-display font-bold text-white/95 line-clamp-4 leading-snug">
+                            {latestOwn.text}
+                          </p>
+                        </div>
+                      )}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/80 z-10" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#FFFFFF] to-[#EEF2F7] dark:from-[#1E2738] dark:to-[#151C28]" />
+                  )}
 
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              aria-label="Tulis status baru"
-              className="h-9 w-9 rounded-xl bg-[#FFFFFF] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#8C0027] dark:text-[#F47296] hover:bg-[#8C0027] hover:text-white flex items-center justify-center brutal-press shrink-0"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
+                  {/* Top-Left Avatar */}
+                  <div className="absolute top-2.5 left-2.5 z-20">
+                    <div className="relative">
+                      <div
+                        className={`p-[2px] rounded-full ${
+                          myStories.length > 0
+                            ? 'bg-gradient-to-tr from-[#8C0027] via-[#F59B00] to-[#BEDEFF]'
+                            : 'bg-transparent'
+                        }`}
+                      >
+                        <div className="p-[1.5px] rounded-full bg-[#FFFFFF] dark:bg-[#1E2738]">
+                          <Avatar
+                            name={currentUser.displayName}
+                            imageUrl={currentUser.avatarUrl}
+                            color={currentUser.avatarColor}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
+                      {myStories.length === 0 && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#8C0027] text-white border-2 border-[#FFFFFF] dark:border-[#1E2738] flex items-center justify-center">
+                          <Plus className="w-3 h-3" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {myStories.length > 1 && (
+                    <span className="absolute top-2.5 right-2.5 z-20 px-1.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-mono font-bold text-white">
+                      {myStories.length}
+                    </span>
+                  )}
+
+                  <div className="absolute inset-x-2.5 bottom-2.5 z-20">
+                    <div
+                      className={`text-xs font-bold truncate ${
+                        latestOwn ? 'text-white drop-shadow-sm' : 'text-[#161B26] dark:text-[#F1F5F9]'
+                      }`}
+                    >
+                      Status saya
+                    </div>
+                    <div
+                      className={`text-[10px] truncate ${
+                        latestOwn ? 'text-white/80 font-mono' : 'text-[#5A6578] dark:text-[#94A3B8]'
+                      }`}
+                    >
+                      {myStories.length > 0
+                        ? `${myStories.length} aktif · Ketuk kelola`
+                        : 'Tambah status'}
+                    </div>
+                  </div>
+                </button>
+              );
+            })()}
+
+            {/* Peer Status Cards (Unseen first, then Seen) */}
+            {orderedPeerGroups.map(([uid, items]) => {
+              const isUnseen = items.some((s) => !s.viewerIds.includes(currentUser.id));
+              return renderStoryCard(uid, items, isUnseen);
+            })}
           </div>
 
-          {unseenGroups.length > 0 && (
-            <div className="space-y-1 pt-1">
-              <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
-                Pembaruan terbaru
-              </div>
-              {unseenGroups.map(([uid, items]) => renderStoryRow(uid, items, true))}
-            </div>
-          )}
-
-          {seenGroups.length > 0 && (
-            <div className="space-y-1 pt-1">
-              <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
-                Telah dilihat
-              </div>
-              {seenGroups.map(([uid, items]) => renderStoryRow(uid, items, false))}
-            </div>
-          )}
-
           {peerStoryGroups.length === 0 && (
-            <p className="px-1 py-2 text-xs text-[#5A6578] dark:text-[#94A3B8]">
-              Belum ada pembaruan status dari kontakmu.
+            <p className="px-1 py-1 text-xs text-[#5A6578] dark:text-[#94A3B8]">
+              Geser kartu status atau tambah pembaruan 24 jam.
             </p>
           )}
         </section>
@@ -359,26 +455,63 @@ export function UpdatesView({
           document.body
         )}
 
+      {/* My Status List Modal (WA-style list with stats & 3-dot delete/share) */}
+      {myStatusPresence.mounted &&
+        createPortal(
+          <MyStatusModal
+            closing={myStatusPresence.closing}
+            stories={myStories}
+            currentUserId={currentUser.id}
+            onClose={() => setShowMyStatusList(false)}
+            onAddNew={() => {
+              setShowMyStatusList(false);
+              setCreating(true);
+            }}
+            onOpenStory={(idx, openViewers = false) => {
+              setShowMyStatusList(false);
+              setOpenViewersOnMount(openViewers);
+              setActiveAuthorId(currentUser.id);
+              setActiveStoryIndex(idx);
+            }}
+            onShareStory={(s) => {
+              setShowMyStatusList(false);
+              setReshareSource(s);
+              setCreating(true);
+            }}
+            onDeleteStory={onDeleteStory}
+          />,
+          document.body
+        )}
+
       {/* Full-Screen Story Viewer (portaled above all headers/navbars) */}
       {viewerRetained.renderedValue &&
         createPortal(
           <StoryViewerModal
             closing={viewerRetained.closing}
             story={viewerRetained.renderedValue}
+            nextStory={activeAuthorStories[activeStoryIndex + 1] || null}
             author={users[viewerRetained.renderedValue.userId]}
             users={users}
             isOwn={viewerRetained.renderedValue.userId === currentUser.id}
+            initialShowViewers={openViewersOnMount}
             index={activeStoryIndex}
             total={Math.max(1, activeAuthorStories.length)}
-            onPrev={() => setActiveStoryIndex((i) => Math.max(0, i - 1))}
+            onPrev={() => {
+              setOpenViewersOnMount(false);
+              setActiveStoryIndex((i) => Math.max(0, i - 1));
+            }}
             onNext={() => {
+              setOpenViewersOnMount(false);
               if (activeStoryIndex + 1 < activeAuthorStories.length) {
                 setActiveStoryIndex((i) => i + 1);
               } else {
                 setActiveAuthorId(null);
               }
             }}
-            onClose={() => setActiveAuthorId(null)}
+            onClose={() => {
+              setOpenViewersOnMount(false);
+              setActiveAuthorId(null);
+            }}
             onDelete={async () => {
               const target = viewerRetained.renderedValue;
               if (!target) return;
@@ -792,12 +925,254 @@ function renderStoryCaptionText(text: string): React.ReactNode {
   );
 }
 
+const QUICK_STORY_EMOJIS = ['❤️', '😂', '😮', '😢', '👏', '🔥'];
+
+function StoryImageWithLoader({
+  src,
+  alt,
+  className = '',
+  spinnerSize = 'md',
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  spinnerSize?: 'sm' | 'md';
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#171E2C]/70 backdrop-blur-xl z-10">
+          <Loader2
+            className={`${
+              spinnerSize === 'sm' ? 'w-5 h-5' : 'w-7 h-7'
+            } text-white/90 animate-spin`}
+          />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        className={`${className} transition-all duration-300 ${
+          loaded ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-md scale-105'
+        }`}
+      />
+    </>
+  );
+}
+
+function MyStatusModal({
+  closing,
+  stories,
+  currentUserId,
+  onClose,
+  onAddNew,
+  onOpenStory,
+  onShareStory,
+  onDeleteStory,
+}: {
+  closing: boolean;
+  stories: StoryItem[];
+  currentUserId: string;
+  onClose: () => void;
+  onAddNew: () => void;
+  onOpenStory: (index: number, openViewers?: boolean) => void;
+  onShareStory: (story: StoryItem) => void;
+  onDeleteStory: (storyId: string) => Promise<void>;
+}) {
+  const [menuStoryId, setMenuStoryId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  return (
+    <div
+      onClick={onClose}
+      className={`${
+        closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
+      } fixed inset-0 z-[75] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4`}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`${
+          closing ? 'p5-modal-out' : 'p5-modal-impact'
+        } w-full sm:max-w-md max-h-[88dvh] rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_-8px_32px_rgba(15,20,30,0.2)] flex flex-col overflow-hidden`}
+      >
+        {/* Header */}
+        <div className="pt-safe-2 md:pt-4 px-4 pb-3 flex items-center justify-between gap-2 bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Kembali"
+              className="h-9 w-9 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                Status saya
+              </h3>
+              <p className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
+                {stories.length} pembaruan aktif
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onAddNew}
+            className="h-9 px-3.5 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold flex items-center gap-1.5 brutal-press"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah</span>
+          </button>
+        </div>
+
+        {/* List View */}
+        <div className="flex-1 overflow-y-auto thin-scrollbar px-3.5 pb-safe-3 space-y-2">
+          {stories.map((s, idx) => {
+            const viewCount = s.viewerIds.filter((id) => id !== currentUserId).length;
+            const isMenuOpen = menuStoryId === s.id;
+            const isDeleting = deletingId === s.id;
+
+            return (
+              <div
+                key={s.id}
+                className="relative flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738]"
+              >
+                <button
+                  type="button"
+                  onClick={() => onOpenStory(idx, false)}
+                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                >
+                  {/* Thumbnail Preview */}
+                  <div
+                    style={!s.mediaUrl ? { backgroundColor: s.bgColor } : undefined}
+                    className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#171E2C] flex items-center justify-center"
+                  >
+                    {s.mediaUrl && s.kind === 'image' ? (
+                      <StoryImageWithLoader
+                        src={s.mediaUrl}
+                        alt="Preview status"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        spinnerSize="sm"
+                      />
+                    ) : s.mediaUrl && s.kind === 'video' ? (
+                      <>
+                        <video
+                          src={s.mediaUrl}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <Play className="w-4 h-4 text-white fill-white relative z-10 drop-shadow" />
+                      </>
+                    ) : (
+                      <span className="text-[9px] font-bold text-white px-1 text-center line-clamp-2 leading-tight">
+                        {s.text || 'Teks'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Status Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
+                      {s.text || (s.kind === 'video' ? 'Video status' : 'Foto status')}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-[#5A6578] dark:text-[#94A3B8]">
+                      <span className="inline-flex items-center gap-1 font-semibold text-[#8C0027] dark:text-[#F47296]">
+                        <Eye className="w-3.5 h-3.5" />
+                        <span className="font-mono tabular-nums">{viewCount}</span>
+                        <span>tayangan</span>
+                      </span>
+                      <span>·</span>
+                      <span className="font-mono text-[11px]">{formatTimeShort(s.createdAt)}</span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* 3-Dot Action Trigger */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setMenuStoryId((prev) => (prev === s.id ? null : s.id))}
+                    aria-label="Opsi status"
+                    className="h-9 w-9 rounded-full hover:bg-[#E6ECF2] dark:hover:bg-[#2B364B] text-[#5A6578] dark:text-[#CBD5E1] flex items-center justify-center transition-colors"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+
+                  {isMenuOpen && (
+                    <div className="absolute right-0 top-10 w-44 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_10px_28px_rgba(15,20,30,0.22)] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 z-30 space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuStoryId(null);
+                          onOpenStory(idx, true);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] flex items-center gap-2"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-[#5A6578]" />
+                        <span>Lihat penonton ({viewCount})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuStoryId(null);
+                          onShareStory(s);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] flex items-center gap-2"
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-[#F59B00]" />
+                        <span>Bagikan ulang</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={async () => {
+                          setDeletingId(s.id);
+                          setMenuStoryId(null);
+                          try {
+                            await onDeleteStory(s.id);
+                          } finally {
+                            setDeletingId(null);
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-[#8C0027] dark:text-[#F47296] hover:bg-[#FDF0F3] dark:hover:bg-[#2B1822] flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus status</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StoryViewerModal({
   closing,
   story,
+  nextStory,
   author,
   users,
   isOwn,
+  initialShowViewers = false,
   index,
   total,
   onPrev,
@@ -810,9 +1185,11 @@ function StoryViewerModal({
 }: {
   closing: boolean;
   story: StoryItem;
+  nextStory?: StoryItem | null;
   author?: UserProfile;
   users: Record<string, UserProfile>;
   isOwn: boolean;
+  initialShowViewers?: boolean;
   index: number;
   total: number;
   onPrev: () => void;
@@ -824,15 +1201,26 @@ function StoryViewerModal({
   onReply: (text: string) => Promise<void>;
 }) {
   const [replyText, setReplyText] = useState('');
-  const [showViewers, setShowViewers] = useState(false);
+  const [showViewers, setShowViewers] = useState(initialShowViewers);
   const [paused, setPaused] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
+  const swipeStartRef = useRef<{ x: number; y: number; ignore: boolean } | null>(null);
   const viewersPresence = useAnimatedPresence(showViewers, 175);
 
   useEffect(() => {
     setProgressPct(0);
-    setShowViewers(false);
-  }, [story.id]);
+    setShowViewers(initialShowViewers);
+    setDragOffsetX(0);
+  }, [story.id, initialShowViewers]);
+
+  // Preload next story image for instant switching
+  useEffect(() => {
+    if (nextStory?.mediaUrl && nextStory.kind === 'image') {
+      const preload = new Image();
+      preload.src = nextStory.mediaUrl;
+    }
+  }, [nextStory]);
 
   useEffect(() => {
     if (story.kind === 'video' || paused || showViewers || replyText.trim().length > 0) return;
@@ -862,6 +1250,53 @@ function StoryViewerModal({
     .map((id) => users[id])
     .filter(Boolean);
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return;
+    const target = e.target as HTMLElement | null;
+    const ignore = Boolean(target?.closest('input, textarea, form, [data-no-story-swipe="true"]'));
+    swipeStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      ignore,
+    };
+    setPaused(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    if (!start || start.ignore || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - start.x;
+    const dy = e.touches[0].clientY - start.y;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      setDragOffsetX(dx * 0.35);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    setPaused(false);
+    setDragOffsetX(0);
+    if (!start || start.ignore || e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      if (dx < 0) onNext();
+      else if (index > 0) onPrev();
+      return;
+    }
+
+    if (Math.abs(dy) > 48 && Math.abs(dy) > Math.abs(dx) * 1.2) {
+      if (dy < 0 && isOwn && !showViewers) {
+        setShowViewers(true);
+      } else if (dy > 0) {
+        if (showViewers) setShowViewers(false);
+        else onClose();
+      }
+    }
+  };
+
   return (
     <div
       className={`${
@@ -872,14 +1307,25 @@ function StoryViewerModal({
         onPointerDown={() => setPaused(true)}
         onPointerUp={() => setPaused(false)}
         onPointerCancel={() => setPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          swipeStartRef.current = null;
+          setPaused(false);
+          setDragOffsetX(0);
+        }}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
         } relative w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex flex-col justify-between bg-black brutal-shadow-lg select-none`}
-        style={{ backgroundColor: story.mediaUrl ? '#000000' : story.bgColor }}
+        style={{
+          backgroundColor: story.mediaUrl ? '#000000' : story.bgColor,
+          transform: dragOffsetX ? `translate3d(${dragOffsetX}px, 0, 0)` : undefined,
+        }}
       >
-        {/* Full-Bleed Edge-to-Edge Media (WA / IG Story Style) */}
+        {/* Full-Bleed Edge-to-Edge Media (with blur + spinner while loading) */}
         {story.mediaUrl && story.kind === 'image' && (
-          <img
+          <StoryImageWithLoader
             src={story.mediaUrl}
             alt="Status media"
             className="absolute inset-0 w-full h-full object-cover"
@@ -1046,16 +1492,19 @@ function StoryViewerModal({
           </div>
         )}
 
-        {/* Bottom Action Bar: Viewers + Reshare (own) OR Capsule Reply + Reshare (others) */}
-        <div className="relative z-20 px-4 pt-2 pb-safe-3">
+        {/* Bottom Action Bar: Viewers + Reshare (own) OR Centered Emoji + Capsule Reply (others) */}
+        <div data-no-story-swipe="true" className="relative z-20 px-4 pt-2 pb-safe-3">
           {isOwn ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="space-y-2 max-w-md mx-auto">
+              <div className="flex items-center justify-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowViewers((p) => !p)}
                   className="flex-1 h-11 flex items-center justify-center gap-2 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/30 text-white text-xs font-bold backdrop-blur-md"
                 >
+                  <ChevronUp
+                    className={`w-4 h-4 transition-transform ${showViewers ? 'rotate-180' : ''}`}
+                  />
                   <Eye className="w-4 h-4" />
                   <span className="font-mono tabular-nums">{viewers.length}</span>
                   <span>Penonton</span>
@@ -1075,7 +1524,7 @@ function StoryViewerModal({
                 <div
                   className={`${
                     viewersPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-                  } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-48 overflow-y-auto thin-scrollbar space-y-2 text-xs`}
+                  } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-52 overflow-y-auto thin-scrollbar space-y-2 text-xs`}
                 >
                   {viewers.length === 0 ? (
                     <div className="text-white/60 text-center py-1">Belum ada penonton lain.</div>
@@ -1111,48 +1560,57 @@ function StoryViewerModal({
               )}
             </div>
           ) : (
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!replyText.trim()) return;
-                await onReply(replyText.trim());
-                setReplyText('');
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={`Balas ${author?.displayName.split(' ')[0] || ''}...`}
-                className="flex-1 h-11 px-4 rounded-full bg-black/50 border border-white/35 backdrop-blur-md text-sm text-white placeholder:text-white/75 focus:outline-none focus:border-white"
-              />
-              <button
-                type="button"
-                onClick={() => void onReply('❤️')}
-                aria-label="Sukai status"
-                title="Sukai status"
-                className="w-11 h-11 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/35 backdrop-blur-md text-white flex items-center justify-center shrink-0 brutal-press"
+            <div className="max-w-md mx-auto space-y-2.5">
+              {/* Quick Emoji Choices (centered above reply form) */}
+              <div className="flex items-center justify-center gap-2">
+                {QUICK_STORY_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => void onReply(emoji)}
+                    aria-label={`Balas dengan ${emoji}`}
+                    className="w-10 h-10 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/25 backdrop-blur-md text-lg flex items-center justify-center brutal-press transition-transform active:scale-90"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              {/* Centered Text Reply Form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!replyText.trim()) return;
+                  await onReply(replyText.trim());
+                  setReplyText('');
+                }}
+                className="flex items-center justify-center gap-2"
               >
-                <Heart className="w-4 h-4 text-[#F47296]" />
-              </button>
-              <button
-                type="button"
-                onClick={onReshare}
-                aria-label="Bagikan ulang ke status saya"
-                title="Bagikan ulang ke Status"
-                className="w-11 h-11 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/35 backdrop-blur-md text-white flex items-center justify-center shrink-0 brutal-press"
-              >
-                <Repeat2 className="w-4 h-4" />
-              </button>
-              <button
-                type="submit"
-                aria-label="Kirim balasan status"
-                className="w-11 h-11 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/40 text-white flex items-center justify-center shrink-0 brutal-press"
-              >
-                <SendHorizontal className="w-4 h-4" />
-              </button>
-            </form>
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Balas ${author?.displayName.split(' ')[0] || ''}...`}
+                  className="flex-1 h-11 px-4 rounded-full bg-black/55 border border-white/35 backdrop-blur-md text-sm text-white placeholder:text-white/75 focus:outline-none focus:border-white"
+                />
+                <button
+                  type="button"
+                  onClick={onReshare}
+                  aria-label="Bagikan ulang ke status saya"
+                  title="Bagikan ulang ke Status"
+                  className="w-11 h-11 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/35 backdrop-blur-md text-white flex items-center justify-center shrink-0 brutal-press"
+                >
+                  <Repeat2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="submit"
+                  aria-label="Kirim balasan status"
+                  className="w-11 h-11 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/40 text-white flex items-center justify-center shrink-0 brutal-press"
+                >
+                  <SendHorizontal className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
           )}
         </div>
       </div>
