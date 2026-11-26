@@ -116,7 +116,10 @@ export function UpdatesView({
   const viewerRetained = useRetainedValue(activeStory, 200);
 
   useEffect(() => {
-    if (activeStory && !activeStory.viewerIds.includes(currentUser.id)) {
+    if (
+      activeStory &&
+      (!activeStory.viewerIds.includes(currentUser.id) || !activeStory.viewerTimes?.[currentUser.id])
+    ) {
       onViewStory(activeStory.id);
     }
   }, [activeStory, currentUser.id, onViewStory]);
@@ -1586,7 +1589,7 @@ function StoryViewerModal({
                             </div>
                           </div>
                           <span className="font-mono text-[11px] text-white/75 tabular-nums shrink-0">
-                            {viewedAt ? formatTimeShort(viewedAt) : 'Dilihat'}
+                            {formatTimeShort(viewedAt || story.createdAt)}
                           </span>
                         </div>
                       );
