@@ -682,7 +682,7 @@ export function ChatWindow({
         if (e.currentTarget === e.target) setIsDragging(false);
       }}
       onDrop={handleDrop}
-      className="relative flex flex-col flex-1 h-full min-w-0 bg-[#FFFFFF] dark:bg-[#171E2C]"
+      className="relative flex flex-col flex-1 h-full min-w-0 chat-canvas-bg"
     >
       {/* Drag-and-Drop Overlay */}
       {dragPresence.mounted && (

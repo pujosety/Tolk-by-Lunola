@@ -591,7 +591,7 @@ export function Sidebar({
           {/* Folder Tabs */}
           <div
             data-no-tab-swipe="true"
-            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar bg-[#F5F7FA] dark:bg-[#131924] shrink-0"
+            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0"
           >
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
@@ -626,7 +626,7 @@ export function Sidebar({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-24 md:pb-20 space-y-2 bg-[#F5F7FA] dark:bg-[#0F141E]">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-24 md:pb-20 space-y-1.5 bg-[#FFFFFF] dark:bg-[#171E2C]">
         {filteredChats.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="font-display font-bold text-base text-[#161B26] dark:text-[#F5F7FA]">
@@ -704,8 +704,8 @@ export function Sidebar({
                 }}
                 className={`p5-row-motion w-full px-3 py-2.5 rounded-2xl flex items-center gap-3 text-left select-none transition-colors ${
                   isSelected
-                    ? 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#8C0027] md:text-[#FFFFFF] md:dark:bg-[#8C0027] md:shadow-sm'
-                    : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#232D40]'
+                    ? 'bg-[#FFFFFF] dark:bg-[#171E2C] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#8C0027] md:text-[#FFFFFF] md:dark:bg-[#8C0027] md:shadow-sm'
+                    : 'bg-transparent text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738]'
                 }`}
               >
                 <Avatar

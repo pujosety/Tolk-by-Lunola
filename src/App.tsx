@@ -1700,7 +1700,7 @@ export function App() {
               onTyping={(isTyping) => socketRef.current?.sendTyping(activeChat.id, isTyping)}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[#FFFFFF] dark:bg-[#171E2C] p-6 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
               <div className="p5-impact-slam px-7 py-7 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg max-w-sm flex flex-col items-center">
                 <div className="mb-4 flex items-center justify-center">
                   <img
