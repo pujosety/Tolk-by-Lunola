@@ -929,8 +929,18 @@ export function CreateChatModal({
     }
   };
 
-  const renderModeSwitcher = (layoutIdSuffix: string) => (
-    <div className="relative grid grid-cols-3 gap-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
+  const modeIndex = mode === 'dm' ? 0 : mode === 'group' ? 1 : 2;
+
+  const renderModeSwitcher = () => (
+    <div className="relative grid grid-cols-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
+      <span
+        aria-hidden="true"
+        style={{
+          width: 'calc((100% - 8px) / 3)',
+          transform: `translate3d(${modeIndex * 100}%, 0, 0)`,
+        }}
+        className="pointer-events-none absolute top-1 bottom-1 left-1 rounded-xl bg-[#8C0027] brutal-shadow-sm transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+      />
       {(
         [
           { key: 'dm', label: 'Pribadi', icon: <UserPlus className="w-3.5 h-3.5" /> },
@@ -944,19 +954,12 @@ export function CreateChatModal({
             key={tab.key}
             type="button"
             onClick={() => setMode(tab.key)}
-            className={`relative min-h-[40px] py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 touch-manipulation ${
+            className={`relative min-h-[40px] py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-200 z-10 touch-manipulation ${
               active
                 ? 'text-white'
                 : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
             }`}
           >
-            {active && (
-              <motion.span
-                layoutId={`create-chat-mode-pill-${layoutIdSuffix}`}
-                transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
-                className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
-              />
-            )}
             {tab.icon}
             <span>{tab.label}</span>
           </button>
@@ -970,10 +973,10 @@ export function CreateChatModal({
       open={open}
       title="Mulai Percakapan"
       subtitle="Chat pribadi via @username, buat grup komunitas, atau buka channel publik."
-      mobileBottomBar={renderModeSwitcher('mobile')}
+      mobileBottomBar={renderModeSwitcher()}
       onClose={onClose}
     >
-      <div className="hidden md:block mb-4">{renderModeSwitcher('desktop')}</div>
+      <div className="hidden md:block mb-4">{renderModeSwitcher()}</div>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div

@@ -218,8 +218,15 @@ export function AuthScreen({
             transition={SPRING_MORPH}
             className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center"
           >
-            {/* Morphing Pill Mode Switcher */}
-            <div className="relative flex rounded-2xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 mb-5 gap-1">
+            {/* Smooth Sliding Pill Mode Switcher */}
+            <div className="relative grid grid-cols-2 md:grid-cols-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 mb-5">
+              <span
+                aria-hidden="true"
+                style={{
+                  transform: `translate3d(${(mode === 'login' ? 0 : mode === 'register' ? 1 : 2) * 100}%, 0, 0)`,
+                }}
+                className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 w-[calc((100%-12px)/2)] md:w-[calc((100%-12px)/3)] rounded-xl bg-[#8C0027] brutal-shadow-sm transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+              />
               {(['login', 'register', 'qr'] as const).map((tabKey) => {
                 const active = mode === tabKey;
                 return (
@@ -233,19 +240,12 @@ export function AuthScreen({
                         void loadQrChallenge();
                       }
                     }}
-                    className={`relative flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors z-10 ${
+                    className={`relative py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-200 z-10 ${
                       active
                         ? 'text-white'
                         : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
                     } ${tabKey === 'qr' ? 'hidden md:flex' : ''}`}
                   >
-                    {active && (
-                      <motion.span
-                        layoutId="auth-mode-pill"
-                        transition={SPRING_MORPH}
-                        className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
-                      />
-                    )}
                     {tabKey === 'login' ? (
                       <>
                         <Lock className="w-3.5 h-3.5" />

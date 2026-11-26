@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
-import { motion } from 'motion/react';
 import {
   Archive,
   Bell,
@@ -442,8 +441,16 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Desktop 5-Tab Switcher (Morphing Pill) */}
-        <div className="hidden md:grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
+        {/* Desktop 5-Tab Switcher (Smooth Sliding Pill) */}
+        <div className="hidden md:grid relative grid-cols-5 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
+          <span
+            aria-hidden="true"
+            style={{
+              width: 'calc((100% - 8px) / 5)',
+              transform: `translate3d(${Math.max(0, currentTabIdx) * 100}%, 0, 0)`,
+            }}
+            className="pointer-events-none absolute top-1 bottom-1 left-1 rounded-xl bg-[#8C0027] brutal-shadow-sm transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+          />
           {(
             [
               { key: 'chats', label: 'Obrolan' },
@@ -459,19 +466,12 @@ export function Sidebar({
                 key={tab.key}
                 type="button"
                 onClick={() => onSelectTab(tab.key)}
-                className={`relative py-1.5 rounded-xl text-[10px] font-bold transition-colors z-10 ${
+                className={`relative py-1.5 rounded-xl text-[10px] font-bold transition-colors duration-200 z-10 ${
                   active
                     ? 'text-white'
                     : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-white'
                 }`}
               >
-                {active && (
-                  <motion.span
-                    layoutId="sidebar-desktop-tab-pill"
-                    transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.9 }}
-                    className="absolute inset-0 rounded-xl bg-[#8C0027] brutal-shadow-sm -z-10"
-                  />
-                )}
                 {tab.label}
                 {tab.key === 'updates' && notificationCount > 0 && (
                   <span className="ml-1 inline-flex min-w-[14px] h-[14px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono items-center justify-center">
