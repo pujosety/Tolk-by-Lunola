@@ -22,6 +22,7 @@ import {
   Server,
   Shield,
   Smartphone,
+  Star,
   Terminal,
   Trash2,
   UserPlus,
@@ -2146,6 +2147,108 @@ export function NotificationsModal({
               })}
             </div>
           </div>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
+export function StarredMessagesModal({
+  open,
+  items,
+  loading,
+  onClose,
+  onOpenChat,
+  onUnstar,
+}: {
+  open: boolean;
+  items: Array<{ message: Message; chatTitle: string; senderName: string }>;
+  loading: boolean;
+  onClose: () => void;
+  onOpenChat: (chatId: string) => void;
+  onUnstar: (messageId: string) => Promise<void>;
+}) {
+  return (
+    <ModalShell
+      open={open}
+      title="Pesan Berbintang"
+      subtitle={`${items.length} pesan ditandai penting`}
+      maxWidth="max-w-lg"
+      onClose={onClose}
+    >
+      <div className="space-y-2.5 max-h-[65dvh] overflow-y-auto pr-1">
+        {loading ? (
+          <div className="py-10 text-center text-sm text-[#5A6578] dark:text-[#94A3B8]">
+            Memuat pesan berbintang...
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-12 text-center space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#FFF2A7] text-[#161B26] mx-auto flex items-center justify-center">
+              <Star className="w-6 h-6 fill-[#F59B00] text-[#F59B00]" />
+            </div>
+            <div className="text-sm font-bold text-[#161B26] dark:text-[#F1F5F9]">
+              Belum ada pesan berbintang
+            </div>
+            <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] max-w-xs mx-auto">
+              Tekan menu titik tiga di bubble pesan mana saja lalu pilih Bintangi Pesan untuk menyimpannya di sini.
+            </p>
+          </div>
+        ) : (
+          items.map(({ message, chatTitle, senderName }) => (
+            <div
+              key={message.id}
+              className="p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#1E2738] space-y-2"
+            >
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0 truncate">
+                  <span className="font-bold text-[#161B26] dark:text-[#F1F5F9]">{senderName}</span>
+                  <span className="text-[#5A6578] dark:text-[#94A3B8]"> · {chatTitle}</span>
+                </div>
+                <span className="font-mono text-[11px] text-[#5A6578] dark:text-[#94A3B8] shrink-0">
+                  {new Date(message.createdAt).toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                  })}{' '}
+                  {new Date(message.createdAt).toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+
+              {message.text && (
+                <p className="text-sm text-[#161B26] dark:text-[#F1F5F9] whitespace-pre-wrap break-words">
+                  {message.text}
+                </p>
+              )}
+
+              {message.attachment && (
+                <div className="text-xs px-2.5 py-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#151C28] text-[#5A6578] dark:text-[#CBD5E1] truncate">
+                  Lampiran: {message.attachment.name}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => void onUnstar(message.id)}
+                  className="px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] text-xs font-semibold text-[#5A6578] dark:text-[#CBD5E1] hover:bg-[#FEE2E2] hover:text-[#991B1B] dark:hover:bg-[#3B1822] dark:hover:text-[#FCA5A5] transition-colors"
+                >
+                  Hapus Bintang
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenChat(message.chatId);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-[#8C0027] text-white text-xs font-bold hover:bg-[#730020] transition-colors"
+                >
+                  Buka Chat
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </ModalShell>

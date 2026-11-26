@@ -148,7 +148,6 @@ export function Sidebar({
     { key: 'dm', label: t(lang, 'dm') },
     { key: 'group', label: t(lang, 'group') },
     { key: 'channel', label: t(lang, 'channel') },
-    { key: 'saved', label: t(lang, 'saved') },
     ...(archivedCount > 0 ? [{ key: 'archived' as FolderKey, label: t(lang, 'archived') }] : []),
   ];
 

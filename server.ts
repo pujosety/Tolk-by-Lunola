@@ -79,6 +79,7 @@ interface StoredUser extends UserProfile {
   blockedUserIds: string[];
   mutedStoryUserIds: string[];
   contactIds?: string[];
+  starredMessageIds?: string[];
   privacy: UserPrivacySettings;
 }
 
@@ -840,6 +841,7 @@ function toPublicUser(u: StoredUser, includeSelfFields = false): UserProfile {
     blockedUserIds: includeSelfFields ? u.blockedUserIds : undefined,
     mutedStoryUserIds: includeSelfFields ? u.mutedStoryUserIds : undefined,
     contactIds: includeSelfFields ? u.contactIds || [] : undefined,
+    starredMessageIds: includeSelfFields ? u.starredMessageIds || [] : undefined,
   };
 }
 
@@ -973,36 +975,6 @@ function getVisibleStoriesForUser(userId: string): StoryItem[] {
 }
 
 function ensureDefaultChatsForUser(userId: string): void {
-  const now = Date.now();
-  const savedChatId = `saved_${userId}`;
-  if (!store.chats[savedChatId]) {
-    store.chats[savedChatId] = {
-      id: savedChatId,
-      type: 'saved',
-      title: 'Pesan Tersimpan',
-      description: 'Catatan pribadi, tautan, foto, dokumen, dan pesan yang diteruskan.',
-      avatarUrl: null,
-      avatarColor: '#0284C7',
-      memberIds: [userId],
-      adminIds: [userId],
-      moderatorIds: [],
-      pinnedMessageId: null,
-      selfDestructSec: 0,
-      createdAt: now,
-    };
-    store.messages[savedChatId] = [
-      {
-        id: `msg_saved_${crypto.randomBytes(4).toString('hex')}`,
-        chatId: savedChatId,
-        senderId: userId,
-        text: 'Selamat datang di Pesan Tersimpan Tolk by Lunola. Simpan catatan pribadi, file penting, atau teruskan pesan dari percakapan lain ke sini.',
-        createdAt: now,
-        reactions: [],
-        readBy: [userId],
-      },
-    ];
-  }
-
   const starterGroupIds = ['chat_wasmer_id', 'chat_lunolatalk_news', 'chat_android_webview'];
   for (const cid of starterGroupIds) {
     const c = store.chats[cid];
@@ -1011,6 +983,7 @@ function ensureDefaultChatsForUser(userId: string): void {
     }
   }
 
+  const now = Date.now();
   const dmId = `dm_${[userId, 'usr_raka'].sort().join('_')}`;
   if (userId !== 'usr_raka' && !store.chats[dmId] && store.users['usr_raka']) {
     store.chats[dmId] = {
@@ -1042,7 +1015,7 @@ function ensureDefaultChatsForUser(userId: string): void {
 
   const u = store.users[userId];
   if (u && (!u.pinnedChatIds || u.pinnedChatIds.length === 0)) {
-    u.pinnedChatIds = [savedChatId, 'chat_wasmer_id'];
+    u.pinnedChatIds = ['chat_wasmer_id'];
   }
 }
 
@@ -1431,7 +1404,7 @@ async function startServer(): Promise<void> {
     }
 
     const chats: ChatRoom[] = Object.values(store.chats)
-      .filter((c) => c.memberIds.includes(userId))
+      .filter((c) => c.type !== 'saved' && c.memberIds.includes(userId))
       .map((c) => buildChatRoomForUser(c, userId))
       .sort((a, b) => {
         if (a.isPinnedByUser !== b.isPinnedByUser) return a.isPinnedByUser ? -1 : 1;
@@ -1724,6 +1697,66 @@ async function startServer(): Promise<void> {
 
     saveStore(store);
     res.json({ request: freq, contactIds: user.contactIds || [] });
+  });
+
+  // Star / Unstar a message (WhatsApp-style Starred Messages)
+  app.post('/api/messages/:messageId/star', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const user = store.users[userId];
+    const messageId = sanitizeText(req.params.messageId, 64);
+
+    let foundMsg: Message | null = null;
+    for (const [cid, list] of Object.entries(store.messages)) {
+      const chat = store.chats[cid];
+      if (!chat || !chat.memberIds.includes(userId)) continue;
+      const m = list.find((item) => item.id === messageId);
+      if (m) {
+        foundMsg = m;
+        break;
+      }
+    }
+    if (!foundMsg) {
+      res.status(404).json({ error: 'Pesan tidak ditemukan.' });
+      return;
+    }
+
+    user.starredMessageIds = user.starredMessageIds || [];
+    const currentlyStarred = user.starredMessageIds.includes(messageId);
+    const desired =
+      typeof req.body?.starred === 'boolean' ? req.body.starred : !currentlyStarred;
+
+    if (desired && !currentlyStarred) {
+      user.starredMessageIds.unshift(messageId);
+    } else if (!desired && currentlyStarred) {
+      user.starredMessageIds = user.starredMessageIds.filter((id) => id !== messageId);
+    }
+
+    saveStore(store);
+    res.json({ starredMessageIds: user.starredMessageIds });
+  });
+
+  app.get('/api/messages/starred', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const user = store.users[userId];
+    const starredSet = new Set(user.starredMessageIds || []);
+    const items: Array<{ message: Message; chatTitle: string; senderName: string }> = [];
+
+    for (const [cid, list] of Object.entries(store.messages)) {
+      const chat = store.chats[cid];
+      if (!chat || !chat.memberIds.includes(userId)) continue;
+      for (const m of list) {
+        if (starredSet.has(m.id)) {
+          items.push({
+            message: m,
+            chatTitle: chat.title,
+            senderName: store.users[m.senderId]?.displayName || 'Pengguna',
+          });
+        }
+      }
+    }
+
+    items.sort((a, b) => b.message.createdAt - a.message.createdAt);
+    res.json({ items });
   });
 
   // Create Chat (DM, Group, Channel)

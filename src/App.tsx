@@ -47,6 +47,7 @@ import {
   ReportModal,
   SessionsModal,
   SettingsModal,
+  StarredMessagesModal,
 } from './components/Modals';
 import {
   CallHistoryModal,
@@ -163,6 +164,11 @@ export function App() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [callHistoryOpen, setCallHistoryOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [starredModalOpen, setStarredModalOpen] = useState(false);
+  const [starredItems, setStarredItems] = useState<
+    Array<{ message: Message; chatTitle: string; senderName: string }>
+  >([]);
+  const [starredLoading, setStarredLoading] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [createModalState, setCreateModalState] = useState<{
     open: boolean;
@@ -1172,10 +1178,36 @@ export function App() {
     showToast('Anda telah keluar. Silakan masuk kembali.');
   }, [token, cleanupWebRtc, showToast]);
 
-  const handleOpenSaved = () => {
-    const saved = chats.find((c) => c.type === 'saved');
-    if (saved) handleSelectChat(saved.id);
-  };
+  const loadStarredMessages = useCallback(async () => {
+    if (!token) return;
+    setStarredLoading(true);
+    try {
+      const { items } = await api.getStarredMessages(token);
+      setStarredItems(items);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Gagal memuat pesan berbintang.');
+    } finally {
+      setStarredLoading(false);
+    }
+  }, [token, showToast]);
+
+  const handleToggleStarMessage = useCallback(
+    async (messageId: string, starred?: boolean) => {
+      if (!token) return;
+      try {
+        const { starredMessageIds } = await api.toggleStarMessage(token, messageId, starred);
+        setCurrentUser((prev) => (prev ? { ...prev, starredMessageIds } : prev));
+        if (starredModalOpen) {
+          setStarredItems((prev) => prev.filter((item) => starredMessageIds.includes(item.message.id)));
+        }
+        const isNowStarred = starredMessageIds.includes(messageId);
+        showToast(isNowStarred ? 'Pesan dibintangi.' : 'Bintang pesan dihapus.');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Gagal memperbarui bintang pesan.');
+      }
+    },
+    [token, starredModalOpen, showToast]
+  );
 
   const showGlobalBanner =
     Boolean(settings?.globalAnnouncement?.trim()) &&
@@ -1410,6 +1442,7 @@ export function App() {
               onDeleteMessage={handleDeleteMessage}
               onToggleReaction={handleToggleReaction}
               onPinMessage={handlePinMessage}
+              onToggleStarMessage={handleToggleStarMessage}
               onForwardMessage={(msg) => setForwardMsg(msg)}
               onTranslateMessage={handleTranslateMessage}
               onSummarizeChat={handleSummarizeChat}
@@ -1533,7 +1566,10 @@ export function App() {
         onToggleDarkMode={() => setDarkMode((v) => !v)}
         onOpenNewGroup={() => setCreateModalState({ open: true, mode: 'group' })}
         onOpenNewChannel={() => setCreateModalState({ open: true, mode: 'channel' })}
-        onOpenSaved={handleOpenSaved}
+        onOpenStarred={() => {
+          setStarredModalOpen(true);
+          void loadStarredMessages();
+        }}
         onOpenDevices={() => {
           setSessionsModalOpen(true);
           void loadSessions();
@@ -1620,6 +1656,15 @@ export function App() {
           setCurrentUser((prev) => (prev ? { ...prev, contactIds: res.contactIds } : prev));
           showToast(action === 'accept' ? 'Permintaan kontak diterima.' : 'Permintaan kontak ditolak.');
         }}
+      />
+
+      <StarredMessagesModal
+        open={starredModalOpen}
+        items={starredItems}
+        loading={starredLoading}
+        onClose={() => setStarredModalOpen(false)}
+        onOpenChat={(chatId) => handleSelectChat(chatId)}
+        onUnstar={(messageId) => handleToggleStarMessage(messageId, false)}
       />
 
       <ForwardModal

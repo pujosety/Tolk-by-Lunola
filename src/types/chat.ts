@@ -66,6 +66,7 @@ export interface UserProfile {
   blockedUserIds?: string[];
   mutedStoryUserIds?: string[];
   contactIds?: string[];
+  starredMessageIds?: string[];
 }
 
 export interface FriendRequest {

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ArrowLeft,
-  Bookmark,
   ChevronRight,
   Download,
   LogIn,
@@ -11,6 +10,7 @@ import {
   Radio,
   Shield,
   Sliders,
+  Star,
   Sun,
   UserCircle2,
   Users,
@@ -31,7 +31,7 @@ interface DrawerMenuProps {
   onToggleDarkMode: () => void;
   onOpenNewGroup: () => void;
   onOpenNewChannel: () => void;
-  onOpenSaved: () => void;
+  onOpenStarred: () => void;
   onOpenDevices: () => void;
   onOpenSettings: () => void;
   onOpenAdminPanel: () => void;
@@ -49,7 +49,7 @@ export function DrawerMenu({
   onToggleDarkMode,
   onOpenNewGroup,
   onOpenNewChannel,
-  onOpenSaved,
+  onOpenStarred,
   onOpenDevices,
   onOpenSettings,
   onOpenAdminPanel,
@@ -92,13 +92,13 @@ export function DrawerMenu({
       },
     },
     {
-      icon: <Bookmark className="w-5 h-5" />,
-      iconBg: 'bg-[#F59B00] text-white',
-      label: t(lang, 'savedMessages'),
-      subtitle: 'Simpan link, foto & catatan penting',
+      icon: <Star className="w-5 h-5" />,
+      iconBg: 'bg-[#FFF2A7] text-[#161B26]',
+      label: 'Pesan Berbintang',
+      subtitle: 'Lihat pesan penting yang ditandai',
       onClick: () => {
         onClose();
-        onOpenSaved();
+        onOpenStarred();
       },
     },
     {

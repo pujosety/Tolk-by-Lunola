@@ -27,6 +27,7 @@ import {
   SendHorizontal,
   Sparkles,
   Square,
+  Star,
   Timer,
   Trash2,
   UploadCloud,
@@ -91,6 +92,7 @@ interface ChatWindowProps {
   onDeleteMessage: (messageId: string) => Promise<void>;
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
   onPinMessage: (messageId: string | null) => Promise<void>;
+  onToggleStarMessage: (messageId: string, starred?: boolean) => Promise<void>;
   onForwardMessage: (message: Message) => void;
   onTranslateMessage: (messageId: string, text: string) => Promise<string>;
   onSummarizeChat: () => Promise<string>;
@@ -270,6 +272,7 @@ export function ChatWindow({
   onDeleteMessage,
   onToggleReaction,
   onPinMessage,
+  onToggleStarMessage,
   onForwardMessage,
   onTranslateMessage,
   onSummarizeChat,
@@ -1185,6 +1188,9 @@ export function ChatWindow({
                           </span>
                         )}
                         {msg.editedAt && <span className="italic">diedit</span>}
+                        {currentUser.starredMessageIds?.includes(msg.id) && (
+                          <Star className="w-3 h-3 fill-[#F59B00] text-[#F59B00]" />
+                        )}
                         <span className="font-mono tabular-nums">
                           {formatTimeShort(msg.createdAt)}
                         </span>
@@ -1293,6 +1299,28 @@ export function ChatWindow({
                         >
                           <Forward className="w-3.5 h-3.5" />
                           <span>Teruskan</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void onToggleStarMessage(msg.id);
+                            setActiveMenuMsgId(null);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                        >
+                          <Star
+                            className={`w-3.5 h-3.5 ${
+                              currentUser.starredMessageIds?.includes(msg.id)
+                                ? 'fill-[#F59B00] text-[#F59B00]'
+                                : ''
+                            }`}
+                          />
+                          <span>
+                            {currentUser.starredMessageIds?.includes(msg.id)
+                              ? 'Hapus Bintang'
+                              : 'Bintangi Pesan'}
+                          </span>
                         </button>
 
                         {msg.text.trim().length > 0 && (

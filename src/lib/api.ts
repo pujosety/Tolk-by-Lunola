@@ -120,6 +120,17 @@ export const api = {
       body: { requestId, action },
     }),
 
+  toggleStarMessage: (token: string, messageId: string, starred?: boolean) =>
+    requestJson<{ starredMessageIds: string[] }>(
+      `/api/messages/${encodeURIComponent(messageId)}/star`,
+      { method: 'POST', token, body: { starred } }
+    ),
+
+  getStarredMessages: (token: string) =>
+    requestJson<{
+      items: Array<{ message: Message; chatTitle: string; senderName: string }>;
+    }>('/api/messages/starred', { token }),
+
   getSessions: (token: string) =>
     requestJson<{ sessions: DeviceSession[] }>('/api/sessions', { token }),
 
