@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import {
-  MessageSquarePlus,
   MonitorSmartphone,
   Shield,
   Sliders,
@@ -15,7 +14,6 @@ interface HeaderOverflowMenuProps {
   lang: LanguageCode;
   user: UserProfile;
   onClose: () => void;
-  onOpenNewChat: () => void;
   onOpenStarred: () => void;
   onOpenDevices: () => void;
   onOpenSettings: () => void;
@@ -27,7 +25,6 @@ export function HeaderOverflowMenu({
   lang,
   user,
   onClose,
-  onOpenNewChat,
   onOpenStarred,
   onOpenDevices,
   onOpenSettings,
@@ -52,14 +49,6 @@ export function HeaderOverflowMenu({
     onClick: () => void;
     accent?: boolean;
   }> = [
-    {
-      label: 'Obrolan / Grup Baru',
-      icon: <MessageSquarePlus className="w-4 h-4 text-[#0284C7] dark:text-[#7DD3FC]" />,
-      onClick: () => {
-        onClose();
-        onOpenNewChat();
-      },
-    },
     {
       label: 'Pesan Berbintang',
       icon: <Star className="w-4 h-4 text-[#F59B00]" />,

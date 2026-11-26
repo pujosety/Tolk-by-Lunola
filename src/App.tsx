@@ -1703,7 +1703,6 @@ export function App() {
         lang={lang}
         user={currentUser}
         onClose={() => setOverflowMenuOpen(false)}
-        onOpenNewChat={() => setCreateModalState({ open: true, mode: 'dm' })}
         onOpenStarred={() => {
           setStarredModalOpen(true);
           void loadStarredMessages();
