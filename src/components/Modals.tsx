@@ -98,7 +98,7 @@ function ModalShell({
           closing ? 'p5-modal-out' : 'p5-modal-impact'
         } relative z-10 w-full h-full md:h-auto ${maxWidth} md:max-h-[88dvh] flex flex-col rounded-none md:rounded-3xl bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="pt-safe-2 md:pt-4 pb-3 px-4 md:px-5 flex items-center justify-between gap-3 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+        <div className="pt-safe-2 md:pt-4 pb-3 px-4 md:px-5 flex items-center justify-between gap-3 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.25)] shrink-0 z-10">
           <div className="flex items-center gap-3 min-w-0">
             {closable && (
               <button
@@ -643,70 +643,66 @@ export function ProfileModal({
           </div>
         </div>
       ) : (
-        <div className="mb-4 p-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
+        <div className="mb-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#1E2738] shadow-[0_4px_20px_rgba(15,20,30,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.28)] overflow-hidden">
+          <div className="p-5 p5-maroon-banner text-white flex flex-col items-center text-center">
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="relative group rounded-3xl focus:outline-none focus:ring-2 focus:ring-white/80"
+              title="Ganti foto profil"
+            >
+              <Avatar
+                name={displayName || user.displayName}
+                imageUrl={avatarUrl}
+                color={avatarColor}
+                size="lg"
+              />
+              <span className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#FFFFFF] text-[#8C0027] shadow-md flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Camera className="w-4 h-4" />
+              </span>
+            </button>
+            <div className="mt-3 font-display font-extrabold text-lg leading-tight truncate max-w-full">
+              {displayName || user.displayName}
+            </div>
+            <div className="text-xs font-mono text-[#FFF2A7]">
+              @{username || user.username}
+            </div>
+
+            <div className="mt-3.5 flex items-center justify-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="relative group rounded-xl shrink-0 focus:outline-none focus:ring-2 focus:ring-[#8C0027]"
-                title="Ganti foto profil"
+                className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
               >
-                <Avatar
-                  name={displayName || user.displayName}
-                  imageUrl={avatarUrl}
-                  color={avatarColor}
-                  size="lg"
-                />
-                <span className="absolute inset-0 rounded-xl bg-[#161B26]/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                  <Camera className="w-5 h-5" />
-                </span>
+                <Camera className="w-3.5 h-3.5" />
+                <span>{avatarUrl ? 'Ganti Foto' : 'Unggah Foto'}</span>
               </button>
-              <div className="min-w-0">
-                <div className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] truncate">
-                  {displayName || user.displayName}
-                </div>
-                <div className="font-mono text-xs font-bold text-[#8C0027] dark:text-[#F47296]">
-                  @{username || user.username}
-                </div>
-                <div className="mt-1.5 flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] hover:underline flex items-center gap-1"
-                  >
-                    <Camera className="w-3 h-3" />
-                    <span>{avatarUrl ? 'Ganti Foto' : 'Unggah Foto'}</span>
-                  </button>
-                  {avatarUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setAvatarUrl(null)}
-                      className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
-                    >
-                      Hapus Foto
-                    </button>
-                  )}
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowQr((v) => !v)}
+                className="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>{showQr ? 'Tutup QR' : 'Kartu QR'}</span>
+              </button>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl(null)}
+                  className="px-3 py-1.5 rounded-full bg-rose-500/30 hover:bg-rose-500/50 text-white text-xs font-bold transition-colors"
+                >
+                  Hapus
+                </button>
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowQr((v) => !v)}
-              className="px-2.5 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center gap-1.5 shrink-0 brutal-press"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>{showQr ? 'Tutup' : 'QR'}</span>
-            </button>
           </div>
 
           {/* Avatar Color Swatches */}
-          <div className="flex items-center justify-between gap-2 pt-2.5 border-t-2 border-[#161B26]/15 dark:border-[#2A364B]">
+          <div className="px-4 py-3 flex items-center justify-between gap-2 bg-[#F5F7FA] dark:bg-[#171E2C]">
             <span className="text-[11px] font-semibold text-[#5A6578] dark:text-[#94A3B8]">
-              Warna latar inisial:
+              Warna inisial
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {AVATAR_COLOR_SWATCHES.map((hex) => (
                 <button
                   key={hex}
@@ -717,9 +713,9 @@ export function ProfileModal({
                   }}
                   aria-label={`Pilih warna ${hex}`}
                   style={{ backgroundColor: hex }}
-                  className={`w-5 h-5 rounded-lg border border-[#E6ECF2] dark:border-[#F5F7FA] transition-transform ${
+                  className={`w-6 h-6 rounded-full transition-transform ${
                     avatarColor === hex && !avatarUrl
-                      ? 'ring-2 ring-offset-2 ring-[#8C0027] dark:ring-offset-[#232D40] scale-115'
+                      ? 'ring-2 ring-offset-2 ring-[#8C0027] dark:ring-offset-[#171E2C] scale-110'
                       : 'hover:scale-110'
                   }`}
                 />

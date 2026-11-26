@@ -162,6 +162,12 @@ export function AdminPanel({
     label: string;
     onConfirm: () => Promise<void>;
   } | null>(null);
+  const [detailItem, setDetailItem] = useState<
+    | { kind: 'user'; item: UserProfile & { activeSessionsCount: number } }
+    | { kind: 'group'; item: ChatRoom & { messageCount: number; reportCount: number } }
+    | { kind: 'audit'; item: AuditLogEntry }
+    | null
+  >(null);
 
   const isAdmin = currentUser.role !== 'user';
 
@@ -428,7 +434,7 @@ export function AdminPanel({
 
       {/* Main Admin Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="pt-safe-2 pb-2 min-h-16 px-4 sm:px-6 bg-[#FFFFFF] dark:bg-[#171E2C] border-b border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3 shrink-0">
+        <header className="pt-safe-2 pb-2 min-h-16 px-4 sm:px-6 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.22)] flex items-center justify-between gap-3 shrink-0 z-10">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
@@ -565,135 +571,36 @@ export function AdminPanel({
                   </div>
                 </div>
 
-                <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] text-[#5A6578] dark:text-[#94A3B8]">
-                      <tr>
-                        <th className="py-3 px-4 font-bold uppercase tracking-wide">Pengguna</th>
-                        <th className="py-3 px-4 font-bold uppercase tracking-wide">Role</th>
-                        <th className="py-3 px-4 font-bold uppercase tracking-wide">Status</th>
-                        <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Sesi</th>
-                        <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Tindakan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#111111]/15 dark:divide-[#2A364B]">
-                      {adminUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]">
-                          <td className="py-3 px-4">
-                            <div className="font-bold text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
-                              <span>{u.displayName}</span>
-                              {u.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#8C0027] dark:text-[#F47296]" />}
-                            </div>
-                            <div className="font-mono text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
-                              @{u.username} · {u.id}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={u.role}
-                              disabled={currentUser.role !== 'super_admin'}
-                              onChange={async (e) => {
-                                try {
-                                  await api.adminUpdateUser(token, u.id, {
-                                    role: e.target.value as AdminRole,
-                                  });
-                                  onNotify(`Role @${u.username} diperbarui`);
-                                  refreshSection();
-                                } catch (err) {
-                                  onNotify(err instanceof Error ? err.message : 'Gagal ubah role');
-                                }
-                              }}
-                              className="px-2 py-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-semibold"
-                            >
-                              {Object.entries(ROLE_LABELS).map(([k, label]) => (
-                                <option key={k} value={k}>
-                                  {label}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="py-3 px-4 font-mono font-bold">
-                            <span
-                              className={
-                                u.status === 'active'
-                                  ? 'text-emerald-700 dark:text-emerald-400'
-                                  : 'text-rose-600 dark:text-rose-400'
-                              }
-                            >
-                              {u.status}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold tabular-nums">
-                            {u.activeSessionsCount}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await api.adminUpdateUser(token, u.id, { verified: !u.verified });
-                                  refreshSection();
-                                }}
-                                className="px-2.5 py-1 rounded-xl border border-[#E6ECF2] dark:border-[#324058] font-bold hover:bg-[#8C0027] hover:text-white"
-                              >
-                                {u.verified ? 'Batal Verifikasi' : 'Verifikasi'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setConfirmAction({
-                                    label:
-                                      u.status === 'active'
-                                        ? `Suspend akun @${u.username} dan cabut semua sesi aktif?`
-                                        : `Aktifkan kembali akun @${u.username}?`,
-                                    onConfirm: async () => {
-                                      const nextStatus: UserAccountStatus =
-                                        u.status === 'active' ? 'suspended' : 'active';
-                                      await api.adminUpdateUser(token, u.id, { status: nextStatus });
-                                      onNotify(`Status @${u.username}: ${nextStatus}`);
-                                      refreshSection();
-                                    },
-                                  })
-                                }
-                                className="px-2.5 py-1 rounded-xl border border-[#E6ECF2] dark:border-[#324058] font-bold hover:bg-[#8C0027] hover:text-white"
-                              >
-                                {u.status === 'active' ? 'Suspend' : 'Aktifkan'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const exported = await api.adminExportUser(token, u.id);
-                                  downloadJson(`tolk-user-${u.username}.json`, exported);
-                                  onNotify('Ekspor data pengguna diunduh');
-                                }}
-                                className="px-2.5 py-1 rounded-xl border border-[#E6ECF2] dark:border-[#324058] font-bold hover:bg-[#8C0027] hover:text-white"
-                              >
-                                Ekspor
-                              </button>
-                              {u.id !== currentUser.id && u.id !== 'usr_pujo' && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setConfirmAction({
-                                      label: `Hapus permanen akun @${u.username}? Semua sesi dan data milik pengguna ini akan dihapus.`,
-                                      onConfirm: async () => {
-                                        await api.adminDeleteUser(token, u.id);
-                                        onNotify(`Akun @${u.username} telah dihapus`);
-                                        refreshSection();
-                                      },
-                                    })
-                                  }
-                                  className="px-2.5 py-1 rounded-xl border border-[#E6ECF2] dark:border-[#324058] font-bold text-[#8C0027] dark:text-[#FF8DA6] hover:bg-[#8C0027] hover:text-white"
-                                >
-                                  Hapus
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-2">
+                  {adminUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="p-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5 truncate">
+                          <span className="truncate">{u.displayName}</span>
+                          {u.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#8C0027] dark:text-[#F47296] shrink-0" />}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-2 text-[11px] font-mono text-[#5A6578] dark:text-[#94A3B8] truncate">
+                          <span>@{u.username}</span>
+                          <span>·</span>
+                          <span className="font-semibold text-[#161B26] dark:text-[#E2E8F0]">{ROLE_LABELS[u.role]}</span>
+                          <span>·</span>
+                          <span className={u.status === 'active' ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
+                            {u.status}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDetailItem({ kind: 'user', item: u })}
+                        className="px-3.5 py-1.5 rounded-full bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#BEDEFF] hover:bg-[#8C0027] hover:text-white text-xs font-bold shrink-0 transition-colors brutal-press"
+                      >
+                        Detail
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -794,48 +701,32 @@ export function AdminPanel({
 
             {/* 4. GROUPS & CHANNELS */}
             {menu === 'groups' && (
-              <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] text-[#5A6578] dark:text-[#94A3B8]">
-                    <tr>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Nama</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Tipe</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Anggota</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Pesan</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Status</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide text-right">Tindakan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#2A364B]">
-                    {groups.map((g) => (
-                      <tr key={g.id} className="hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]">
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-[#161B26] dark:text-[#F5F7FA]">{g.title}</div>
-                          <div className="font-mono text-[11px] text-[#5A6578] dark:text-[#94A3B8]">@{g.handle || g.id}</div>
-                        </td>
-                        <td className="py-3 px-4 capitalize font-semibold">{g.type}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold tabular-nums">{g.memberIds.length}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold tabular-nums">{g.messageCount}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold">
+              <div className="space-y-2">
+                {groups.map((g) => (
+                  <div
+                    key={g.id}
+                    className="p-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-[#161B26] dark:text-[#F5F7FA] truncate">
+                        {g.title}
+                      </div>
+                      <div className="mt-0.5 text-[11px] font-mono text-[#5A6578] dark:text-[#94A3B8] truncate">
+                        @{g.handle || g.id} · <span className="capitalize">{g.type}</span> ·{' '}
+                        <span className={g.suspended ? 'text-rose-600 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'}>
                           {g.suspended ? 'Dibekukan' : 'Aktif'}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              await api.adminUpdateGroup(token, g.id, { suspended: !g.suspended });
-                              onNotify(`Status ${g.title} diperbarui`);
-                              refreshSection();
-                            }}
-                            className="px-2.5 py-1 rounded-xl border border-[#E6ECF2] dark:border-[#324058] font-bold hover:bg-[#8C0027] hover:text-white"
-                          >
-                            {g.suspended ? 'Aktifkan' : 'Bekukan'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailItem({ kind: 'group', item: g })}
+                      className="px-3.5 py-1.5 rounded-full bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#BEDEFF] hover:bg-[#8C0027] hover:text-white text-xs font-bold shrink-0 transition-colors brutal-press"
+                    >
+                      Detail
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -1114,40 +1005,211 @@ export function AdminPanel({
 
             {/* 10. AUDIT LOGS */}
             {menu === 'audit' && (
-              <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] text-[#5A6578] dark:text-[#94A3B8]">
-                    <tr>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Waktu</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Aktor</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Tindakan</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Target</th>
-                      <th className="py-3 px-4 font-bold uppercase tracking-wide">Detail</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#111111]/15 dark:divide-[#2A364B]">
-                    {auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]">
-                        <td className="py-2.5 px-4 font-mono tabular-nums text-[#5A6578] dark:text-[#94A3B8] whitespace-nowrap">
-                          {formatTimeShort(log.createdAt)}
-                        </td>
-                        <td className="py-2.5 px-4 whitespace-nowrap text-[#161B26] dark:text-[#F5F7FA] font-semibold">
-                          {log.actorName} <span className="font-mono text-[#5A6578] dark:text-[#94A3B8]">({log.actorRole})</span>
-                        </td>
-                        <td className="py-2.5 px-4 font-mono font-bold text-[#8C0027] dark:text-[#F47296] whitespace-nowrap">
-                          {log.action}
-                        </td>
-                        <td className="py-2.5 px-4 font-bold text-[#161B26] dark:text-[#F5F7FA]">{log.target}</td>
-                        <td className="py-2.5 px-4 text-[#5A6578] dark:text-[#94A3B8]">{log.details}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                {auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.2)] flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-mono font-bold text-[#8C0027] dark:text-[#F47296] truncate">
+                        {log.action}
+                      </div>
+                      <div className="mt-0.5 text-xs text-[#161B26] dark:text-[#F5F7FA] font-semibold truncate">
+                        {log.actorName} · {log.target}
+                      </div>
+                      <div className="text-[11px] font-mono text-[#5A6578] dark:text-[#94A3B8]">
+                        {formatTimeShort(log.createdAt)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailItem({ kind: 'audit', item: log })}
+                      className="px-3.5 py-1.5 rounded-full bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#BEDEFF] hover:bg-[#8C0027] hover:text-white text-xs font-bold shrink-0 transition-colors brutal-press"
+                    >
+                      Detail
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Admin Item Detail Modal */}
+      {detailItem && (
+        <div className="fixed inset-0 z-50 bg-[#161B26]/65 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="p5-modal-impact w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] p-5 pb-safe-3 space-y-4 brutal-shadow-lg max-h-[85dvh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-display font-extrabold text-lg text-[#161B26] dark:text-[#F5F7FA] truncate">
+                {detailItem.kind === 'user'
+                  ? `Detail Pengguna · @${detailItem.item.username}`
+                  : detailItem.kind === 'group'
+                    ? `Detail ${detailItem.item.type === 'channel' ? 'Channel' : 'Grup'}`
+                    : 'Detail Audit Log'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDetailItem(null)}
+                aria-label="Tutup detail"
+                className="h-9 w-9 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {detailItem.kind === 'user' && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] space-y-1.5">
+                  <StatusRow label="Nama" value={detailItem.item.displayName} />
+                  <StatusRow label="Username" value={`@${detailItem.item.username}`} />
+                  <StatusRow label="User ID" value={detailItem.item.id} />
+                  <StatusRow label="Status Akun" value={detailItem.item.status} />
+                  <StatusRow label="Verifikasi" value={detailItem.item.verified ? 'Terverifikasi' : 'Belum'} />
+                  <StatusRow label="Sesi Aktif" value={String(detailItem.item.activeSessionsCount)} />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#5A6578] dark:text-[#94A3B8] mb-1">
+                    Role Pengguna
+                  </label>
+                  <select
+                    value={detailItem.item.role}
+                    disabled={currentUser.role !== 'super_admin'}
+                    onChange={async (e) => {
+                      const nextRole = e.target.value as AdminRole;
+                      try {
+                        await api.adminUpdateUser(token, detailItem.item.id, { role: nextRole });
+                        onNotify(`Role @${detailItem.item.username} diperbarui`);
+                        setDetailItem({ kind: 'user', item: { ...detailItem.item, role: nextRole } });
+                        refreshSection();
+                      } catch (err) {
+                        onNotify(err instanceof Error ? err.message : 'Gagal ubah role');
+                      }
+                    }}
+                    className="w-full h-10 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-semibold"
+                  >
+                    {Object.entries(ROLE_LABELS).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const nextVerified = !detailItem.item.verified;
+                      await api.adminUpdateUser(token, detailItem.item.id, { verified: nextVerified });
+                      setDetailItem({ kind: 'user', item: { ...detailItem.item, verified: nextVerified } });
+                      refreshSection();
+                    }}
+                    className="py-2.5 px-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white transition-colors"
+                  >
+                    {detailItem.item.verified ? 'Batal Verifikasi' : 'Verifikasi'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const u = detailItem.item;
+                      setDetailItem(null);
+                      setConfirmAction({
+                        label:
+                          u.status === 'active'
+                            ? `Suspend akun @${u.username} dan cabut semua sesi aktif?`
+                            : `Aktifkan kembali akun @${u.username}?`,
+                        onConfirm: async () => {
+                          const nextStatus: UserAccountStatus =
+                            u.status === 'active' ? 'suspended' : 'active';
+                          await api.adminUpdateUser(token, u.id, { status: nextStatus });
+                          onNotify(`Status @${u.username}: ${nextStatus}`);
+                          refreshSection();
+                        },
+                      });
+                    }}
+                    className="py-2.5 px-3 rounded-full bg-[#FFF2A7] text-[#161B26] font-bold hover:bg-[#F59B00] hover:text-white transition-colors"
+                  >
+                    {detailItem.item.status === 'active' ? 'Suspend' : 'Aktifkan'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const exported = await api.adminExportUser(token, detailItem.item.id);
+                      downloadJson(`tolk-user-${detailItem.item.username}.json`, exported);
+                      onNotify('Ekspor data pengguna diunduh');
+                    }}
+                    className="py-2.5 px-3 rounded-full bg-[#EAF4FF] dark:bg-[#1B2436] text-[#161B26] dark:text-[#BEDEFF] font-bold"
+                  >
+                    Ekspor JSON
+                  </button>
+                  {detailItem.item.id !== currentUser.id && detailItem.item.id !== 'usr_pujo' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const u = detailItem.item;
+                        setDetailItem(null);
+                        setConfirmAction({
+                          label: `Hapus permanen akun @${u.username}? Semua sesi dan data milik pengguna ini akan dihapus.`,
+                          onConfirm: async () => {
+                            await api.adminDeleteUser(token, u.id);
+                            onNotify(`Akun @${u.username} telah dihapus`);
+                            refreshSection();
+                          },
+                        });
+                      }}
+                      className="py-2.5 px-3 rounded-full bg-rose-600 text-white font-bold"
+                    >
+                      Hapus Akun
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {detailItem.kind === 'group' && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] space-y-1.5">
+                  <StatusRow label="Nama" value={detailItem.item.title} />
+                  <StatusRow label="Handle / ID" value={`@${detailItem.item.handle || detailItem.item.id}`} />
+                  <StatusRow label="Tipe" value={detailItem.item.type} />
+                  <StatusRow label="Jumlah Anggota" value={String(detailItem.item.memberIds.length)} />
+                  <StatusRow label="Total Pesan" value={String(detailItem.item.messageCount)} />
+                  <StatusRow label="Laporan" value={String(detailItem.item.reportCount)} />
+                  <StatusRow label="Status" value={detailItem.item.suspended ? 'Dibekukan' : 'Aktif'} />
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const g = detailItem.item;
+                    await api.adminUpdateGroup(token, g.id, { suspended: !g.suspended });
+                    onNotify(`Status ${g.title} diperbarui`);
+                    setDetailItem({ kind: 'group', item: { ...g, suspended: !g.suspended } });
+                    refreshSection();
+                  }}
+                  className="w-full py-2.5 px-4 rounded-full bg-[#8C0027] text-white font-bold"
+                >
+                  {detailItem.item.suspended ? 'Aktifkan Kembali' : 'Bekukan Ruang'}
+                </button>
+              </div>
+            )}
+
+            {detailItem.kind === 'audit' && (
+              <div className="p-3.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] space-y-1.5 text-xs">
+                <StatusRow label="Waktu" value={formatTimeShort(detailItem.item.createdAt)} />
+                <StatusRow label="Aktor" value={`${detailItem.item.actorName} (${detailItem.item.actorRole})`} />
+                <StatusRow label="Tindakan" value={detailItem.item.action} />
+                <StatusRow label="Target" value={detailItem.item.target} />
+                <div className="pt-2 text-[#5A6578] dark:text-[#CBD5E1] leading-relaxed">
+                  {detailItem.item.details}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* High-Risk Action Re-Confirmation Modal */}
       {confirmRetained.renderedValue && (

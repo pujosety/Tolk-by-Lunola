@@ -390,10 +390,10 @@ export function Sidebar({
   return (
     <aside
       key="sidebar-full"
-      className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFFFF] dark:bg-[#171E2C] border-r-2 border-[#E6ECF2] dark:border-[#2A364B] select-none overflow-hidden"
+      className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFFFF] dark:bg-[#171E2C] select-none overflow-hidden"
     >
-      {/* Top Header */}
-      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+      {/* Top Header (Seamless Futuristic) */}
+      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] shrink-0 z-10">
         <div className="flex items-center justify-between gap-2">
           {/* Clean Left Logo (Chats) or Tab Title */}
           <div className="h-11 px-1 flex items-center min-w-0">
@@ -579,7 +579,7 @@ export function Sidebar({
           {/* Folder Tabs */}
           <div
             data-no-tab-swipe="true"
-            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] shrink-0"
+            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar bg-[#F5F7FA] dark:bg-[#131924] shrink-0"
           >
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
@@ -845,31 +845,41 @@ export function Sidebar({
       )}
       </div>
 
-      {/* Floating Glassmorphism Capsule Bottom Navigation Bar */}
+      {/* Floating Liquid-Glass Capsule Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] py-1.5 px-2 rounded-full bg-[#FFFFFF]/75 dark:bg-[#171E2C]/75 backdrop-blur-xl border border-white/70 dark:border-white/15 shadow-[0_10px_30px_rgba(22,27,38,0.14)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.45)] grid grid-cols-5 gap-0.5 z-30"
+        className="md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/65 dark:bg-[#171E2C]/65 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14),inset_0_1px_1px_rgba(255,255,255,0.7)] grid grid-cols-5 z-30"
       >
+        {/* Flowing Liquid-Glass Active Indicator */}
+        <span
+          aria-hidden="true"
+          style={{
+            width: 'calc((100% - 12px) / 5)',
+            transform: `translate3d(${Math.max(0, currentTabIdx) * 100}%, 0, 0)`,
+          }}
+          className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 rounded-full bg-gradient-to-b from-white/95 via-white/75 to-white/50 dark:from-[#8C0027]/75 dark:via-[#8C0027]/55 dark:to-[#8C0027]/35 backdrop-blur-md border border-white/90 dark:border-white/25 shadow-[0_4px_14px_rgba(140,0,39,0.16),inset_0_1px_1px_rgba(255,255,255,0.95)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+        />
+
         <button
           type="button"
           onClick={() => onSelectTab('chats')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
+          className="relative z-10 py-1.5 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
-            className={`relative px-3 py-1 rounded-full transition-colors ${
+            className={`relative px-2 py-0.5 transition-colors ${
               activeTab === 'chats'
-                ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
+                ? 'text-[#8C0027] dark:text-white'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             <MessageCircle className="w-5 h-5" />
             {unreadByFolder.all > 0 && (
-              <span className="absolute -top-0.5 right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-[#8C0027] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+              <span className="absolute -top-1 right-0 min-w-[15px] h-[15px] px-1 rounded-full bg-[#8C0027] text-white text-[9px] font-mono font-bold flex items-center justify-center">
                 {unreadByFolder.all > 99 ? '99+' : unreadByFolder.all}
               </span>
             )}
           </span>
-          <span className={activeTab === 'chats' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'chats' ? 'text-[#8C0027] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Obrolan
           </span>
         </button>
@@ -877,21 +887,21 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('status')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
+          className="relative z-10 py-1.5 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
-            className={`relative px-3 py-1 rounded-full transition-colors ${
+            className={`relative px-2 py-0.5 transition-colors ${
               activeTab === 'status'
-                ? 'bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7]'
+                ? 'text-[#8C0027] dark:text-[#FFF2A7]'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             <CircleDot className="w-5 h-5" />
             {stories.length > 0 && (
-              <span className="absolute top-0.5 right-2 w-2 h-2 rounded-full bg-[#F59B00]" />
+              <span className="absolute -top-0.5 right-1 w-2 h-2 rounded-full bg-[#F59B00]" />
             )}
           </span>
-          <span className={activeTab === 'status' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'status' ? 'text-[#8C0027] dark:text-[#FFF2A7]' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Status
           </span>
         </button>
@@ -899,23 +909,23 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('updates')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
+          className="relative z-10 py-1.5 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
-            className={`relative px-3 py-1 rounded-full transition-colors ${
+            className={`relative px-2 py-0.5 transition-colors ${
               activeTab === 'updates'
-                ? 'bg-[#8C0027] text-white brutal-shadow-sm'
+                ? 'text-[#8C0027] dark:text-white'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             <Bell className="w-5 h-5" />
             {notificationCount > 0 && (
-              <span className="absolute -top-0.5 right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+              <span className="absolute -top-1 right-0 min-w-[15px] h-[15px] px-1 rounded-full bg-[#F59B00] text-white text-[9px] font-mono font-bold flex items-center justify-center">
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
           </span>
-          <span className={activeTab === 'updates' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'updates' ? 'text-[#8C0027] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Update
           </span>
         </button>
@@ -923,18 +933,18 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('calls')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
+          className="relative z-10 py-1.5 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
-            className={`px-3 py-1 rounded-full transition-colors ${
+            className={`px-2 py-0.5 transition-colors ${
               activeTab === 'calls'
-                ? 'bg-[#BEDEFF] dark:bg-[#1F2C44] text-[#8C0027] dark:text-[#BEDEFF]'
+                ? 'text-[#8C0027] dark:text-white'
                 : 'text-[#5A6578] dark:text-[#94A3B8]'
             }`}
           >
             <Phone className="w-5 h-5" />
           </span>
-          <span className={activeTab === 'calls' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'calls' ? 'text-[#8C0027] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Panggilan
           </span>
         </button>
@@ -942,13 +952,11 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => onSelectTab('you')}
-          className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
+          className="relative z-10 py-1.5 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold touch-manipulation active:scale-95 transition-transform"
         >
           <span
-            className={`px-2.5 py-0.5 rounded-full flex items-center justify-center transition-colors ${
-              activeTab === 'you'
-                ? 'ring-2 ring-[#8C0027] dark:ring-[#F47296]'
-                : ''
+            className={`px-2 py-0 rounded-full flex items-center justify-center transition-transform ${
+              activeTab === 'you' ? 'scale-105' : ''
             }`}
           >
             <Avatar
@@ -958,7 +966,7 @@ export function Sidebar({
               size="xs"
             />
           </span>
-          <span className={activeTab === 'you' ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
+          <span className={activeTab === 'you' ? 'text-[#8C0027] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
             Kamu
           </span>
         </button>

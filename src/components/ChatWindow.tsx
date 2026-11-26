@@ -700,8 +700,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Chat Top Bar */}
-      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FFFFFF] dark:bg-[#171E2C] border-b-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-2 shrink-0 z-10">
+      {/* Chat Top Bar (Seamless Futuristic) */}
+      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_14px_rgba(15,20,30,0.05)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.28)] flex items-center justify-between gap-2 shrink-0 z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <button
             type="button"
