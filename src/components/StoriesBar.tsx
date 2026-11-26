@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   AtSign,
@@ -6,6 +7,7 @@ import {
   Camera,
   Edit3,
   Eye,
+  Heart,
   Image as ImageIcon,
   Plus,
   Radio,
@@ -335,72 +337,76 @@ export function UpdatesView({
         </section>
       </div>
 
-      {/* Create Story Modal */}
-      {createPresence.mounted && (
-        <CreateStoryModal
-          closing={createPresence.closing}
-          users={Object.values(users).filter((u) => u.id !== currentUser.id)}
-          initialReshare={reshareSource}
-          initialAuthor={reshareSource ? users[reshareSource.userId] : undefined}
-          onClose={() => {
-            setCreating(false);
-            setReshareSource(null);
-          }}
-          onUploadMedia={onUploadStoryMedia}
-          onSubmit={async (payload) => {
-            await onCreateStory(payload);
-            setCreating(false);
-            setReshareSource(null);
-          }}
-        />
-      )}
+      {/* Create Story Modal (portaled above all headers/navbars) */}
+      {createPresence.mounted &&
+        createPortal(
+          <CreateStoryModal
+            closing={createPresence.closing}
+            users={Object.values(users).filter((u) => u.id !== currentUser.id)}
+            initialReshare={reshareSource}
+            initialAuthor={reshareSource ? users[reshareSource.userId] : undefined}
+            onClose={() => {
+              setCreating(false);
+              setReshareSource(null);
+            }}
+            onUploadMedia={onUploadStoryMedia}
+            onSubmit={async (payload) => {
+              await onCreateStory(payload);
+              setCreating(false);
+              setReshareSource(null);
+            }}
+          />,
+          document.body
+        )}
 
-      {/* Full-Screen Story Viewer */}
-      {viewerRetained.renderedValue && (
-        <StoryViewerModal
-          closing={viewerRetained.closing}
-          story={viewerRetained.renderedValue}
-          author={users[viewerRetained.renderedValue.userId]}
-          users={users}
-          isOwn={viewerRetained.renderedValue.userId === currentUser.id}
-          index={activeStoryIndex}
-          total={Math.max(1, activeAuthorStories.length)}
-          onPrev={() => setActiveStoryIndex((i) => Math.max(0, i - 1))}
-          onNext={() => {
-            if (activeStoryIndex + 1 < activeAuthorStories.length) {
-              setActiveStoryIndex((i) => i + 1);
-            } else {
+      {/* Full-Screen Story Viewer (portaled above all headers/navbars) */}
+      {viewerRetained.renderedValue &&
+        createPortal(
+          <StoryViewerModal
+            closing={viewerRetained.closing}
+            story={viewerRetained.renderedValue}
+            author={users[viewerRetained.renderedValue.userId]}
+            users={users}
+            isOwn={viewerRetained.renderedValue.userId === currentUser.id}
+            index={activeStoryIndex}
+            total={Math.max(1, activeAuthorStories.length)}
+            onPrev={() => setActiveStoryIndex((i) => Math.max(0, i - 1))}
+            onNext={() => {
+              if (activeStoryIndex + 1 < activeAuthorStories.length) {
+                setActiveStoryIndex((i) => i + 1);
+              } else {
+                setActiveAuthorId(null);
+              }
+            }}
+            onClose={() => setActiveAuthorId(null)}
+            onDelete={async () => {
+              const target = viewerRetained.renderedValue;
+              if (!target) return;
+              await onDeleteStory(target.id);
               setActiveAuthorId(null);
-            }
-          }}
-          onClose={() => setActiveAuthorId(null)}
-          onDelete={async () => {
-            const target = viewerRetained.renderedValue;
-            if (!target) return;
-            await onDeleteStory(target.id);
-            setActiveAuthorId(null);
-          }}
-          onMuteAuthor={async () => {
-            const target = viewerRetained.renderedValue;
-            if (!target) return;
-            await onMuteStoryAuthor(target.userId);
-            setActiveAuthorId(null);
-          }}
-          onReshare={() => {
-            const target = viewerRetained.renderedValue;
-            if (!target) return;
-            setActiveAuthorId(null);
-            setReshareSource(target);
-            setCreating(true);
-          }}
-          onReply={async (text) => {
-            const target = viewerRetained.renderedValue;
-            if (!target) return;
-            await onReplyToStory(target, text);
-            setActiveAuthorId(null);
-          }}
-        />
-      )}
+            }}
+            onMuteAuthor={async () => {
+              const target = viewerRetained.renderedValue;
+              if (!target) return;
+              await onMuteStoryAuthor(target.userId);
+              setActiveAuthorId(null);
+            }}
+            onReshare={() => {
+              const target = viewerRetained.renderedValue;
+              if (!target) return;
+              setActiveAuthorId(null);
+              setReshareSource(target);
+              setCreating(true);
+            }}
+            onReply={async (text) => {
+              const target = viewerRetained.renderedValue;
+              if (!target) return;
+              await onReplyToStory(target, text);
+              setActiveAuthorId(null);
+            }}
+          />,
+          document.body
+        )}
     </>
   );
 }
@@ -530,7 +536,7 @@ function CreateStoryModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}>
+    <div className={`fixed inset-0 z-[80] flex items-stretch md:items-center justify-center p-0 md:p-4 ${closing ? 'pointer-events-none' : ''}`}>
       <div
         className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/65 backdrop-blur-[2px]`}
         onClick={onClose}
@@ -859,7 +865,7 @@ function StoryViewerModal({
     <div
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-0 sm:p-4`}
+      } fixed inset-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4`}
     >
       <div
         onPointerDown={() => setPaused(true)}
@@ -1100,6 +1106,15 @@ function StoryViewerModal({
                 placeholder={`Balas ${author?.displayName.split(' ')[0] || ''}...`}
                 className="flex-1 h-11 px-4 rounded-full bg-black/50 border border-white/35 backdrop-blur-md text-sm text-white placeholder:text-white/75 focus:outline-none focus:border-white"
               />
+              <button
+                type="button"
+                onClick={() => void onReply('❤️')}
+                aria-label="Sukai status"
+                title="Sukai status"
+                className="w-11 h-11 rounded-full bg-black/50 hover:bg-[#8C0027] border border-white/35 backdrop-blur-md text-white flex items-center justify-center shrink-0 brutal-press"
+              >
+                <Heart className="w-4 h-4 text-[#F47296]" />
+              </button>
               <button
                 type="button"
                 onClick={onReshare}
