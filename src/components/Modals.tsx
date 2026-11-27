@@ -1545,6 +1545,11 @@ export function SettingsModal({
   onChangeAppearance,
   onUpdatePrivacy,
   onUnblockUser,
+  quickReplies = [],
+  onChangeQuickReplies,
+  hasAppLockPin = false,
+  onSetAppLockPin,
+  onClearAppLockPin,
 }: {
   open: boolean;
   initialTab?: 'appearance' | 'notifications' | 'privacy';
@@ -1576,11 +1581,24 @@ export function SettingsModal({
   onChangeAppearance: (next: ChatAppearancePrefs) => void;
   onUpdatePrivacy: (patch: Partial<UserPrivacySettings>) => Promise<void>;
   onUnblockUser: (targetId: string) => Promise<void>;
+  quickReplies?: Array<{ trigger: string; text: string }>;
+  onChangeQuickReplies?: (next: Array<{ trigger: string; text: string }>) => void;
+  hasAppLockPin?: boolean;
+  onSetAppLockPin?: (pin: string) => Promise<void>;
+  onClearAppLockPin?: () => void;
 }) {
   const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'privacy'>(initialTab);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [qrTrigger, setQrTrigger] = useState('');
+  const [qrText, setQrText] = useState('');
   useEffect(() => {
-    if (open) setActiveTab(initialTab);
+    if (open) {
+      setActiveTab(initialTab);
+      setPinInput('');
+      setPinError('');
+    }
   }, [open, initialTab]);
 
   const [notifPermission, setNotifPermission] = useState<string>(() =>
@@ -2207,6 +2225,130 @@ export function SettingsModal({
               </div>
             )}
           </div>
+
+          {/* Quick Replies /slash Manager (#15) */}
+          {onChangeQuickReplies && (
+            <div className="pt-4 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-2.5">
+              <div className="font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                Template Balasan Cepat (/slash)
+              </div>
+              <p className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
+                Ketik <code className="font-mono font-bold">/</code> di kolom chat untuk menyisipkan template secara instan.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={qrTrigger}
+                  onChange={(e) => setQrTrigger(e.target.value)}
+                  placeholder="/halo"
+                  className="sm:w-28 px-3 py-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-mono text-[#161B26] dark:text-[#F5F7FA]"
+                />
+                <input
+                  type="text"
+                  value={qrText}
+                  onChange={(e) => setQrText(e.target.value)}
+                  placeholder="Isi pesan template..."
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanTrig = qrTrigger.trim().replace(/^\/+/, '');
+                    const cleanText = qrText.trim();
+                    if (!cleanTrig || !cleanText) return;
+                    const trigger = `/${cleanTrig.toLowerCase()}`;
+                    const next = [...quickReplies.filter((q) => q.trigger !== trigger), { trigger, text: cleanText }];
+                    onChangeQuickReplies(next);
+                    setQrTrigger('');
+                    setQrText('');
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#8C0027] text-white text-xs font-bold shrink-0"
+                >
+                  Tambah
+                </button>
+              </div>
+              {quickReplies.length > 0 && (
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  {quickReplies.map((q) => (
+                    <div
+                      key={q.trigger}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] mr-2">
+                          {q.trigger}
+                        </span>
+                        <span className="text-[11px] text-[#161B26] dark:text-[#F5F7FA] truncate">
+                          {q.text}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onChangeQuickReplies(quickReplies.filter((item) => item.trigger !== q.trigger))}
+                        className="text-[11px] font-bold text-[#B91C1C] dark:text-[#FF6B81] hover:underline shrink-0"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* App Lock PIN (#6) */}
+          {onSetAppLockPin && (
+            <div className="pt-4 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                  Kunci Aplikasi & Chat Terkunci (PIN)
+                </span>
+                <span className="text-[11px] font-mono font-bold text-[#8C0027] dark:text-[#F47296]">
+                  {hasAppLockPin ? 'Aktif' : 'Mati'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value.replace(/\D/g, ''));
+                    setPinError('');
+                  }}
+                  placeholder={hasAppLockPin ? 'Ubah PIN (4-6 digit)' : 'Buat PIN (4-6 digit)'}
+                  className="flex-1 px-3 py-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-mono text-[#161B26] dark:text-[#F5F7FA]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pinInput.length < 4 || pinInput.length > 6) {
+                      setPinError('PIN harus 4 sampai 6 angka.');
+                      return;
+                    }
+                    void onSetAppLockPin(pinInput).then(() => {
+                      setPinInput('');
+                      setPinError('');
+                    });
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#8C0027] text-white text-xs font-bold shrink-0"
+                >
+                  Simpan PIN
+                </button>
+                {hasAppLockPin && onClearAppLockPin && (
+                  <button
+                    type="button"
+                    onClick={onClearAppLockPin}
+                    className="px-3 py-1.5 rounded-xl border border-[#B91C1C]/40 text-[#B91C1C] dark:text-[#FF6B81] text-xs font-bold shrink-0"
+                  >
+                    Matikan
+                  </button>
+                )}
+              </div>
+              {pinError && <p className="text-[11px] text-[#B91C1C] font-semibold">{pinError}</p>}
+            </div>
+          )}
         </section>
         )}
         </motion.div>

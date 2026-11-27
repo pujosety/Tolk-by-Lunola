@@ -63,6 +63,7 @@ interface SidebarProps {
   onlineUserIds: Set<string>;
   typingByChat: Record<string, string[]>;
   draftsByChat: Record<string, string>;
+  lockedChatIds?: string[];
   activeChatId: string | null;
   activeFolder: FolderKey;
   searchQuery: string;
@@ -131,6 +132,7 @@ export function Sidebar({
   onlineUserIds,
   typingByChat,
   draftsByChat,
+  lockedChatIds = [],
   activeChatId,
   activeFolder,
   searchQuery,
@@ -286,22 +288,31 @@ export function Sidebar({
     [chats]
   );
 
+  const lockedSet = useMemo(() => new Set(lockedChatIds), [lockedChatIds]);
+
   const folders: { key: FolderKey; label: string }[] = [
     { key: 'all', label: t(lang, 'all') },
     { key: 'dm', label: t(lang, 'dm') },
     { key: 'group', label: t(lang, 'group') },
     { key: 'channel', label: t(lang, 'channel') },
     ...(archivedCount > 0 ? [{ key: 'archived' as FolderKey, label: t(lang, 'archived') }] : []),
+    ...(lockedChatIds.length > 0 ? [{ key: 'locked' as FolderKey, label: lang === 'en' ? 'Locked' : 'Terkunci' }] : []),
   ];
 
   const filteredChats = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return chats.filter((chat) => {
-      if (activeFolder === 'archived') {
-        if (!chat.isArchivedByUser) return false;
+      const isLocked = lockedSet.has(chat.id);
+      if (activeFolder === 'locked') {
+        if (!isLocked) return false;
       } else {
-        if (chat.isArchivedByUser && !q) return false;
-        if (activeFolder !== 'all' && chat.type !== activeFolder) return false;
+        if (isLocked) return false;
+        if (activeFolder === 'archived') {
+          if (!chat.isArchivedByUser) return false;
+        } else {
+          if (chat.isArchivedByUser && !q) return false;
+          if (activeFolder !== 'all' && chat.type !== activeFolder) return false;
+        }
       }
 
       if (!q) return true;
@@ -311,7 +322,7 @@ export function Sidebar({
       const inLast = (chat.lastMessage?.text || '').toLowerCase().includes(q);
       return inTitle || inHandle || inPeer || inLast;
     });
-  }, [chats, activeFolder, searchQuery]);
+  }, [chats, activeFolder, searchQuery, lockedSet]);
 
   const unreadByFolder = useMemo(() => {
     const counts: Record<FolderKey, number> = {
@@ -321,11 +332,14 @@ export function Sidebar({
       channel: 0,
       saved: 0,
       archived: 0,
+      locked: 0,
     };
     for (const c of chats) {
       const hasUnread = c.unreadCount > 0 || Boolean(c.markedUnreadByUser);
       const amount = c.unreadCount > 0 ? c.unreadCount : hasUnread ? 1 : 0;
-      if (c.isArchivedByUser) {
+      if (lockedSet.has(c.id)) {
+        counts.locked += amount;
+      } else if (c.isArchivedByUser) {
         counts.archived += amount;
       } else {
         counts.all += amount;
@@ -333,7 +347,7 @@ export function Sidebar({
       }
     }
     return counts;
-  }, [chats]);
+  }, [chats, lockedSet]);
 
   if (minimized) {
     return (
@@ -819,10 +833,10 @@ export function Sidebar({
                             : 'text-[#5A6578] dark:text-[#94A3B8]'
                       }`}
                     >
-                      {draftText && typingIds.length === 0 ? (
+                      {draftText && !isSelected && typingIds.length === 0 ? (
                         <span className="truncate">
                           <span className="text-[#8C0027] dark:text-[#F47296] font-bold">
-                            {t(lang, 'draft')}:{' '}
+                            Draft:{' '}
                           </span>
                           {draftText}
                         </span>

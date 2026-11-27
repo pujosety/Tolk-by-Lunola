@@ -7,9 +7,13 @@ import {
   BellOff,
   Check,
   Copy,
+  Download,
   Edit3,
   FileText,
   Flag,
+  Gauge,
+  Link2,
+  Lock,
   LogOut,
   MailOpen,
   Mic,
@@ -18,6 +22,7 @@ import {
   Shield,
   Timer,
   Trash2,
+  Unlock,
   X,
 } from 'lucide-react';
 import type { ChatRoom, Message, UserProfile } from '../types/chat';
@@ -55,6 +60,10 @@ interface ChatInfoDrawerProps {
     targetId: string;
     targetLabel: string;
   }) => void;
+  isLocked?: boolean;
+  onToggleLockChat?: () => void;
+  onClearChat?: () => Promise<void>;
+  onSetSlowMode?: (seconds: number) => Promise<void>;
 }
 
 const TIMER_OPTIONS = [
@@ -63,6 +72,14 @@ const TIMER_OPTIONS = [
   { label: '5 menit', value: 300 },
   { label: '1 jam', value: 3600 },
   { label: '24 jam', value: 86400 },
+];
+
+const SLOW_MODE_OPTIONS = [
+  { label: 'Mati', value: 0 },
+  { label: '10d', value: 10 },
+  { label: '30d', value: 30 },
+  { label: '1m', value: 60 },
+  { label: '5m', value: 300 },
 ];
 
 export function ChatInfoDrawer({
@@ -85,14 +102,19 @@ export function ChatInfoDrawer({
   onDeleteChat,
   onToggleBlockUser,
   onReportTarget,
+  isLocked,
+  onToggleLockChat,
+  onClearChat,
+  onSetSlowMode,
 }: ChatInfoDrawerProps) {
-  const [tab, setTab] = useState<'members' | 'media' | 'files' | 'voice'>(
+  const [tab, setTab] = useState<'members' | 'media' | 'files' | 'links' | 'voice'>(
     chat.type === 'dm' ? 'media' : 'members'
   );
   const [copiedHandle, setCopiedHandle] = useState(false);
   const [showInviteQr, setShowInviteQr] = useState(false);
   const [editingGroup, setEditingGroup] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [editTitle, setEditTitle] = useState(chat.title);
   const [editDesc, setEditDesc] = useState(chat.description);
   const [editAdminOnly, setEditAdminOnly] = useState(Boolean(chat.adminOnlyPost));
@@ -100,6 +122,7 @@ export function ChatInfoDrawer({
 
   useEffect(() => {
     setConfirmDelete(false);
+    setConfirmClear(false);
     setEditingGroup(false);
     setShowInviteQr(false);
     setEditTitle(chat.title);
@@ -121,10 +144,54 @@ export function ChatInfoDrawer({
     [messages]
   );
 
+  const linkMessages = useMemo(
+    () =>
+      messages.filter(
+        (m) => Boolean(m.linkPreview?.url) || /https?:\/\/[^\s]+/i.test(m.text || '')
+      ),
+    [messages]
+  );
+
   const voiceMessages = useMemo(
     () => messages.filter((m) => m.attachment?.kind === 'audio'),
     [messages]
   );
+
+  const handleExportChat = (format: 'txt' | 'json') => {
+    const safeName = (chat.title || 'chat').replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
+    let blob: Blob;
+    if (format === 'json') {
+      const payload = {
+        chatId: chat.id,
+        title: chat.title,
+        type: chat.type,
+        exportedAt: new Date().toISOString(),
+        messages: messages.map((m) => ({
+          id: m.id,
+          sender: users[m.senderId]?.displayName || m.senderId,
+          createdAt: new Date(m.createdAt).toISOString(),
+          content: m.text,
+          attachment: m.attachment?.name || null,
+          linkPreview: m.linkPreview?.url || null,
+        })),
+      };
+      blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    } else {
+      const lines = messages.map((m) => {
+        const sender = users[m.senderId]?.displayName || m.senderId;
+        const ts = new Date(m.createdAt).toLocaleString('id-ID');
+        const extra = m.attachment?.name ? ` [Lampiran: ${m.attachment.name}]` : '';
+        return `[${ts}] ${sender}: ${m.text || ''}${extra}`;
+      });
+      blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tolk-${safeName}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const { mounted, closing } = useAnimatedPresence(open, 230);
 
@@ -408,6 +475,26 @@ export function ChatInfoDrawer({
             </span>
           </button>
 
+          {onToggleLockChat && chat.type !== 'saved' && (
+            <button
+              type="button"
+              onClick={onToggleLockChat}
+              className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738]"
+            >
+              <span className="flex items-center gap-2.5">
+                {isLocked ? (
+                  <Lock className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+                ) : (
+                  <Unlock className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8]" />
+                )}
+                <span>{isLocked ? 'Buka Kunci Chat' : 'Kunci Chat (Terkunci)'}</span>
+              </span>
+              <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
+                {isLocked ? 'Terkunci' : 'Mati'}
+              </span>
+            </button>
+          )}
+
           {/* Timed Mute */}
           <div className="px-3 py-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] mb-2">
@@ -473,56 +560,119 @@ export function ChatInfoDrawer({
               ))}
             </div>
           </div>
+
+          {/* Group Slow Mode (#11) */}
+          {chat.type === 'group' && isGroupAdmin && onSetSlowMode && (
+            <div className="px-3 py-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] mb-2">
+                <Gauge className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+                <span>Mode Lambat (Slow Mode)</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {SLOW_MODE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => void onSetSlowMode(opt.value)}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-colors ${
+                      (chat.slowModeSec || 0) === opt.value
+                        ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2] dark:border-[#F5F7FA]'
+                        : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#E2E8F0] border-[#161B26]/25 dark:border-[#324058] hover:border-[#8C0027]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Export Chat (#10) */}
+          <div className="px-3 py-2 flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+              <Download className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8]" />
+              <span>Ekspor Chat</span>
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleExportChat('txt')}
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027] text-[#161B26] dark:text-[#E2E8F0]"
+              >
+                .TXT
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExportChat('json')}
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027] text-[#161B26] dark:text-[#E2E8F0]"
+              >
+                .JSON
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] px-1">
-          {chat.type === 'group' && (
+        {/* Capsule Filter Bar (#12: Media | Dokumen | Tautan + Anggota/Suara) */}
+        <div className="p-2 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
+          <div className="flex items-center gap-1 bg-white dark:bg-[#1A2232] p-1 rounded-full border border-[#E6ECF2] dark:border-[#2A364B] overflow-x-auto no-scrollbar">
+            {chat.type === 'group' && (
+              <button
+                type="button"
+                onClick={() => setTab('members')}
+                className={`px-2.5 py-1.5 rounded-full text-[11px] font-display font-bold whitespace-nowrap transition-colors ${
+                  tab === 'members'
+                    ? 'bg-[#8C0027] text-white'
+                    : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26]'
+                }`}
+              >
+                Anggota ({chat.memberIds.length})
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setTab('members')}
-              className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
-                tab === 'members'
-                  ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
-                  : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
+              onClick={() => setTab('media')}
+              className={`flex-1 px-2.5 py-1.5 rounded-full text-[11px] font-display font-bold whitespace-nowrap transition-colors ${
+                tab === 'media'
+                  ? 'bg-[#8C0027] text-white'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26]'
               }`}
             >
-              Anggota ({chat.memberIds.length})
+              Media ({mediaMessages.length})
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setTab('media')}
-            className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
-              tab === 'media'
-                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
-                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
-            }`}
-          >
-            Media ({mediaMessages.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('files')}
-            className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
-              tab === 'files'
-                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
-                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
-            }`}
-          >
-            File ({fileMessages.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('voice')}
-            className={`flex-1 py-2.5 text-xs font-display font-bold border-b-2 transition-colors ${
-              tab === 'voice'
-                ? 'border-[#8C0027] text-[#8C0027] dark:text-[#F47296]'
-                : 'border-transparent text-[#5A6578] dark:text-[#94A3B8]'
-            }`}
-          >
-            Suara ({voiceMessages.length})
-          </button>
+            <button
+              type="button"
+              onClick={() => setTab('files')}
+              className={`flex-1 px-2.5 py-1.5 rounded-full text-[11px] font-display font-bold whitespace-nowrap transition-colors ${
+                tab === 'files'
+                  ? 'bg-[#8C0027] text-white'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26]'
+              }`}
+            >
+              Dokumen ({fileMessages.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('links')}
+              className={`flex-1 px-2.5 py-1.5 rounded-full text-[11px] font-display font-bold whitespace-nowrap transition-colors ${
+                tab === 'links'
+                  ? 'bg-[#8C0027] text-white'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26]'
+              }`}
+            >
+              Tautan ({linkMessages.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('voice')}
+              className={`px-2.5 py-1.5 rounded-full text-[11px] font-display font-bold whitespace-nowrap transition-colors ${
+                tab === 'voice'
+                  ? 'bg-[#8C0027] text-white'
+                  : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26]'
+              }`}
+            >
+              Suara ({voiceMessages.length})
+            </button>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -667,6 +817,41 @@ export function ChatInfoDrawer({
             </>
           )}
 
+          {tab === 'links' && (
+            <>
+              {linkMessages.length === 0 ? (
+                <p className="text-xs text-[#6B768A] dark:text-[#7E8DA4] text-center py-8">
+                  Belum ada tautan yang dibagikan di percakapan ini.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {linkMessages.map((m) => {
+                    const urlMatch = m.linkPreview?.url || m.text.match(/https?:\/\/[^\s]+/i)?.[0] || '';
+                    return (
+                      <a
+                        key={m.id}
+                        href={urlMatch}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2]/25 dark:border-[#324058] flex items-center gap-2.5 hover:border-[#8C0027]"
+                      >
+                        <Link2 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] truncate">
+                            {m.linkPreview?.title || urlMatch}
+                          </div>
+                          <div className="text-[10px] text-[#6B768A] dark:text-[#7E8DA4] truncate">
+                            {urlMatch}
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
           {tab === 'voice' && (
             <>
               {voiceMessages.length === 0 ? (
@@ -700,6 +885,43 @@ export function ChatInfoDrawer({
         {/* Safety Actions */}
         {chat.type !== 'saved' && (
           <div className="p-3 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-1">
+            {onClearChat && (
+              confirmClear ? (
+                <div className="p-2.5 rounded-xl border border-amber-500 bg-amber-50 dark:bg-amber-950/30 space-y-2 mb-1">
+                  <p className="text-[11px] font-bold text-amber-900 dark:text-amber-200">
+                    Bersihkan semua isi pesan di chat ini?
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmClear(false);
+                        void onClearChat();
+                      }}
+                      className="flex-1 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-bold"
+                    >
+                      Ya, Bersihkan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmClear(false)}
+                      className="flex-1 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmClear(true)}
+                  className="w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Bersihkan Isi Chat</span>
+                </button>
+              )
+            )}
             {chat.type === 'dm' && chat.peerUser && (
               <>
                 <button

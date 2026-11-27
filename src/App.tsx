@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, MessageCircle, WifiOff } from 'lucide-react';
+import { AlertTriangle, Lock, MessageCircle, WifiOff } from 'lucide-react';
 import type {
   Attachment,
   CallRecord,
   ChatAppearancePrefs,
   ChatRoom,
   ChatType,
+  ContactCardPayload,
   DeviceSession,
   FolderKey,
   FriendRequest,
   LanguageCode,
+  LinkPreview,
+  LocationPayload,
   Message,
   ModerationReport,
   NotificationTone,
@@ -116,7 +119,51 @@ export function App() {
 
   const [messagesByChat, setMessagesByChat] = useState<Record<string, Message[]>>({});
   const [scheduledByChat, setScheduledByChat] = useState<Record<string, Message[]>>({});
-  const [draftsByChat, setDraftsByChat] = useState<Record<string, string>>({});
+  const [draftsByChat, setDraftsByChat] = useState<Record<string, string>>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_drafts');
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [lockedChatIds, setLockedChatIds] = useState<string[]>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_locked_chats');
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [appLockHash, setAppLockHash] = useState<string>(() => {
+    try {
+      return window.localStorage.getItem('tolk_app_lock_hash') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [appLocked, setAppLocked] = useState<boolean>(() => {
+    try {
+      return Boolean(window.localStorage.getItem('tolk_app_lock_hash'));
+    } catch {
+      return false;
+    }
+  });
+  const [pinGateInput, setPinGateInput] = useState('');
+  const [pinGateError, setPinGateError] = useState('');
+  const [quickReplies, setQuickReplies] = useState<Array<{ trigger: string; text: string }>>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_quick_replies');
+      if (raw) return JSON.parse(raw) as Array<{ trigger: string; text: string }>;
+    } catch {
+      // Ignore
+    }
+    return [
+      { trigger: '/halo', text: 'Halo! Ada yang bisa saya bantu hari ini?' },
+      { trigger: '/otw', text: 'Sedang dalam perjalanan, sebentar lagi sampai.' },
+      { trigger: '/makasih', text: 'Terima kasih banyak atas informasinya!' },
+    ];
+  });
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
@@ -963,6 +1010,9 @@ export function App() {
               prev.map((c) => (c.id === evt.chatId ? { ...c, ...evt.patch } : c))
             )
           );
+          if (evt.patch.lastMessage === null) {
+            setMessagesByChat((prev) => ({ ...prev, [evt.chatId]: [] }));
+          }
           break;
 
         case 'chat:deleted':
@@ -1188,6 +1238,110 @@ export function App() {
     [token]
   );
 
+  const hashPin = useCallback(async (pin: string): Promise<string> => {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const data = new TextEncoder().encode(`tolk_pin:${pin}`);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+    return btoa(`tolk_pin:${pin}`);
+  }, []);
+
+  const handleSetAppLockPin = useCallback(
+    async (pin: string) => {
+      const digest = await hashPin(pin);
+      setAppLockHash(digest);
+      try {
+        window.localStorage.setItem('tolk_app_lock_hash', digest);
+      } catch {
+        // Ignore
+      }
+      showToast('PIN kunci aplikasi disimpan.');
+    },
+    [hashPin, showToast]
+  );
+
+  const handleClearAppLockPin = useCallback(() => {
+    setAppLockHash('');
+    setAppLocked(false);
+    try {
+      window.localStorage.removeItem('tolk_app_lock_hash');
+    } catch {
+      // Ignore
+    }
+    showToast('Kunci PIN dinonaktifkan.');
+  }, [showToast]);
+
+  const handleToggleLockChat = useCallback(
+    (chatId: string) => {
+      setLockedChatIds((prev) => {
+        const exists = prev.includes(chatId);
+        const next = exists ? prev.filter((id) => id !== chatId) : [...prev, chatId];
+        try {
+          window.localStorage.setItem('tolk_locked_chats', JSON.stringify(next));
+        } catch {
+          // Ignore
+        }
+        showToast(exists ? 'Chat dikeluarkan dari folder Terkunci.' : 'Chat dipindahkan ke folder Terkunci.');
+        return next;
+      });
+    },
+    [showToast]
+  );
+
+  const handleClearChat = useCallback(
+    async (chatId: string) => {
+      if (!token) return;
+      await api.clearChat(token, chatId);
+      setMessagesByChat((prev) => ({ ...prev, [chatId]: [] }));
+      setChats((prev) =>
+        prev.map((c) => (c.id === chatId ? { ...c, lastMessage: null } : c))
+      );
+      showToast('Isi percakapan dibersihkan.');
+    },
+    [token, showToast]
+  );
+
+  const handleSetSlowMode = useCallback(
+    async (chatId: string, seconds: number) => {
+      if (!token) return;
+      const { slowModeSec } = await api.setSlowMode(token, chatId, seconds);
+      setChats((prev) =>
+        prev.map((c) => (c.id === chatId ? { ...c, slowModeSec } : c))
+      );
+      showToast(slowModeSec > 0 ? `Slow mode aktif (${slowModeSec} detik).` : 'Slow mode dimatikan.');
+    },
+    [token, showToast]
+  );
+
+  const handleCancelScheduled = useCallback(
+    async (messageId: string) => {
+      if (!token || !activeChatId) return;
+      await api.deleteScheduledMessage(token, messageId);
+      setScheduledByChat((prev) => ({
+        ...prev,
+        [activeChatId]: (prev[activeChatId] || []).filter((m) => m.id !== messageId),
+      }));
+      showToast('Pesan terjadwal dibatalkan.');
+    },
+    [token, activeChatId, showToast]
+  );
+
+  const handleFetchLinkPreview = useCallback(
+    async (url: string): Promise<LinkPreview | null> => {
+      if (!token) return null;
+      try {
+        const { preview } = await api.fetchLinkPreview(token, url);
+        return preview;
+      } catch {
+        return null;
+      }
+    },
+    [token]
+  );
+
   const handleSendMessage = useCallback(
     async (payload: {
       text: string;
@@ -1198,6 +1352,10 @@ export function App() {
         allowMultiple: boolean;
         options: Array<{ text: string }>;
       } | null;
+      linkPreview?: LinkPreview | null;
+      contactCard?: ContactCardPayload | null;
+      location?: LocationPayload | null;
+      sticker?: { id: string; label: string } | null;
       scheduledFor?: number | null;
     }) => {
       if (!token || !activeChatId) return;
@@ -1621,6 +1779,60 @@ export function App() {
     );
   }
 
+  if (appLocked && appLockHash) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-[#F5F7FA] dark:bg-[#0F141E] p-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void hashPin(pinGateInput).then((digest) => {
+              if (digest === appLockHash) {
+                setAppLocked(false);
+                setPinGateInput('');
+                setPinGateError('');
+              } else {
+                setPinGateError('PIN salah. Coba lagi.');
+              }
+            });
+          }}
+          className="w-full max-w-xs p-6 rounded-3xl bg-white dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg text-center space-y-4"
+        >
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#8C0027]/10 dark:bg-[#8C0027]/25 flex items-center justify-center">
+            <Lock className="w-6 h-6 text-[#8C0027] dark:text-[#F47296]" />
+          </div>
+          <div>
+            <h2 className="font-display font-extrabold text-lg text-[#161B26] dark:text-[#F5F7FA]">
+              Tolk Terkunci
+            </h2>
+            <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] mt-1">
+              Masukkan PIN untuk membuka aplikasi
+            </p>
+          </div>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            autoFocus
+            value={pinGateInput}
+            onChange={(e) => {
+              setPinGateInput(e.target.value.replace(/\D/g, ''));
+              setPinGateError('');
+            }}
+            placeholder="••••"
+            className="w-full text-center tracking-[0.5em] font-mono text-xl py-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA]"
+          />
+          {pinGateError && <p className="text-xs font-bold text-[#B91C1C]">{pinGateError}</p>}
+          <button
+            type="submit"
+            className="w-full py-2.5 rounded-full bg-[#8C0027] text-white text-sm font-display font-bold"
+          >
+            Buka Kunci
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden bg-[#F5F7FA] dark:bg-[#0F141E]">
       {/* Offline Indicator (PWA) */}
@@ -1663,6 +1875,7 @@ export function App() {
             onlineUserIds={onlineUserIds}
             typingByChat={typingByChat}
             draftsByChat={draftsByChat}
+            lockedChatIds={lockedChatIds}
             activeChatId={activeChatId}
             activeFolder={activeFolder}
             searchQuery={searchQuery}
@@ -1790,8 +2003,24 @@ export function App() {
               maxUploadMb={maxUploadMb}
               appearance={appearance}
               darkMode={darkMode}
+              quickReplies={quickReplies}
+              onFetchLinkPreview={handleFetchLinkPreview}
+              onCancelScheduled={handleCancelScheduled}
+              onOpenDirectChat={(uid) => {
+                void handleCreateChat({ type: 'dm', targetUserId: uid });
+              }}
               onDraftChange={(text) =>
-                setDraftsByChat((prev) => ({ ...prev, [activeChat.id]: text }))
+                setDraftsByChat((prev) => {
+                  const next = { ...prev };
+                  if (!text.trim()) delete next[activeChat.id];
+                  else next[activeChat.id] = text;
+                  try {
+                    window.localStorage.setItem('tolk_drafts', JSON.stringify(next));
+                  } catch {
+                    // Ignore
+                  }
+                  return next;
+                })
               }
               onBackMobile={() => setMobileShowChat(false)}
               onOpenInfo={() => setInfoOpen((v) => !v)}
@@ -1877,6 +2106,10 @@ export function App() {
                 })
               }
               onSetTimer={handleSetTimer}
+              isLocked={lockedChatIds.includes(activeChat.id)}
+              onToggleLockChat={() => handleToggleLockChat(activeChat.id)}
+              onClearChat={() => handleClearChat(activeChat.id)}
+              onSetSlowMode={(sec) => handleSetSlowMode(activeChat.id, sec)}
               onStartDmWithUser={(uid) => {
                 setInfoOpen(false);
                 void handleCreateChat({ type: 'dm', targetUserId: uid });
@@ -2134,6 +2367,18 @@ export function App() {
           setCurrentUser((prev) => (prev ? { ...prev, blockedUserIds } : prev));
           showToast('Pengguna tidak lagi diblokir.');
         }}
+        quickReplies={quickReplies}
+        onChangeQuickReplies={(next) => {
+          setQuickReplies(next);
+          try {
+            window.localStorage.setItem('tolk_quick_replies', JSON.stringify(next));
+          } catch {
+            // Ignore
+          }
+        }}
+        hasAppLockPin={Boolean(appLockHash)}
+        onSetAppLockPin={handleSetAppLockPin}
+        onClearAppLockPin={handleClearAppLockPin}
       />
 
       <ReportModal

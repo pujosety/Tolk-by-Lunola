@@ -269,6 +269,22 @@ export const api = {
         allowMultiple: boolean;
         options: Array<{ text: string }>;
       } | null;
+      linkPreview?: {
+        url: string;
+        title: string;
+        description?: string;
+        image?: string;
+        domain?: string;
+      } | null;
+      contactCard?: {
+        userId: string;
+        displayName: string;
+        username: string;
+        avatarUrl?: string | null;
+        avatarColor?: string;
+      } | null;
+      location?: { lat: number; lng: number; label?: string } | null;
+      sticker?: { id: string; label: string } | null;
       scheduledFor?: number | null;
     }
   ) =>
@@ -319,6 +335,29 @@ export const api = {
       `/api/chats/${encodeURIComponent(chatId)}/timer`,
       { method: 'POST', token, body: { seconds } }
     ),
+
+  setSlowMode: (token: string, chatId: string, seconds: number) =>
+    requestJson<{ slowModeSec: number }>(
+      `/api/chats/${encodeURIComponent(chatId)}/slow-mode`,
+      { method: 'POST', token, body: { seconds } }
+    ),
+
+  clearChat: (token: string, chatId: string) =>
+    requestJson<{ ok: boolean }>(`/api/chats/${encodeURIComponent(chatId)}/clear`, {
+      method: 'POST',
+      token,
+    }),
+
+  deleteScheduledMessage: (token: string, messageId: string) =>
+    requestJson<{ ok: boolean }>(`/api/scheduled/${encodeURIComponent(messageId)}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  fetchLinkPreview: (token: string, url: string) =>
+    requestJson<{
+      preview: { url: string; title: string; description?: string; image?: string; domain?: string };
+    }>(`/api/link-preview?url=${encodeURIComponent(url)}`, { token }),
 
   updateChatPreferences: (
     token: string,

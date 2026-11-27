@@ -22,6 +22,7 @@ import {
   Info,
   Languages,
   Lock,
+  MapPin,
   Mic,
   MoreVertical,
   Paperclip,
@@ -34,12 +35,14 @@ import {
   Reply,
   Search,
   SendHorizontal,
+  Smile,
   Sparkles,
   Square,
   Star,
   Timer,
   Trash2,
   UploadCloud,
+  UserCheck,
   Video,
   X,
   ZoomIn,
@@ -50,6 +53,7 @@ import type {
   ChatAppearancePrefs,
   ChatRoom,
   LanguageCode,
+  LinkPreview,
   Message,
   UserProfile,
 } from '../types/chat';
@@ -98,8 +102,22 @@ interface ChatWindowProps {
       allowMultiple: boolean;
       options: Array<{ text: string }>;
     } | null;
+    linkPreview?: LinkPreview | null;
+    contactCard?: {
+      userId: string;
+      displayName: string;
+      username: string;
+      avatarUrl?: string | null;
+      avatarColor?: string;
+    } | null;
+    location?: { lat: number; lng: number; label?: string } | null;
+    sticker?: { id: string; label: string } | null;
     scheduledFor?: number | null;
   }) => Promise<void>;
+  quickReplies?: Array<{ trigger: string; text: string }>;
+  onFetchLinkPreview?: (url: string) => Promise<LinkPreview | null>;
+  onCancelScheduled?: (messageId: string) => Promise<void>;
+  onOpenDirectChat?: (userId: string) => void;
   onUploadFile: (
     file: File,
     onProgress?: (percent: number) => void,
@@ -230,6 +248,31 @@ function VoiceNotePlayer({
   );
 }
 
+function renderFormattedSegment(seg: string, keyPrefix: string): React.ReactNode {
+  const fmtRegex = /(\*[^*\n]+\*|_[^_\n]+_|`[^`\n]+`|~[^~\n]+~)/g;
+  const parts = seg.split(fmtRegex);
+  return parts.map((p, i) => {
+    const k = `${keyPrefix}_${i}`;
+    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
+      return <strong key={k} className="font-bold">{p.slice(1, -1)}</strong>;
+    }
+    if (p.startsWith('_') && p.endsWith('_') && p.length > 2) {
+      return <em key={k} className="italic">{p.slice(1, -1)}</em>;
+    }
+    if (p.startsWith('`') && p.endsWith('`') && p.length > 2) {
+      return (
+        <code key={k} className="px-1 py-0.5 rounded bg-black/15 font-mono text-[12px]">
+          {p.slice(1, -1)}
+        </code>
+      );
+    }
+    if (p.startsWith('~') && p.endsWith('~') && p.length > 2) {
+      return <s key={k} className="line-through opacity-80">{p.slice(1, -1)}</s>;
+    }
+    return <span key={k}>{p}</span>;
+  });
+}
+
 function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
   const tokenRegex = /(https?:\/\/[^\s]+|@[a-zA-Z0-9_]{3,24})/g;
   const parts = text.split(tokenRegex);
@@ -263,7 +306,7 @@ function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
         </span>
       );
     }
-    return <span key={idx}>{part}</span>;
+    return <span key={idx}>{renderFormattedSegment(part, `t_${idx}`)}</span>;
   });
 }
 
@@ -292,6 +335,10 @@ export function ChatWindow({
   onToggleReaction,
   onVotePoll,
   onMarkViewOnceViewed,
+  quickReplies = [],
+  onFetchLinkPreview,
+  onCancelScheduled,
+  onOpenDirectChat,
   onPinMessage,
   onToggleStarMessage,
   onForwardMessage,
@@ -337,6 +384,12 @@ export function ChatWindow({
   };
   const [searchOpen, setSearchOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [emojiTab, setEmojiTab] = useState<'emoji' | 'sticker'>('emoji');
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [contactPickerOpen, setContactPickerOpen] = useState(false);
+  const [scheduledDrawerOpen, setScheduledDrawerOpen] = useState(false);
+  const [msgInfoTarget, setMsgInfoTarget] = useState<Message | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxMsgId, setLightboxMsgId] = useState<string | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState<number>(1);
@@ -713,10 +766,20 @@ export function ChatWindow({
 
     setSending(true);
     try {
+      let linkPreview: LinkPreview | null = null;
+      const urlMatch = trimmed.match(/https?:\/\/[^\s]+/i);
+      if (urlMatch && onFetchLinkPreview) {
+        try {
+          linkPreview = await onFetchLinkPreview(urlMatch[0]);
+        } catch {
+          linkPreview = null;
+        }
+      }
       await onSendMessage({
         text: trimmed,
         replyToId: replyTo?.id || null,
         attachment: null,
+        linkPreview,
         scheduledFor,
       });
       setReplyTo(null);
@@ -1102,6 +1165,21 @@ export function ChatWindow({
           </button>
         </div>
       )}
+
+        {/* Scheduled Messages Banner */}
+        {scheduledMessages.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setScheduledDrawerOpen(true)}
+            className="w-full px-4 py-1.5 bg-[#FFF9D6] dark:bg-[#232D40] border-b border-[#F59B00]/30 flex items-center justify-between text-xs font-semibold text-[#161B26] dark:text-[#FFF2A7] z-10"
+          >
+            <span className="flex items-center gap-1.5">
+              <CalendarClock className="w-3.5 h-3.5 text-[#F59B00]" />
+              <span>{scheduledMessages.length} pesan terjadwal menunggu dikirim</span>
+            </span>
+            <span className="text-[11px] underline">Kelola</span>
+          </button>
+        )}
 
       {/* Pinned Message Banner */}
       {pinnedMessage && (
@@ -1684,11 +1762,115 @@ export function ChatWindow({
                         </a>
                       )}
 
+                      {/* Sticker */}
+                      {msg.sticker && (
+                        <div className="mb-1 py-1 text-5xl leading-none select-none text-center">
+                          {msg.sticker.id}
+                        </div>
+                      )}
+
+                      {/* Contact Card */}
+                      {msg.contactCard && (
+                        <div
+                          className={`mb-1.5 p-2.5 rounded-xl border flex items-center justify-between gap-2.5 min-w-[210px] ${
+                            isOwn
+                              ? 'bg-black/20 border-white/25 text-white'
+                              : 'bg-[#F5F7FA] dark:bg-[#1E2738] border-[#E6ECF2] dark:border-[#324058]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar
+                              name={msg.contactCard.displayName}
+                              imageUrl={msg.contactCard.avatarUrl || null}
+                              color={msg.contactCard.avatarColor}
+                              size="sm"
+                            />
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold truncate">{msg.contactCard.displayName}</div>
+                              <div className="text-[11px] font-mono opacity-80 truncate">
+                                @{msg.contactCard.username}
+                              </div>
+                            </div>
+                          </div>
+                          {onOpenDirectChat && msg.contactCard.userId !== currentUser.id && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenDirectChat(msg.contactCard!.userId)}
+                              className="px-2.5 py-1 rounded-full bg-[#8C0027] text-white text-[11px] font-bold shrink-0"
+                            >
+                              Chat
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Location Card */}
+                      {msg.location && (
+                        <a
+                          href={`https://maps.google.com/?q=${msg.location.lat},${msg.location.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`mb-1.5 p-2.5 rounded-xl border flex items-center gap-2.5 min-w-[210px] ${
+                            isOwn
+                              ? 'bg-black/20 border-white/25 text-white hover:bg-black/30'
+                              : 'bg-[#F5F7FA] dark:bg-[#1E2738] border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027]'
+                          }`}
+                        >
+                          <span className="h-9 w-9 rounded-full bg-[#8C0027] text-white flex items-center justify-center shrink-0">
+                            <MapPin className="w-4 h-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold truncate">
+                              {msg.location.label || 'Lokasi Terkini'}
+                            </div>
+                            <div className="text-[11px] font-mono opacity-80 truncate">
+                              {msg.location.lat.toFixed(4)}, {msg.location.lng.toFixed(4)} · Buka Maps
+                            </div>
+                          </div>
+                        </a>
+                      )}
+
                       {/* Message Text */}
                       {msg.text && (
                         <p className="text-[14px] leading-[1.5] whitespace-pre-wrap break-words">
                           {renderSafeMessageText(msg.text, isOwn)}
                         </p>
+                      )}
+
+                      {/* Link Preview Card */}
+                      {msg.linkPreview && isSafeHttpUrl(msg.linkPreview.url) && (
+                        <a
+                          href={msg.linkPreview.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`mt-1.5 block rounded-xl overflow-hidden border transition-colors ${
+                            isOwn
+                              ? 'bg-black/20 border-white/25 text-white'
+                              : 'bg-[#F5F7FA] dark:bg-[#1E2738] border-[#E6ECF2] dark:border-[#324058]'
+                          }`}
+                        >
+                          {msg.linkPreview.image && isSafeHttpUrl(msg.linkPreview.image) && (
+                            <img
+                              src={msg.linkPreview.image}
+                              alt={msg.linkPreview.title}
+                              className="w-full max-h-32 object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="p-2.5 space-y-0.5">
+                            <div className="text-[10px] font-mono uppercase opacity-75 truncate">
+                              {msg.linkPreview.domain || 'Tautan'}
+                            </div>
+                            <div className="text-xs font-bold leading-snug line-clamp-2">
+                              {msg.linkPreview.title}
+                            </div>
+                            {msg.linkPreview.description && (
+                              <div className="text-[11px] opacity-80 line-clamp-2">
+                                {msg.linkPreview.description}
+                              </div>
+                            )}
+                          </div>
+                        </a>
                       )}
 
                       {/* AI Translation Block */}
@@ -1840,6 +2022,18 @@ export function ChatWindow({
                         >
                           <CheckSquare className="w-3.5 h-3.5" />
                           <span>Pilih Pesan</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMsgInfoTarget(msg);
+                            setActiveMenuMsgId(null);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Info Pesan</span>
                         </button>
 
                         <button
@@ -2301,6 +2495,202 @@ export function ChatWindow({
         </div>
       )}
 
+      {/* /slash Quick Reply Autocomplete */}
+      {draftText.startsWith('/') && quickReplies.length > 0 && (
+        (() => {
+          const q = draftText.slice(1).toLowerCase();
+          const matched = quickReplies.filter((r) =>
+            r.trigger.toLowerCase().includes(q) || r.text.toLowerCase().includes(q)
+          );
+          if (matched.length === 0) return null;
+          return (
+            <div className="mx-3 mb-1.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] shadow-lg overflow-hidden z-30">
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8] border-b border-[#E6ECF2] dark:border-[#2A364B]">
+                Template Balasan Cepat
+              </div>
+              <div className="max-h-40 overflow-y-auto thin-scrollbar divide-y divide-[#E6ECF2] dark:divide-[#2A364B]">
+                {matched.map((item) => (
+                  <button
+                    key={item.trigger}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      onDraftChange(item.text);
+                      inputRef.current?.focus();
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738] flex items-center justify-between gap-2"
+                  >
+                    <span className="font-mono text-xs font-bold text-[#8C0027] dark:text-[#F47296]">
+                      /{item.trigger}
+                    </span>
+                    <span className="text-xs text-[#161B26] dark:text-[#F5F7FA] truncate">
+                      {item.text}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+      {/* Emoji & Sticker Popover */}
+      {emojiOpen && (
+        <div className="mx-3 mb-1.5 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] shadow-xl z-30 space-y-2.5 p5-panel-reveal">
+          <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 p-0.5 rounded-full bg-[#F5F7FA] dark:bg-[#232D40]">
+              {(['emoji', 'sticker'] as const).map((tKey) => (
+                <button
+                  key={tKey}
+                  type="button"
+                  onClick={() => setEmojiTab(tKey)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    emojiTab === tKey ? 'bg-[#8C0027] text-white' : 'text-[#5A6578] dark:text-[#CBD5E1]'
+                  }`}
+                >
+                  {tKey === 'emoji' ? 'Emoji' : 'Stiker'}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setEmojiOpen(false)}
+              className="h-7 w-7 rounded-full flex items-center justify-center text-[#5A6578]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {emojiTab === 'emoji' ? (
+            <div className="grid grid-cols-8 gap-1">
+              {['😀','😂','🥰','😎','🥳','😭','🙏','🔥','❤️','👍','👏','🎉','✨','💯','🤝','🫶','👀','🤔','😅','🚀','☕','🌙','🎵','📸'].map((em) => (
+                <button
+                  key={em}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onDraftChange(`${draftText}${em}`)}
+                  className="h-9 rounded-lg hover:bg-[#F5F7FA] dark:hover:bg-[#232D40] text-lg flex items-center justify-center"
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { id: '👋', label: 'Halo!' },
+                { id: '🔥', label: 'Mantap' },
+                { id: '❤️', label: 'Sayang' },
+                { id: '😂', label: 'Ngakak' },
+                { id: '🥳', label: 'Gas!' },
+                { id: '🙏', label: 'Makasih' },
+                { id: '🫶', label: 'Oke Siap' },
+                { id: '☕', label: 'Ngopi Yuk' },
+              ].map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={async () => {
+                    setEmojiOpen(false);
+                    await onSendMessage({ text: '', sticker: st });
+                  }}
+                  className="p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
+                >
+                  <span className="text-2xl leading-none">{st.id}</span>
+                  <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1]">{st.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* + Attachment Action Sheet */}
+      {attachMenuOpen && (
+        <div className="mx-3 mb-1.5 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] shadow-xl z-30 grid grid-cols-3 sm:grid-cols-6 gap-2 p5-panel-reveal">
+          <button
+            type="button"
+            onClick={() => {
+              setAttachMenuOpen(false);
+              fileInputRef.current?.click();
+            }}
+            className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+          >
+            <Paperclip className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+            <span>File/Galeri</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAttachMenuOpen(false);
+              setCameraOpen(true);
+            }}
+            className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+          >
+            <Camera className="w-4 h-4 text-[#0284C7]" />
+            <span>Kamera</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAttachMenuOpen(false);
+              setContactPickerOpen(true);
+            }}
+            className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+          >
+            <UserCheck className="w-4 h-4 text-emerald-600" />
+            <span>Kontak</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAttachMenuOpen(false);
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  void onSendMessage({
+                    text: '',
+                    location: {
+                      lat: pos.coords.latitude,
+                      lng: pos.coords.longitude,
+                      label: 'Lokasi Saat Ini',
+                    },
+                  });
+                },
+                () => setUploadError('Izin lokasi tidak tersedia.')
+              );
+            }}
+            className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+          >
+            <MapPin className="w-4 h-4 text-rose-600" />
+            <span>Lokasi</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAttachMenuOpen(false);
+              setScheduleOpen((v) => !v);
+            }}
+            className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+          >
+            <CalendarClock className="w-4 h-4 text-amber-600" />
+            <span>Jadwal</span>
+          </button>
+          {(chat.type === 'group' || chat.type === 'channel') && (
+            <button
+              type="button"
+              onClick={() => {
+                setAttachMenuOpen(false);
+                setPollModalOpen(true);
+              }}
+              className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] flex flex-col items-center gap-1 text-[11px] font-bold"
+            >
+              <BarChart3 className="w-4 h-4 text-violet-600" />
+              <span>Polling</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Floating Capsule Composer */}
       <footer className="mx-2.5 mb-safe-2 mt-1 px-2.5 py-2 rounded-full bg-[#FFFFFF]/92 dark:bg-[#171E2C]/92 backdrop-blur-xl border border-[#E6ECF2] dark:border-[#2A364B] shadow-[0_8px_28px_rgba(15,20,30,0.10)] shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {selectionMode ? (
@@ -2493,48 +2883,40 @@ export function ChatWindow({
               }}
               className="hidden"
             />
-            {!composerFocused ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setScheduleOpen((v) => !v)}
-                  disabled={sending || Boolean(editingMsg)}
-                  aria-label={t(lang, 'scheduleMessage')}
-                  title={t(lang, 'scheduleMessage')}
-                  className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-all ${
-                    scheduledFor
-                      ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
-                      : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
-                  }`}
-                >
-                  <CalendarClock className="w-4 h-4" />
-                </button>
-                {(chat.type === 'group' || chat.type === 'channel') && (
-                  <button
-                    type="button"
-                    onClick={() => setPollModalOpen(true)}
-                    disabled={sending || Boolean(editingMsg)}
-                    aria-label="Buat polling"
-                    title="Buat polling"
-                    className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                  </button>
-                )}
-              </>
-            ) : (
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={sending}
-                aria-label="Lampirkan file atau media"
-                title="Lampirkan foto, video, atau dokumen"
-                className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setEmojiOpen((v) => !v);
+                setAttachMenuOpen(false);
+              }}
+              disabled={sending}
+              aria-label="Emoji dan Stiker"
+              className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-colors ${
+                emojiOpen
+                  ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
+              }`}
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setAttachMenuOpen((v) => !v);
+                setEmojiOpen(false);
+              }}
+              disabled={sending || Boolean(editingMsg)}
+              aria-label="Menu lampiran dan fitur"
+              className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-colors ${
+                attachMenuOpen || scheduledFor
+                  ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
 
             <textarea
               ref={inputRef}
@@ -2916,6 +3298,165 @@ export function ChatWindow({
             >
               Kirim Polling
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Card Picker Modal */}
+      {contactPickerOpen && (
+        <div
+          onClick={() => setContactPickerOpen(false)}
+          className="fixed inset-0 z-[80] bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 pb-safe-3 space-y-3 p5-modal-impact"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                Bagikan Kontak
+              </h3>
+              <button
+                type="button"
+                onClick={() => setContactPickerOpen(false)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-72 overflow-y-auto thin-scrollbar space-y-1.5">
+              {Object.values(users)
+                .filter((u) => u.id !== currentUser.id && u.id !== 'usr_bot')
+                .map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={async () => {
+                      setContactPickerOpen(false);
+                      await onSendMessage({
+                        text: '',
+                        contactCard: {
+                          userId: u.id,
+                          displayName: u.displayName,
+                          username: u.username,
+                          avatarUrl: u.avatarUrl,
+                          avatarColor: u.avatarColor,
+                        },
+                      });
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] hover:bg-[#EAF4FF] dark:hover:bg-[#232D40] flex items-center gap-2.5 text-left"
+                  >
+                    <Avatar name={u.displayName} imageUrl={u.avatarUrl} color={u.avatarColor} size="sm" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
+                        {u.displayName}
+                      </div>
+                      <div className="text-[11px] font-mono text-[#5A6578] dark:text-[#94A3B8]">
+                        @{u.username}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scheduled Messages Drawer */}
+      {scheduledDrawerOpen && (
+        <div
+          onClick={() => setScheduledDrawerOpen(false)}
+          className="fixed inset-0 z-[80] bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 pb-safe-3 space-y-3 p5-modal-impact"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                Pesan Terjadwal ({scheduledMessages.length})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setScheduledDrawerOpen(false)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-72 overflow-y-auto thin-scrollbar space-y-2">
+              {scheduledMessages.map((sm) => (
+                <div
+                  key={sm.id}
+                  className="p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] flex items-start justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-mono font-bold text-[#8C0027] dark:text-[#F47296]">
+                      {formatTimeShort(sm.scheduledFor || sm.createdAt)}
+                    </div>
+                    <div className="text-xs text-[#161B26] dark:text-[#F5F7FA] mt-0.5 break-words">
+                      {sm.text || sm.attachment?.name || 'Lampiran'}
+                    </div>
+                  </div>
+                  {onCancelScheduled && (
+                    <button
+                      type="button"
+                      onClick={() => void onCancelScheduled(sm.id)}
+                      className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-[11px] font-bold shrink-0"
+                    >
+                      Batalkan
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Read-By Info Modal */}
+      {msgInfoTarget && (
+        <div
+          onClick={() => setMsgInfoTarget(null)}
+          className="fixed inset-0 z-[80] bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 pb-safe-3 space-y-3 p5-modal-impact"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                Info Pesan
+              </h3>
+              <button
+                type="button"
+                onClick={() => setMsgInfoTarget(null)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] text-xs text-[#161B26] dark:text-[#F5F7FA]">
+              {msgInfoTarget.text || msgInfoTarget.attachment?.name || 'Pesan media'}
+            </div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+              Dibaca oleh ({msgInfoTarget.readBy.filter((id) => id !== msgInfoTarget.senderId).length})
+            </div>
+            <div className="max-h-48 overflow-y-auto thin-scrollbar space-y-1.5">
+              {msgInfoTarget.readBy
+                .filter((id) => id !== msgInfoTarget.senderId)
+                .map((uid) => {
+                  const u = users[uid];
+                  return (
+                    <div key={uid} className="flex items-center gap-2.5 p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738]">
+                      <Avatar name={u?.displayName || uid} imageUrl={u?.avatarUrl} color={u?.avatarColor} size="xs" />
+                      <span className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                        {u?.displayName || uid}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </div>
       )}

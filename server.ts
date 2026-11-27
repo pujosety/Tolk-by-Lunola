@@ -106,6 +106,7 @@ interface StoredChat {
   adminOnlyPost?: boolean;
   pinnedMessageId: string | null;
   selfDestructSec: number;
+  slowModeSec?: number;
   subscriberCount?: number;
   inviteExpiresAt?: number | null;
   inviteMaxUses?: number | null;
@@ -2432,9 +2433,68 @@ async function startServer(): Promise<void> {
       }
     }
 
-    if (!text && !attachment && !poll) {
+    const rawContact = req.body?.contactCard;
+    const contactCard =
+      rawContact && typeof rawContact.userId === 'string' && typeof rawContact.displayName === 'string'
+        ? {
+            userId: sanitizeText(rawContact.userId, 64),
+            displayName: sanitizeText(rawContact.displayName, 64),
+            username: sanitizeText(rawContact.username, 32),
+            avatarUrl: typeof rawContact.avatarUrl === 'string' ? rawContact.avatarUrl.slice(0, 300) : null,
+            avatarColor: sanitizeText(rawContact.avatarColor, 20) || undefined,
+          }
+        : null;
+
+    const rawLoc = req.body?.location;
+    const location =
+      rawLoc && typeof rawLoc.lat === 'number' && typeof rawLoc.lng === 'number'
+        ? {
+            lat: rawLoc.lat,
+            lng: rawLoc.lng,
+            label: sanitizeText(rawLoc.label, 120) || undefined,
+          }
+        : null;
+
+    const rawSticker = req.body?.sticker;
+    const sticker =
+      rawSticker && typeof rawSticker.id === 'string'
+        ? {
+            id: sanitizeText(rawSticker.id, 40),
+            label: sanitizeText(rawSticker.label, 40) || 'Stiker',
+          }
+        : null;
+
+    const rawLp = req.body?.linkPreview;
+    const linkPreview =
+      rawLp && typeof rawLp.url === 'string' && typeof rawLp.title === 'string'
+        ? {
+            url: rawLp.url.slice(0, 500),
+            title: sanitizeText(rawLp.title, 160),
+            description: sanitizeText(rawLp.description, 280) || undefined,
+            image: typeof rawLp.image === 'string' ? rawLp.image.slice(0, 500) : undefined,
+            domain: sanitizeText(rawLp.domain, 80) || undefined,
+          }
+        : null;
+
+    if (!text && !attachment && !poll && !contactCard && !location && !sticker) {
       res.status(400).json({ error: 'Pesan atau lampiran tidak boleh kosong.' });
       return;
+    }
+
+    const now = Date.now();
+    if (
+      chat.type === 'group' &&
+      (chat.slowModeSec || 0) > 0 &&
+      !chat.adminIds.includes(userId) &&
+      !chat.moderatorIds.includes(userId)
+    ) {
+      const chatMsgs = store.messages[chat.id] || [];
+      const lastOwn = [...chatMsgs].reverse().find((m) => m.senderId === userId && !m.systemEvent);
+      if (lastOwn && now - lastOwn.createdAt < (chat.slowModeSec || 0) * 1000) {
+        const waitSec = Math.ceil(((chat.slowModeSec || 0) * 1000 - (now - lastOwn.createdAt)) / 1000);
+        res.status(429).json({ error: `Slow mode aktif. Tunggu ${waitSec} detik lagi.` });
+        return;
+      }
     }
 
     const mentionMatches = text.match(/@([a-z0-9_]{3,24})/gi) || [];
@@ -2442,7 +2502,6 @@ async function startServer(): Promise<void> {
       new Set(mentionMatches.map((m) => m.slice(1).toLowerCase()))
     );
 
-    const now = Date.now();
     const scheduledFor =
       typeof req.body?.scheduledFor === 'number' && req.body.scheduledFor > now + 5000
         ? req.body.scheduledFor
@@ -2461,6 +2520,10 @@ async function startServer(): Promise<void> {
       mentions: mentions.length > 0 ? mentions : undefined,
       attachment,
       poll: poll || undefined,
+      linkPreview: linkPreview || undefined,
+      contactCard: contactCard || undefined,
+      location: location || undefined,
+      sticker: sticker || undefined,
       reactions: [],
       readBy: [userId],
       views: chat.type === 'channel' ? 1 : undefined,
@@ -2685,6 +2748,131 @@ async function startServer(): Promise<void> {
       patch: { selfDestructSec: seconds },
     });
     res.json({ selfDestructSec: seconds });
+  });
+
+  // Group Slow Mode
+  app.post('/api/chats/:chatId/slow-mode', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const chat = store.chats[req.params.chatId];
+    if (!chat || !chat.memberIds.includes(userId)) {
+      res.status(404).json({ error: 'Percakapan tidak ditemukan.' });
+      return;
+    }
+    if (!chat.adminIds.includes(userId) && !chat.moderatorIds.includes(userId)) {
+      res.status(403).json({ error: 'Hanya admin grup yang dapat mengatur slow mode.' });
+      return;
+    }
+    const seconds = Number(req.body?.seconds);
+    if (![0, 10, 30, 60, 300].includes(seconds)) {
+      res.status(400).json({ error: 'Durasi slow mode tidak valid.' });
+      return;
+    }
+    chat.slowModeSec = seconds;
+    saveStore(store);
+    broadcastToChat(chat, {
+      type: 'chat:updated',
+      chatId: chat.id,
+      patch: { slowModeSec: seconds },
+    });
+    res.json({ slowModeSec: seconds });
+  });
+
+  // Clear Chat History
+  app.post('/api/chats/:chatId/clear', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const chat = store.chats[req.params.chatId];
+    if (!chat || !chat.memberIds.includes(userId)) {
+      res.status(404).json({ error: 'Percakapan tidak ditemukan.' });
+      return;
+    }
+    store.messages[chat.id] = [];
+    chat.pinnedMessageId = null;
+    saveStore(store);
+    broadcastToChat(chat, {
+      type: 'chat:updated',
+      chatId: chat.id,
+      patch: { pinnedMessageId: null, lastMessage: null },
+    });
+    res.json({ ok: true });
+  });
+
+  // Cancel Scheduled Message
+  app.delete('/api/scheduled/:messageId', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const idx = store.scheduledMessages.findIndex(
+      (m) => m.id === req.params.messageId && m.senderId === userId
+    );
+    if (idx < 0) {
+      res.status(404).json({ error: 'Pesan terjadwal tidak ditemukan.' });
+      return;
+    }
+    store.scheduledMessages.splice(idx, 1);
+    saveStore(store);
+    res.json({ ok: true });
+  });
+
+  // OpenGraph Link Preview
+  app.get('/api/link-preview', requireAuth, async (req: AuthedRequest, res) => {
+    const rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+    let parsed: URL;
+    try {
+      parsed = new URL(rawUrl);
+    } catch {
+      res.status(400).json({ error: 'URL tidak valid.' });
+      return;
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      res.status(400).json({ error: 'Protokol URL tidak didukung.' });
+      return;
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host.startsWith('127.') ||
+      host.startsWith('10.') ||
+      host.startsWith('192.168.') ||
+      host === '0.0.0.0'
+    ) {
+      res.status(400).json({ error: 'Host tidak diizinkan.' });
+      return;
+    }
+    try {
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 3200);
+      const resp = await fetch(parsed.toString(), {
+        signal: ac.signal,
+        headers: { 'User-Agent': 'TolkLinkPreview/1.0' },
+      });
+      clearTimeout(timer);
+      const html = (await resp.text()).slice(0, 65000);
+      const pickMeta = (prop: string) => {
+        const m =
+          html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i')) ||
+          html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`, 'i'));
+        return m ? m[1].trim() : '';
+      };
+      const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || '';
+      const title = pickMeta('og:title') || titleTag || parsed.hostname;
+      const description = pickMeta('og:description') || pickMeta('description') || undefined;
+      const image = pickMeta('og:image') || undefined;
+      res.json({
+        preview: {
+          url: parsed.toString(),
+          title: title.slice(0, 160),
+          description: description ? description.slice(0, 280) : undefined,
+          image: image && image.startsWith('http') ? image.slice(0, 500) : undefined,
+          domain: parsed.hostname.replace(/^www\./, ''),
+        },
+      });
+    } catch {
+      res.json({
+        preview: {
+          url: parsed.toString(),
+          title: parsed.hostname.replace(/^www\./, ''),
+          domain: parsed.hostname.replace(/^www\./, ''),
+        },
+      });
+    }
   });
 
   // Chat Preferences: Pin, Timed Mute, Archive, Mark Unread

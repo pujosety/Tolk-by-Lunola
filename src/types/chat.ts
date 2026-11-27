@@ -1,6 +1,6 @@
 export type ChatType = 'saved' | 'dm' | 'group' | 'channel';
 
-export type FolderKey = 'all' | 'dm' | 'group' | 'channel' | 'saved' | 'archived';
+export type FolderKey = 'all' | 'dm' | 'group' | 'channel' | 'saved' | 'archived' | 'locked';
 
 export type AdminRole =
   | 'super_admin'
@@ -117,6 +117,28 @@ export interface PollData {
   options: PollOption[];
 }
 
+export interface LinkPreview {
+  url: string;
+  title: string;
+  description?: string;
+  image?: string;
+  domain?: string;
+}
+
+export interface ContactCardPayload {
+  userId: string;
+  displayName: string;
+  username: string;
+  avatarUrl?: string | null;
+  avatarColor?: string;
+}
+
+export interface LocationPayload {
+  lat: number;
+  lng: number;
+  label?: string;
+}
+
 export interface MessageReaction {
   emoji: string;
   userIds: string[];
@@ -146,6 +168,10 @@ export interface Message {
   mentions?: string[];
   attachment?: Attachment | null;
   poll?: PollData | null;
+  linkPreview?: LinkPreview | null;
+  contactCard?: ContactCardPayload | null;
+  location?: LocationPayload | null;
+  sticker?: { id: string; label: string } | null;
   reactions: MessageReaction[];
   readBy: string[];
   views?: number;
@@ -172,6 +198,7 @@ export interface ChatRoom {
   isArchivedByUser?: boolean;
   markedUnreadByUser?: boolean;
   selfDestructSec: number; // 0 = off
+  slowModeSec?: number; // 0 = off
   subscriberCount?: number;
   inviteExpiresAt?: number | null;
   inviteMaxUses?: number | null;
