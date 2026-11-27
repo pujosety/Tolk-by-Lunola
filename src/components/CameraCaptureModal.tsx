@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Check, RefreshCw, RotateCcw, ScanLine, X } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Image as ImageIcon, RefreshCw, RotateCcw, ScanLine, X } from 'lucide-react';
 
 interface CameraCaptureModalProps {
   open: boolean;
@@ -19,6 +19,7 @@ export function CameraCaptureModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fallbackInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [cameraReady, setCameraReady] = useState(false);
@@ -285,14 +286,29 @@ export function CameraCaptureModal({
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-6">
+          <div className="max-w-sm mx-auto flex items-center justify-between gap-6">
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f && onCapturePhoto) {
+                  onCapturePhoto(f);
+                  onClose();
+                }
+              }}
+            />
             <button
               type="button"
-              onClick={onClose}
-              aria-label="Batal"
-              className="h-11 w-11 rounded-2xl bg-white/10 flex items-center justify-center"
+              onClick={() => galleryInputRef.current?.click()}
+              aria-label="Pilih dari galeri"
+              title="Pilih foto dari galeri"
+              className="h-11 w-11 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center active:scale-95 transition-transform"
             >
-              <X className="w-5 h-5" />
+              <ImageIcon className="w-5 h-5" />
             </button>
             <button
               type="button"
@@ -303,7 +319,14 @@ export function CameraCaptureModal({
             >
               <span className="h-12 w-12 rounded-full bg-[#8C0027]" />
             </button>
-            <div className="w-11" />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Batal"
+              className="h-11 w-11 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         )}
       </div>
