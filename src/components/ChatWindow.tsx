@@ -1759,22 +1759,7 @@ export function ChatWindow({
                       </div>
                     )}
 
-                    {/* Action Menu Trigger */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openMessageMenu(msg.id, e.currentTarget, isOwn);
-                      }}
-                      aria-label="Opsi pesan"
-                      className={`absolute top-1 ${
-                        isOwn ? '-left-10' : '-right-10'
-                      } h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center opacity-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity`}
-                    >
-                      <MoreVertical className="w-3.5 h-3.5" />
-                    </button>
-
-                    {/* Floating Message Context Menu — rendered via React Portal to document.body so transformed ancestors never trap position:fixed */}
+                    {/* Floating Message Context Menu — rendered via React Portal to document.body (opened via long-press or right-click) */}
                     {menuRetained.renderedValue === msg.id && menuPos && typeof document !== 'undefined' && createPortal(
                       <div
                         onClick={(e) => e.stopPropagation()}
