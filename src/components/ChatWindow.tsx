@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   CalendarClock,
@@ -1476,8 +1477,8 @@ export function ChatWindow({
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Floating Message Context Menu — rendered via portal-like fixed position to avoid bubble clip */}
-                    {menuRetained.renderedValue === msg.id && menuPos && (
+                    {/* Floating Message Context Menu — rendered via React Portal to document.body so transformed ancestors never trap position:fixed */}
+                    {menuRetained.renderedValue === msg.id && menuPos && typeof document !== 'undefined' && createPortal(
                       <div
                         onClick={(e) => e.stopPropagation()}
                         style={{
@@ -1657,7 +1658,8 @@ export function ChatWindow({
                             <span>Hapus</span>
                           </button>
                         )}
-                      </div>
+                      </div>,
+                      document.body
                     )}
                   </div>
                 </div>
