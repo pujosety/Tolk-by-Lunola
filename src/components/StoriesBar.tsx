@@ -251,24 +251,13 @@ export function UpdatesView({
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-24 md:pb-4 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
+      <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-28 md:pb-4 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
         {/* Status Section */}
         <section className="space-y-2.5">
           <div className="flex items-center justify-between px-1">
             <h2 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F1F5F9]">
               Status
             </h2>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setCreating(true)}
-                aria-label="Buat status baru"
-                className="px-3 py-1.5 rounded-xl bg-[#FFF2A7] dark:bg-[#2B2618] text-[#161B26] dark:text-[#FFF2A7] text-xs font-bold flex items-center gap-1.5 brutal-press"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Tambah Status</span>
-              </button>
-            </div>
           </div>
 
           {/* WA-style Horizontal Swipeable Status Cards */}
@@ -452,6 +441,17 @@ export function UpdatesView({
           )}
         </section>
       </div>
+
+      {/* Floating Create Story Camera FAB (positioned cleanly above floating capsule navbar) */}
+      <button
+        type="button"
+        onClick={() => setCreating(true)}
+        aria-label="Buat status baru"
+        title="Buat status baru"
+        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+98px)] md:bottom-6 right-4 md:right-5 h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press items-center justify-center z-20"
+      >
+        <Camera className="w-5 h-5" />
+      </button>
 
       {/* Create Story Modal (portaled above all headers/navbars) */}
       {createPresence.mounted &&
@@ -656,6 +656,7 @@ function CreateStoryModal({
       : null
   );
   const [privacy, setPrivacy] = useState<'everyone' | 'selected' | 'except'>('everyone');
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [pickedUserIds, setPickedUserIds] = useState<string[]>([]);
   const [mentionPickerOpen, setMentionPickerOpen] = useState(false);
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>(
@@ -742,157 +743,75 @@ function CreateStoryModal({
       className={`fixed inset-x-0 z-[80] flex items-stretch md:items-center justify-center p-0 md:p-4 transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] ${closing ? 'pointer-events-none' : ''}`}
     >
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/65 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/70`}
         onClick={onClose}
       />
       <form
         onSubmit={handleSave}
+        style={{ backgroundColor: bgColor }}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full h-full md:h-auto md:max-w-md flex flex-col rounded-none md:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full md:h-[84dvh] md:max-h-[720px] md:max-w-md flex flex-col rounded-none md:rounded-3xl md:border md:border-white/25 brutal-shadow-lg overflow-hidden text-white transition-colors duration-200`}
       >
-        <div className="pt-safe-2 md:pt-3.5 pb-3 px-4 md:px-5 flex items-center justify-between border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Kembali"
-              className="md:hidden h-9 w-9 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <h2 className="font-display font-extrabold text-lg md:text-xl text-[#161B26] dark:text-[#F5F7FA]">
-              Bikin Story 24 Jam
-            </h2>
-          </div>
+        {/* Floating Top Bar */}
+        <div className="pt-safe-2 md:pt-3.5 pb-2.5 px-4 flex items-center justify-between gap-2 bg-gradient-to-b from-black/50 via-black/25 to-transparent shrink-0 z-10">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Tutup"
-            className="hidden md:flex h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white items-center justify-center"
+            aria-label="Kembali"
+            className="h-10 w-10 rounded-full bg-black/30 hover:bg-black/45 border border-white/20 text-white flex items-center justify-center brutal-press"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setMentionPickerOpen((v) => !v);
+                setPrivacyOpen(false);
+              }}
+              className={`h-10 px-3 rounded-full border text-xs font-bold flex items-center gap-1.5 brutal-press ${
+                mentionedUserIds.length > 0 || mentionPickerOpen
+                  ? 'bg-[#FFF2A7] border-[#F59B00] text-[#161B26]'
+                  : 'bg-black/30 border-white/20 text-white hover:bg-black/45'
+              }`}
+            >
+              <AtSign className="w-3.5 h-3.5" />
+              <span>{mentionedUserIds.length > 0 ? `Mention (${mentionedUserIds.length})` : 'Mention'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPrivacyOpen((v) => !v);
+                setMentionPickerOpen(false);
+              }}
+              className={`h-10 px-3 rounded-full border text-xs font-bold flex items-center gap-1.5 brutal-press ${
+                privacy !== 'everyone' || privacyOpen
+                  ? 'bg-white text-[#161B26] border-white'
+                  : 'bg-black/30 border-white/20 text-white hover:bg-black/45'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>
+                {privacy === 'everyone'
+                  ? 'Semua Kontak'
+                  : privacy === 'selected'
+                  ? `Tertentu (${pickedUserIds.length})`
+                  : `Kecualikan (${pickedUserIds.length})`}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 p-4 md:p-5 space-y-4 overflow-y-auto thin-scrollbar">
-          {/* Preview Canvas */}
-          <div
-            className="relative rounded-xl min-h-[180px] p-5 flex flex-col items-center justify-center text-center overflow-hidden border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm"
-            style={{ backgroundColor: bgColor }}
-          >
-            {media?.kind === 'image' && (
-              <div className="relative mb-2">
-                <img
-                  src={media.url}
-                  alt="Preview status"
-                  className="max-h-56 rounded-xl border border-white/80 object-contain"
-                />
-                {uploading && (
-                  <div className="absolute inset-0 rounded-xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
-                    <div className="h-10 w-10 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
-                    <span className="font-mono text-[11px] font-bold text-white tabular-nums">
-                      {uploadPct}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-            {media?.kind === 'video' && (
-              <div className="relative mb-2">
-                <video
-                  src={media.url}
-                  controls
-                  className="max-h-56 rounded-xl border border-white/80"
-                />
-                {uploading && (
-                  <div className="absolute inset-0 rounded-xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
-                    <div className="h-10 w-10 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
-                    <span className="font-mono text-[11px] font-bold text-white tabular-nums">
-                      {uploadPct}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-            <textarea
-              rows={3}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Bagikan momen atau pembaruan (kedaluwarsa 24 jam)..."
-              className="w-full bg-transparent text-white placeholder:text-white/75 text-center font-display text-lg font-bold resize-none focus:outline-none"
-            />
-          </div>
-
-          {/* Background Color + Media Upload */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {STORY_BG_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setBgColor(c)}
-                  aria-label={`Warna latar ${c}`}
-                  className={`w-6 h-6 rounded-xl border border-[#E6ECF2] dark:border-[#F5F7FA] transition-transform ${
-                    bgColor === c ? 'scale-115 ring-2 ring-[#8C0027] ring-offset-2 dark:ring-offset-[#171E2C]' : ''
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,video/mp4,video/webm"
-              className="hidden"
-              onChange={handleFile}
-            />
-            <div className="flex items-center gap-1.5 flex-wrap justify-end">
-              <button
-                type="button"
-                onClick={() => setMentionPickerOpen((v) => !v)}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold brutal-press ${
-                  mentionedUserIds.length > 0 || mentionPickerOpen
-                    ? 'bg-[#FFF2A7] border-[#F59B00] text-[#161B26]'
-                    : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
-                }`}
-              >
-                <AtSign className="w-3.5 h-3.5" />
-                <span>{mentionedUserIds.length > 0 ? `Mention (${mentionedUserIds.length})` : 'Mention'}</span>
-              </button>
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => setCameraOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#BEDEFF] dark:border-[#324058] bg-[#EAF4FF] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Kamera</span>
-              </button>
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press"
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>
-                  {uploading ? `${uploadPct}%` : media ? 'Ganti' : 'Galeri'}
-                </span>
-              </button>
-            </div>
-          </div>
-          {initialReshare && (
-            <div className="px-3 py-2 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#BEDEFF] dark:border-[#324058] flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F1F5F9]">
-              <Repeat2 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
-              <span>
-                Membagikan ulang status dari <strong>@{initialAuthor?.username || 'user'}</strong>
-              </span>
-            </div>
-          )}
-          {mentionPickerOpen && (
-            <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] max-h-28 overflow-y-auto thin-scrollbar">
-              {users.map((u) => {
+        {/* Expandable Mention Tray */}
+        {mentionPickerOpen && (
+          <div className="mx-4 mb-2 p-2.5 rounded-2xl bg-black/55 backdrop-blur-md border border-white/20 flex flex-wrap gap-1.5 max-h-32 overflow-y-auto thin-scrollbar z-10">
+            {users.length === 0 ? (
+              <span className="text-xs text-white/75 px-1">Belum ada kontak untuk di-mention.</span>
+            ) : (
+              users.map((u) => {
                 const tagged = mentionedUserIds.includes(u.id);
                 return (
                   <button
@@ -903,36 +822,27 @@ function CreateStoryModal({
                         prev.includes(u.id) ? prev.filter((id) => id !== u.id) : [...prev, u.id]
                       )
                     }
-                    className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
                       tagged
-                        ? 'bg-[#8C0027] text-white'
-                        : 'bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#E2E8F0] border border-[#E6ECF2] dark:border-[#324058]'
+                        ? 'bg-[#FFF2A7] text-[#161B26]'
+                        : 'bg-white/15 text-white hover:bg-white/25'
                     }`}
                   >
                     @{u.username}
                   </button>
                 );
-              })}
-            </div>
-          )}
-          {uploading && (
-            <div className="h-2 w-full rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] overflow-hidden">
-              <div
-                className="h-full bg-[#8C0027] transition-all duration-150"
-                style={{ width: `${Math.max(8, uploadPct)}%` }}
-              />
-            </div>
-          )}
+              })
+            )}
+          </div>
+        )}
 
-          {/* Story Privacy Selector */}
-          <div>
-            <label className="block text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] mb-1.5">
-              Siapa yang dapat melihat status ini
-            </label>
-            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]">
+        {/* Expandable Privacy Tray */}
+        {privacyOpen && (
+          <div className="mx-4 mb-2 p-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/20 space-y-2.5 z-10">
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/10">
               {[
-                { key: 'everyone' as const, label: 'Semua Kontak' },
-                { key: 'selected' as const, label: 'Kontak Tertentu' },
+                { key: 'everyone' as const, label: 'Semua' },
+                { key: 'selected' as const, label: 'Tertentu' },
                 { key: 'except' as const, label: 'Kecualikan' },
               ].map((opt) => (
                 <button
@@ -942,19 +852,18 @@ function CreateStoryModal({
                     setPrivacy(opt.key);
                     setPickedUserIds([]);
                   }}
-                  className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-colors ${
+                  className={`py-2 px-2 rounded-lg text-xs font-bold transition-colors ${
                     privacy === opt.key
                       ? 'bg-[#8C0027] text-white'
-                      : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
+                      : 'text-white/80 hover:text-white'
                   }`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-
             {privacy !== 'everyone' && (
-              <div className="mt-2 max-h-28 overflow-y-auto thin-scrollbar border border-[#E6ECF2] dark:border-[#324058] rounded-xl p-2 space-y-1 bg-[#FFFFFF] dark:bg-[#1E2738]">
+              <div className="max-h-32 overflow-y-auto thin-scrollbar space-y-1">
                 {users.map((u) => {
                   const active = pickedUserIds.includes(u.id);
                   return (
@@ -966,29 +875,154 @@ function CreateStoryModal({
                           prev.includes(u.id) ? prev.filter((id) => id !== u.id) : [...prev, u.id]
                         )
                       }
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
                         active
-                          ? 'bg-[#EAF4FF] dark:bg-[#1B2436] text-[#8C0027] dark:text-[#F47296] font-bold'
-                          : 'text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]'
+                          ? 'bg-[#8C0027] text-white font-bold'
+                          : 'bg-white/10 text-white/90 hover:bg-white/20'
                       }`}
                     >
                       <span>{u.displayName}</span>
-                      <span className="font-mono opacity-75">@{u.username}</span>
+                      <span className="font-mono opacity-80">@{u.username}</span>
                     </button>
                   );
                 })}
               </div>
             )}
           </div>
+        )}
 
-          {error && <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{error}</p>}
+        {/* Full-Bleed Center Canvas */}
+        <div className="flex-1 min-h-0 px-5 flex flex-col items-center justify-center text-center overflow-y-auto thin-scrollbar gap-3">
+          {initialReshare && (
+            <div className="px-3 py-1.5 rounded-full bg-black/35 border border-white/20 flex items-center gap-1.5 text-xs font-semibold text-white">
+              <Repeat2 className="w-3.5 h-3.5 text-[#FFF2A7] shrink-0" />
+              <span>Bagikan ulang @{initialAuthor?.username || 'user'}</span>
+            </div>
+          )}
+
+          {media?.kind === 'image' && (
+            <div className="relative max-w-full">
+              <img
+                src={media.url}
+                alt="Preview status"
+                className="max-h-[42dvh] rounded-2xl border border-white/30 object-contain shadow-lg"
+              />
+              {!uploading && (
+                <button
+                  type="button"
+                  onClick={() => setMedia(null)}
+                  aria-label="Hapus media status"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              {uploading && (
+                <div className="absolute inset-0 rounded-2xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
+                  <div className="h-11 w-11 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
+                  <span className="font-mono text-xs font-bold text-white tabular-nums">
+                    {uploadPct}%
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          {media?.kind === 'video' && (
+            <div className="relative max-w-full">
+              <video
+                src={media.url}
+                controls
+                className="max-h-[42dvh] rounded-2xl border border-white/30 shadow-lg"
+              />
+              {!uploading && (
+                <button
+                  type="button"
+                  onClick={() => setMedia(null)}
+                  aria-label="Hapus media status"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              {uploading && (
+                <div className="absolute inset-0 rounded-2xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
+                  <div className="h-11 w-11 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
+                  <span className="font-mono text-xs font-bold text-white tabular-nums">
+                    {uploadPct}%
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <textarea
+            rows={media ? 2 : 4}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={media ? 'Tambahkan keterangan...' : 'Ketik status Anda (24 jam)...'}
+            className="w-full max-w-sm bg-transparent text-white placeholder:text-white/70 text-center font-display text-xl sm:text-2xl font-bold leading-snug resize-none focus:outline-none"
+          />
+        </div>
+
+        {/* Bottom Dock */}
+        <div className="pt-3 pb-safe-3 px-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent space-y-3 shrink-0">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/mp4,video/webm"
+            className="hidden"
+            onChange={handleFile}
+          />
+
+          <div className="flex items-center justify-between gap-2">
+            {/* Color Swatches */}
+            <div className="flex items-center gap-2">
+              {STORY_BG_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setBgColor(c)}
+                  aria-label={`Warna latar ${c}`}
+                  className={`w-7 h-7 rounded-full border-2 border-white/80 transition-transform ${
+                    bgColor === c ? 'scale-115 ring-2 ring-white ring-offset-2 ring-offset-black/40' : ''
+                  }`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+
+            {/* Camera & Gallery Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => setCameraOpen(true)}
+                aria-label="Ambil foto kamera"
+                className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center brutal-press disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="h-10 px-3.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-bold flex items-center gap-1.5 brutal-press disabled:opacity-50"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>{uploading ? `${uploadPct}%` : media ? 'Ganti' : 'Galeri'}</span>
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="text-xs font-semibold text-rose-300 text-center">{error}</p>}
 
           <button
             type="submit"
             disabled={saving || uploading}
-            className="w-full h-11 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-sm font-bold transition-colors disabled:opacity-60"
+            className="w-full h-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/30 text-white text-sm font-bold flex items-center justify-center gap-2 brutal-press transition-colors disabled:opacity-60"
           >
-            {saving ? 'Menerbitkan...' : 'Terbitkan Status'}
+            <SendHorizontal className="w-4 h-4" />
+            <span>{saving ? 'Menerbitkan...' : 'Terbitkan Status'}</span>
           </button>
         </div>
       </form>

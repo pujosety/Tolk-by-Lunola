@@ -882,7 +882,7 @@ export function Sidebar({
         <div
           aria-hidden={!isDraggingTab && currentTabIdx !== 1}
           {...(!isDraggingTab && currentTabIdx !== 1 ? ({ inert: '' } as Record<string, unknown>) : {})}
-          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 ${
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 relative ${
             !isDraggingTab && currentTabIdx !== 1 ? 'pointer-events-none' : ''
           }`}
         >
