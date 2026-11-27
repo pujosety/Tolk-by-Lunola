@@ -19,6 +19,7 @@ if (typeof window !== 'undefined') {
   let webViewFallbackTimer: number | null = null;
   let webViewFallbackActive = false;
   let nativeAndroidInsets: { top: number; bottom: number; ime: number } | null = null;
+  let wasKeyboardOpen = false;
 
   const isTextInputEl = (el: HTMLElement | null): boolean => {
     if (!el) return false;
@@ -28,6 +29,25 @@ if (typeof window !== 'undefined') {
       return !['checkbox', 'radio', 'file', 'hidden', 'range', 'button', 'submit', 'reset'].includes(type);
     }
     return el.isContentEditable;
+  };
+
+  const applyKeyboardState = (appHeight: number, vvOffsetTop: number, effectiveInset: number) => {
+    document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
+    document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vvOffsetTop)}px`);
+    document.documentElement.style.setProperty('--keyboard-inset', `${effectiveInset}px`);
+    if (effectiveInset > 0) {
+      wasKeyboardOpen = true;
+      document.documentElement.setAttribute('data-keyboard-open', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-keyboard-open');
+      if (wasKeyboardOpen) {
+        wasKeyboardOpen = false;
+        const active = document.activeElement as HTMLElement | null;
+        if (isTextInputEl(active)) {
+          active?.blur();
+        }
+      }
+    }
   };
 
   const syncKeyboardInset = () => {
@@ -42,19 +62,13 @@ if (typeof window !== 'undefined') {
       document.documentElement.style.setProperty('--android-safe-top', `${nativeAndroidInsets.top}px`);
       document.documentElement.style.setProperty('--android-safe-bottom', `${nativeAndroidInsets.bottom}px`);
       const imeInset = nativeAndroidInsets.ime > 60 ? nativeAndroidInsets.ime : 0;
-      // Only subtract ime if WebView didn't already shrink vvHeight
-      const vvAlreadyShrank = maxViewportHeight - vvHeight > 90;
+      const vvInset = Math.max(0, Math.round(maxViewportHeight - vvHeight));
+      const effectiveInset = imeInset > 0 ? imeInset : vvInset > 90 ? vvInset : 0;
+      const vvAlreadyShrank = vvInset > 90;
       const appHeight = vvAlreadyShrank
         ? Math.round(vvHeight)
-        : Math.max(280, Math.round(maxViewportHeight - imeInset));
-      document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
-      document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vvOffsetTop)}px`);
-      document.documentElement.style.setProperty('--keyboard-inset', `${imeInset}px`);
-      if (imeInset > 0) {
-        document.documentElement.setAttribute('data-keyboard-open', 'true');
-      } else {
-        document.documentElement.removeAttribute('data-keyboard-open');
-      }
+        : Math.max(280, Math.round(maxViewportHeight - effectiveInset));
+      applyKeyboardState(appHeight, vvOffsetTop, effectiveInset);
       return;
     }
 
@@ -73,14 +87,7 @@ if (typeof window !== 'undefined') {
     const effectiveInset = nativeInset || fallbackInset;
     const appHeight = Math.max(280, Math.round(vvHeight - fallbackInset));
 
-    document.documentElement.style.setProperty('--app-height', `${appHeight}px`);
-    document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vvOffsetTop)}px`);
-    document.documentElement.style.setProperty('--keyboard-inset', `${effectiveInset}px`);
-    if (effectiveInset > 0) {
-      document.documentElement.setAttribute('data-keyboard-open', 'true');
-    } else {
-      document.documentElement.removeAttribute('data-keyboard-open');
-    }
+    applyKeyboardState(appHeight, vvOffsetTop, effectiveInset);
   };
 
   window.__onAndroidInsets = (topDp: number, bottomDp: number, imeDp: number) => {

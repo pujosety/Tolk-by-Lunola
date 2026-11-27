@@ -1072,12 +1072,13 @@ export function ChatWindow({
                   onTouchStart={(e) => {
                     if (e.touches.length !== 1) return;
                     const target = e.target as HTMLElement | null;
-                    const ignore = Boolean(target?.closest('button, a, input, textarea, audio, video'));
+                    const ignoreLongPress = Boolean(target?.closest('button, a, input, textarea, audio, video'));
+                    const ignoreSwipe = Boolean(target?.closest('input, textarea, audio, video')) || e.touches[0].clientX < 28;
                     const rowEl = e.currentTarget;
                     if (msgLongPressRef.current !== null) {
                       window.clearTimeout(msgLongPressRef.current);
                     }
-                    if (!ignore) {
+                    if (!ignoreLongPress) {
                       msgLongPressRef.current = window.setTimeout(() => {
                         msgLongPressRef.current = null;
                         triggerAndroidHaptic();
@@ -1089,7 +1090,7 @@ export function ChatWindow({
                       x: e.touches[0].clientX,
                       y: e.touches[0].clientY,
                       locked: false,
-                      ignore: ignore || e.touches[0].clientX < 28,
+                      ignore: ignoreSwipe,
                       hapticFired: false,
                     };
                   }}
@@ -1107,7 +1108,7 @@ export function ChatWindow({
                       }
                     }
                     if (!start.locked) {
-                      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+                      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.1) {
                         start.locked = true;
                         setSwipingMsgId(msg.id);
                       } else if (Math.abs(dy) > 10) {
@@ -1117,7 +1118,7 @@ export function ChatWindow({
                         return;
                       }
                     }
-                    const clamped = Math.max(-68, Math.min(68, dx));
+                    const clamped = Math.max(-72, Math.min(72, dx));
                     if (!start.hapticFired && Math.abs(clamped) >= 44) {
                       start.hapticFired = true;
                       triggerAndroidHaptic();
@@ -1165,31 +1166,30 @@ export function ChatWindow({
                     setSwipingMsgId(null);
                     setSwipeOffsetX(0);
                   }}
-                  style={
-                    swipingMsgId === msg.id && swipeOffsetX !== 0
-                      ? { transform: `translate3d(${swipeOffsetX}px, 0, 0)` }
-                      : undefined
-                  }
-                  className={`relative flex items-end gap-2 group ${
+                  className={`relative touch-pan-y flex items-end gap-2 group ${
                     menuRetained.renderedValue === msg.id ? 'z-40' : ''
-                  } ${
-                    swipingMsgId === msg.id ? '' : 'transition-transform duration-200 ease-out'
                   } ${isOwn ? 'justify-end p5-msg-own' : 'justify-start p5-msg-peer'}`}
                 >
-                  {swipingMsgId === msg.id && swipeOffsetX > 12 && (
+                  {swipingMsgId === msg.id && swipeOffsetX > 8 && (
                     <div
-                      style={{ opacity: Math.min(1, swipeOffsetX / 44) }}
-                      className="pointer-events-none absolute -left-9 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#8C0027] text-white flex items-center justify-center shadow-sm"
+                      style={{
+                        opacity: Math.min(1, swipeOffsetX / 44),
+                        transform: `translateY(-50%) scale(${Math.min(1.1, 0.7 + (swipeOffsetX / 44) * 0.35).toFixed(2)})`,
+                      }}
+                      className="pointer-events-none absolute left-1 top-1/2 w-8 h-8 rounded-full bg-[#8C0027] text-white flex items-center justify-center shadow-md z-10"
                     >
-                      <Reply className="w-3.5 h-3.5" />
+                      <Reply className="w-4 h-4" />
                     </div>
                   )}
-                  {swipingMsgId === msg.id && swipeOffsetX < -12 && (
+                  {swipingMsgId === msg.id && swipeOffsetX < -8 && (
                     <div
-                      style={{ opacity: Math.min(1, Math.abs(swipeOffsetX) / 44) }}
-                      className="pointer-events-none absolute -right-9 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#161B26] dark:bg-[#232D40] text-white flex items-center justify-center shadow-sm"
+                      style={{
+                        opacity: Math.min(1, Math.abs(swipeOffsetX) / 44),
+                        transform: `translateY(-50%) scale(${Math.min(1.1, 0.7 + (Math.abs(swipeOffsetX) / 44) * 0.35).toFixed(2)})`,
+                      }}
+                      className="pointer-events-none absolute right-1 top-1/2 w-8 h-8 rounded-full bg-[#161B26] dark:bg-[#232D40] text-white flex items-center justify-center shadow-md z-10"
                     >
-                      <Forward className="w-3.5 h-3.5" />
+                      <Forward className="w-4 h-4" />
                     </div>
                   )}
                   {!isOwn && chat.type === 'group' && (
@@ -1205,7 +1205,16 @@ export function ChatWindow({
                     </div>
                   )}
 
-                  <div className="relative max-w-[84%] sm:max-w-[68%]">
+                  <div
+                    style={
+                      swipingMsgId === msg.id && swipeOffsetX !== 0
+                        ? { transform: `translate3d(${swipeOffsetX}px, 0, 0)` }
+                        : undefined
+                    }
+                    className={`relative max-w-[84%] sm:max-w-[68%] ${
+                      swipingMsgId === msg.id ? '' : 'transition-transform duration-200 ease-out'
+                    }`}
+                  >
                     <div
                       className={`px-3.5 py-2.5 ${getBubbleClasses(appearance, isOwn)}`}
                     >
