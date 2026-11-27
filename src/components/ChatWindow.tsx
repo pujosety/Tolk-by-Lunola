@@ -2717,9 +2717,9 @@ export function ChatWindow({
 
       {/* Emoji & Sticker Popover */}
       {emojiOpen && (
-        <div className="mb-1.5 p-3 rounded-3xl liquid-glass z-30 space-y-2.5 p5-panel-reveal">
+        <div className="mb-2 p-3 rounded-3xl liquid-glass z-30 space-y-2.5 p5-panel-reveal">
           <div className="flex items-center justify-between">
-            <div className="grid grid-cols-2 p-0.5 rounded-full bg-[#F5F7FA] dark:bg-[#232D40]">
+            <div className="grid grid-cols-2 p-1 rounded-full liquid-glass">
               {(['emoji', 'sticker'] as const).map((tKey) => (
                 <button
                   key={tKey}
@@ -2940,8 +2940,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Floating Liquid-Glass Capsule Composer */}
-      <footer className="px-2.5 py-2 rounded-full liquid-glass shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+      {/* Floating WhatsApp-Style Liquid-Glass Composer + Separate Mic/Send Button */}
+      <footer className="shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {selectionMode ? (
           <div className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -3132,103 +3132,96 @@ export function ChatWindow({
               }}
               className="hidden"
             />
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setEmojiOpen((v) => !v);
-                setAttachMenuOpen(false);
-              }}
-              disabled={sending}
-              aria-label="Emoji dan Stiker"
-              className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-colors ${
-                emojiOpen
-                  ? 'bg-[#8C0027] text-white border-[#8C0027]'
-                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
-              }`}
-            >
-              <Smile className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setAttachMenuOpen((v) => !v);
-                setEmojiOpen(false);
-              }}
-              disabled={sending || Boolean(editingMsg)}
-              aria-label="Menu lampiran dan fitur"
-              className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-colors ${
-                attachMenuOpen || scheduledFor
-                  ? 'bg-[#8C0027] text-white border-[#8C0027]'
-                  : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA]'
-              }`}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            {/* Left Floating Liquid-Glass Input Capsule */}
+            <div className="flex-1 min-w-0 flex items-end gap-0.5 px-1.5 py-1 rounded-full liquid-glass">
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setEmojiOpen((v) => !v);
+                  setAttachMenuOpen(false);
+                }}
+                disabled={sending}
+                aria-label="Emoji dan Stiker"
+                title="Emoji & Stiker"
+                className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  emojiOpen
+                    ? 'bg-[#8C0027] text-white'
+                    : 'text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/5 dark:hover:bg-white/10'
+                }`}
+              >
+                <Smile className="w-5 h-5" />
+              </button>
 
-            <textarea
-              ref={inputRef}
-              rows={1}
-              value={draftText}
-              onFocus={() => {
-                setComposerFocused(true);
-                window.setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }, 260);
-              }}
-              onBlur={() => setComposerFocused(false)}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onPaste={handlePaste}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  void handleSend();
-                }
-              }}
-              placeholder="Ketik pesan"
-              className="flex-1 h-11 max-h-32 min-h-[44px] py-[11px] px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm leading-[20px] text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none overflow-y-auto focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-all"
-            />
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={draftText}
+                onFocus={() => {
+                  setComposerFocused(true);
+                  window.setTimeout(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  }, 260);
+                }}
+                onBlur={() => setComposerFocused(false)}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onPaste={handlePaste}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                placeholder="Ketik pesan"
+                className="flex-1 min-w-0 h-10 max-h-32 min-h-[40px] py-[10px] px-1.5 bg-transparent border-0 text-sm leading-[20px] text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#94A3B8] resize-none overflow-y-auto focus:outline-none"
+              />
 
-            {!composerFocused && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={sending}
-                  aria-label="Lampirkan file atau media"
-                  title="Lampirkan foto, video, atau dokumen"
-                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
-                >
-                  <Paperclip className="w-4 h-4" />
-                </button>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setAttachMenuOpen((v) => !v);
+                  setEmojiOpen(false);
+                }}
+                disabled={sending || Boolean(editingMsg)}
+                aria-label="Menu lampiran dan fitur"
+                title="Lampirkan & Fitur"
+                className={`h-10 w-9 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  attachMenuOpen || scheduledFor
+                    ? 'bg-[#8C0027] text-white'
+                    : 'text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/5 dark:hover:bg-white/10'
+                }`}
+              >
+                <Paperclip className="w-5 h-5 -rotate-45" />
+              </button>
 
+              {!composerFocused && !draftText.trim() && (
                 <button
                   type="button"
                   onClick={() => setCameraOpen(true)}
                   disabled={sending}
                   aria-label="Buka kamera"
                   title="Ambil foto dari kamera"
-                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
+                  className="h-10 w-9 rounded-full text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center shrink-0 transition-colors"
                 >
-                  <Camera className="w-4 h-4" />
+                  <Camera className="w-5 h-5" />
                 </button>
-              </>
-            )}
+              )}
+            </div>
 
-            {composerFocused || draftText.trim() || pendingFile ? (
+            {/* Right Separate Circular Mic / Send Button */}
+            {draftText.trim() || pendingFile ? (
               <button
                 key={`send-${sendKick}`}
                 type="submit"
                 onMouseDown={(e) => e.preventDefault()}
                 disabled={sending}
                 aria-label="Kirim pesan"
-                className={`h-11 px-4 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center gap-1.5 font-display font-bold tracking-wide shrink-0 disabled:opacity-50 ${
+                className={`h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/30 shadow-[0_8px_22px_rgba(140,0,39,0.38)] brutal-press flex items-center justify-center shrink-0 disabled:opacity-50 ${
                   sendKick > 0 ? 'p5-send-recoil p5-impact-ring' : ''
                 }`}
               >
-                <SendHorizontal className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Kirim</span>
+                <SendHorizontal className="w-5 h-5" />
               </button>
             ) : (
               <button
@@ -3237,7 +3230,7 @@ export function ChatWindow({
                 disabled={sending}
                 aria-label="Rekam pesan suara"
                 title="Rekam pesan suara"
-                className="h-11 w-11 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press p5-slash-btn flex items-center justify-center shrink-0 disabled:opacity-50"
+                className="h-12 w-12 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/30 shadow-[0_8px_22px_rgba(140,0,39,0.38)] brutal-press flex items-center justify-center shrink-0 disabled:opacity-50"
               >
                 <Mic className="w-5 h-5" />
               </button>
