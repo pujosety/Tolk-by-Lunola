@@ -956,7 +956,7 @@ export function ChatWindow({
             type="button"
             onClick={onBackMobile}
             aria-label="Kembali ke daftar chat"
-            className="md:hidden h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm flex items-center justify-center shrink-0"
+            className="md:hidden h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -1767,9 +1767,9 @@ export function ChatWindow({
                         openMessageMenu(msg.id, e.currentTarget, isOwn);
                       }}
                       aria-label="Opsi pesan"
-                      className={`absolute top-1.5 ${
-                        isOwn ? '-left-9' : '-right-9'
-                      } h-7 w-7 rounded-lg border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity`}
+                      className={`absolute top-1 ${
+                        isOwn ? '-left-10' : '-right-10'
+                      } h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center opacity-50 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity`}
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
@@ -1791,7 +1791,7 @@ export function ChatWindow({
                           menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
                         } rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow p-1.5`}
                       >
-                        <div className="flex items-center justify-between px-1 py-1 border-b-2 border-[#161B26]/15 dark:border-[#2A364B] mb-1">
+                        <div className="flex items-center justify-between px-1 py-1 border-b border-[#E6ECF2] dark:border-[#2A364B] mb-1">
                           {QUICK_REACTIONS.map((emoji) => (
                             <button
                               key={emoji}
@@ -2304,8 +2304,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Neo-Brutalist Composer */}
-      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] shrink-0 transition-[padding-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+      {/* Composer */}
+      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t border-[#E6ECF2] dark:border-[#2A364B] shrink-0 transition-[padding-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {selectionMode ? (
           <div className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -2496,7 +2496,7 @@ export function ChatWindow({
               }}
               className="hidden"
             />
-            {!composerFocused && (
+            {!composerFocused ? (
               <>
                 <button
                   type="button"
@@ -2504,7 +2504,7 @@ export function ChatWindow({
                   disabled={sending || Boolean(editingMsg)}
                   aria-label={t(lang, 'scheduleMessage')}
                   title={t(lang, 'scheduleMessage')}
-                  className={`h-11 w-10 rounded-full border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 transition-all ${
+                  className={`h-11 w-10 rounded-full border brutal-press flex items-center justify-center shrink-0 transition-all ${
                     scheduledFor
                       ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
                       : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
@@ -2519,12 +2519,24 @@ export function ChatWindow({
                     disabled={sending || Boolean(editingMsg)}
                     aria-label="Buat polling"
                     title="Buat polling"
-                    className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                    className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
                   >
                     <BarChart3 className="w-4 h-4" />
                   </button>
                 )}
               </>
+            ) : (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending}
+                aria-label="Lampirkan file atau media"
+                title="Lampirkan foto, video, atau dokumen"
+                className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             )}
 
             <textarea
@@ -2558,7 +2570,7 @@ export function ChatWindow({
                   disabled={sending}
                   aria-label="Lampirkan file atau media"
                   title="Lampirkan foto, video, atau dokumen"
-                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
                 >
                   <Paperclip className="w-4 h-4" />
                 </button>
@@ -2569,7 +2581,7 @@ export function ChatWindow({
                   disabled={sending}
                   aria-label="Buka kamera"
                   title="Ambil foto dari kamera"
-                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                  className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
                 >
                   <Camera className="w-4 h-4" />
                 </button>

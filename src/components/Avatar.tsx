@@ -65,11 +65,11 @@ export function Avatar({
           alt={name}
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
-          className="w-full h-full rounded-2xl object-cover border border-white/80 dark:border-[#384234] brutal-shadow-sm bg-[#F5F7FA] dark:bg-[#232920]"
+          className="w-full h-full rounded-full object-cover border border-white/80 dark:border-[#384234] bg-[#F5F7FA] dark:bg-[#232920]"
         />
       ) : (
         <div
-          className="w-full h-full rounded-2xl flex items-center justify-center select-none border border-white/60 dark:border-[#384234] brutal-shadow-sm"
+          className="w-full h-full rounded-full flex items-center justify-center select-none border border-white/60 dark:border-[#384234]"
           style={{ backgroundColor: color === '#0284C7' || color === '#8B112B' ? '#8C0027' : color }}
         >
           {renderFallback()}

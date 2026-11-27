@@ -27,7 +27,7 @@ export const WALLPAPER_OPTIONS: Array<{
 ];
 
 export const BUBBLE_STYLE_OPTIONS: Array<{ id: BubbleStyleId; label: string }> = [
-  { id: 'tiktok', label: 'TikTok Sleek' },
+  { id: 'tiktok', label: 'Modern Pill' },
   { id: 'classic', label: 'Klasik' },
   { id: 'clay', label: '3D Pastel' },
   { id: 'outline', label: 'Outline' },

@@ -377,7 +377,7 @@ export function CallHistoryModal({
             type="button"
             onClick={onClose}
             aria-label="Tutup riwayat panggilan"
-            className="h-8 w-8 rounded-xl border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center"
+            className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#FFFFFF] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>

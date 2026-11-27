@@ -78,7 +78,7 @@ export function YouView({
           icon: <Palette className="w-5 h-5" />,
           iconBg: 'bg-[#FFF2A7] text-[#161B26]',
           label: 'Tampilan & Tema Chat',
-          subtitle: 'Wallpaper chat, gaya bubble TikTok & warna',
+          subtitle: 'Wallpaper chat, gaya bubble & warna',
           onClick: onOpenSettings,
         },
         {
@@ -164,7 +164,7 @@ export function YouView({
               onClick={onOpenQrCard}
               aria-label="Tampilkan Kartu QR"
               title="Kartu QR Saya"
-              className="h-9 w-9 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center brutal-press"
+              className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center brutal-press"
             >
               <QrCode className="w-4 h-4" />
             </button>
@@ -173,7 +173,7 @@ export function YouView({
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t(lang, 'lightMode') : t(lang, 'darkMode')}
               title={darkMode ? t(lang, 'lightMode') : t(lang, 'darkMode')}
-              className="h-9 w-9 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center brutal-press"
+              className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center brutal-press"
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -211,10 +211,10 @@ export function YouView({
       <div className="space-y-4">
         {menuSections.map((section) => (
           <div key={section.title} className="space-y-1.5">
-            <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+            <div className="px-2 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
               {section.title}
             </div>
-            <div className="rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] overflow-hidden">
+            <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] overflow-hidden">
               {section.items.map((item) => (
                 <button
                   key={item.label}
@@ -253,7 +253,7 @@ export function YouView({
       <button
         type="button"
         onClick={onLogout}
-        className="w-full px-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-center gap-2 text-[#8C0027] dark:text-[#F47296] hover:bg-[#FDF0F3] dark:hover:bg-[#2B1822] font-bold text-sm brutal-shadow-sm transition-colors"
+        className="w-full px-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-center gap-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-bold text-sm transition-colors"
       >
         <LogOut className="w-4 h-4" />
         <span>{t(lang, 'logout')}</span>

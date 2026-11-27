@@ -177,7 +177,7 @@ export function ChatInfoDrawer({
     <>
       <div
         onClick={onClose}
-        className={`lg:hidden fixed inset-0 z-30 bg-[#161B26]/55 backdrop-blur-[1px] ${
+        className={`lg:hidden fixed inset-0 z-30 bg-[#161B26]/60 ${
           closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
         }`}
       />

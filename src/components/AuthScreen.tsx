@@ -233,33 +233,14 @@ export function AuthScreen({
               </p>
             </div>
 
-            {/* Playful Animated Mini Chat Preview */}
-            <div className="relative z-10 hidden sm:flex flex-col gap-2.5 p-3.5 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25">
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15, ...SPRING_MORPH }}
-                className="self-start max-w-[85%] px-3.5 py-2 rounded-2xl rounded-bl-md bg-[#FFFFFF] text-[#161B26] text-xs font-medium brutal-shadow-sm"
-              >
-                Lagi pada di mana nih? Ayo kumpul!
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, ...SPRING_MORPH }}
-                className="self-end max-w-[85%] px-3.5 py-2 rounded-2xl rounded-br-md bg-[#BEDEFF] text-[#161B26] text-xs font-bold brutal-shadow-sm"
-              >
-                Udah online di Tolk, langsung gas!
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, ...SPRING_MORPH }}
-                className="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF2A7] text-[#161B26] text-[11px] font-bold"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#F59B00] animate-pulse" />
-                <span>lagi ngetik...</span>
-              </motion.div>
+            {/* Brand Value Summary */}
+            <div className="relative z-10 hidden sm:flex flex-col gap-2 p-4 rounded-2xl bg-white/12 border border-white/20 text-xs text-white/90 leading-relaxed">
+              <div className="font-display font-bold text-sm text-white">
+                Cepat, Pribadi, & Real-Time
+              </div>
+              <p>
+                Sinkron otomatis di HP Android dan browser desktop tanpa perlu instalasi rumit.
+              </p>
             </div>
 
             {/* Feature Pills */}

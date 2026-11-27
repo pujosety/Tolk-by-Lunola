@@ -169,7 +169,7 @@ export function DrawerMenu({
   return (
     <div className={`fixed inset-0 z-50 flex ${closing ? 'pointer-events-none' : ''}`}>
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/55 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden md:block fixed inset-0 bg-[#0F141E]/60`}
         onClick={onClose}
       />
 
@@ -289,7 +289,7 @@ export function DrawerMenu({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 brutal-shadow-sm ${item.iconBg}`}
+                    className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${item.iconBg}`}
                   >
                     {item.icon}
                   </span>
@@ -315,7 +315,7 @@ export function DrawerMenu({
               onClose();
               onLogout();
             }}
-            className="w-full px-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-center gap-2 text-[#8C0027] dark:text-[#F47296] hover:bg-[#FDF0F3] dark:hover:bg-[#2B1822] font-bold text-sm brutal-shadow-sm transition-colors"
+            className="w-full px-4 py-3.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-center gap-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-bold text-sm transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span>{t(lang, 'logout')}</span>

@@ -842,7 +842,7 @@ export function Sidebar({
                       )}
                       {showUnread && (
                         <span
-                          className={`p5-skew p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center ${
+                          className={`rounded-full p5-reaction-pop min-w-[22px] h-5 px-1.5 text-[11px] font-mono font-bold tabular-nums flex items-center justify-center ${
                             isSelected
                               ? chat.isMutedByUser
                                 ? 'bg-[#E7E0D8] dark:bg-[#3A2F36] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#FFFFFF] md:text-[#8C0027]'
@@ -852,7 +852,7 @@ export function Sidebar({
                                 : 'bg-[#8C0027] text-[#FFFFFF]'
                           }`}
                         >
-                          <span className="p5-unskew">
+                          <span>
                             {chat.unreadCount > 0 ? chat.unreadCount : '•'}
                           </span>
                         </span>

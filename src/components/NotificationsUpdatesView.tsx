@@ -30,7 +30,7 @@ export function NotificationsUpdatesView({
   const announcement = settings?.globalAnnouncement?.trim() || '';
 
   return (
-    <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-24 md:pb-4 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
+    <div className="flex-1 overflow-y-auto thin-scrollbar p-3.5 pb-28 md:pb-4 space-y-5 bg-[#FFFFFF] dark:bg-[#171E2C]">
       {/* Platform Announcement / System Update */}
       <section className="space-y-2">
         <div className="flex items-center gap-1.5 px-1 text-xs font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
@@ -59,8 +59,10 @@ export function NotificationsUpdatesView({
         </div>
 
         {incomingPending.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-center space-y-1.5">
-            <Bell className="w-6 h-6 text-[#94A3B8] mx-auto" />
+          <div className="p-5 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] text-center space-y-2">
+            <div className="w-11 h-11 rounded-full bg-[#E6ECF2] dark:bg-[#2A364B] text-[#5A6578] dark:text-[#94A3B8] mx-auto flex items-center justify-center">
+              <Bell className="w-5 h-5" />
+            </div>
             <div className="text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
               Belum ada permintaan kontak masuk.
             </div>

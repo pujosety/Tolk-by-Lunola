@@ -175,7 +175,7 @@ export function UpdatesView({
           setActiveStoryIndex(0);
         }}
         style={!latest.mediaUrl ? { backgroundColor: latest.bgColor } : undefined}
-        className="relative w-[116px] h-[168px] shrink-0 snap-start rounded-2xl overflow-hidden bg-[#171E2C] text-left group brutal-press shadow-[0_4px_16px_rgba(15,20,30,0.10)]"
+        className="relative w-[96px] h-[138px] shrink-0 snap-start rounded-2xl overflow-hidden bg-[#171E2C] text-left group brutal-press shadow-[0_4px_16px_rgba(15,20,30,0.10)]"
       >
         {/* Background Media / Text Preview */}
         {latest.mediaUrl && latest.kind === 'image' ? (
@@ -368,7 +368,7 @@ export function UpdatesView({
                       Status saya
                     </div>
                     <div
-                      className={`text-[10px] truncate ${
+                      className={`text-[11px] truncate ${
                         latestOwn ? 'text-white/80 font-mono' : 'text-[#5A6578] dark:text-[#94A3B8]'
                       }`}
                     >

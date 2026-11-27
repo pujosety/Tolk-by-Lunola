@@ -1852,7 +1852,7 @@ export function SettingsModal({
         </section>
 
         {/* Privacy */}
-        <section className="pt-4 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-3">
+        <section className="pt-4 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-3">
           <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Privasi & Kontrol Kontak</span>
