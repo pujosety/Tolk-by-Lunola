@@ -47,18 +47,6 @@ export function CallsView({
   return (
     <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scrollbar pb-28 md:pb-4">
-      {/* Quick Action Banner */}
-      <div className="px-4 py-3 border-b border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3 bg-[#FFFFFF] dark:bg-[#171E2C]">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
-            Riwayat Panggilan
-          </div>
-          <p className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
-            Suara & video WebRTC pribadi
-          </p>
-        </div>
-      </div>
-
       {/* Call History List */}
       <div className="p-2.5 space-y-1 flex-1">
         {calls.length === 0 ? (
