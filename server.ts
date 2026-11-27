@@ -969,22 +969,27 @@ function buildChatRoomForUser(chat: StoredChat, userId: string): ChatRoom {
   };
 }
 
-function getVisibleStoriesForUser(userId: string): StoryItem[] {
-  const now = Date.now();
+function canUserViewStory(userId: string, story: StoryItem): boolean {
+  if (story.expiresAt <= Date.now()) return false;
+  if (story.userId === userId) return true;
   const viewer = store.users[userId];
-  const mutedAuthors = new Set(viewer?.mutedStoryUserIds || []);
+  const author = store.users[story.userId];
+  if (!viewer || !author || author.status !== 'active') return false;
+  if ((viewer.mutedStoryUserIds || []).includes(story.userId)) return false;
+  if (author.blockedUserIds?.includes(userId)) return false;
+  // Mutual friends only: both users must have each other in contactIds
+  const isMutualFriend =
+    Boolean(viewer.contactIds?.includes(story.userId)) &&
+    Boolean(author.contactIds?.includes(userId));
+  if (!isMutualFriend) return false;
+  if (story.privacy === 'selected') return story.allowedUserIds.includes(userId);
+  if (story.privacy === 'except') return !story.excludedUserIds.includes(userId);
+  return true;
+}
+
+function getVisibleStoriesForUser(userId: string): StoryItem[] {
   return store.stories
-    .filter((s) => s.expiresAt > now)
-    .filter((s) => {
-      if (s.userId === userId) return true;
-      if (mutedAuthors.has(s.userId)) return false;
-      const author = store.users[s.userId];
-      if (!author || author.status !== 'active') return false;
-      if (author.blockedUserIds?.includes(userId)) return false;
-      if (s.privacy === 'selected') return s.allowedUserIds.includes(userId);
-      if (s.privacy === 'except') return !s.excludedUserIds.includes(userId);
-      return true;
-    })
+    .filter((s) => canUserViewStory(userId, s))
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
@@ -2761,7 +2766,11 @@ async function startServer(): Promise<void> {
     }
 
     saveStore(store);
-    broadcastAll({ type: 'story:created', story });
+    for (const targetUid of activeSockets.keys()) {
+      if (canUserViewStory(targetUid, story)) {
+        sendWsToUser(targetUid, { type: 'story:created', story });
+      }
+    }
     res.status(201).json({ story });
   });
 

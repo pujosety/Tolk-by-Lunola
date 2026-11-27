@@ -589,6 +589,7 @@ export class LunolaTalkSocket {
   private reconnectTimer: number | null = null;
   private pingTimer: number | null = null;
   private attempt = 0;
+  private lastPongAt = Date.now();
   private onEvent: (evt: ServerWsEvent) => void;
   private onStatusChange: (connected: boolean) => void;
 
@@ -604,6 +605,10 @@ export class LunolaTalkSocket {
 
   connect(): void {
     this.closedByClient = false;
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
@@ -612,18 +617,24 @@ export class LunolaTalkSocket {
 
     socket.onopen = () => {
       this.attempt = 0;
+      this.lastPongAt = Date.now();
       socket.send(JSON.stringify({ type: 'auth', token: this.token }));
       this.onStatusChange(true);
 
       this.clearPing();
       this.pingTimer = window.setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) {
+          if (Date.now() - this.lastPongAt > 28000) {
+            socket.close();
+            return;
+          }
           socket.send(JSON.stringify({ type: 'ping' }));
         }
-      }, 25000);
+      }, 15000);
     };
 
     socket.onmessage = (event) => {
+      this.lastPongAt = Date.now();
       try {
         const parsed = JSON.parse(String(event.data)) as ServerWsEvent;
         this.onEvent(parsed);
@@ -645,6 +656,22 @@ export class LunolaTalkSocket {
     socket.onerror = () => {
       socket.close();
     };
+  }
+
+  ensureConnected(): void {
+    if (this.closedByClient) return;
+    if (
+      !this.ws ||
+      this.ws.readyState === WebSocket.CLOSED ||
+      this.ws.readyState === WebSocket.CLOSING
+    ) {
+      this.attempt = 0;
+      this.connect();
+      return;
+    }
+    if (this.ws.readyState === WebSocket.OPEN && Date.now() - this.lastPongAt > 22000) {
+      this.ws.close();
+    }
   }
 
   sendTyping(chatId: string, isTyping: boolean): void {

@@ -198,7 +198,12 @@ export async function requestBrowserNotificationPermission(): Promise<Notificati
   return Notification.requestPermission();
 }
 
-export function showBrowserNotification(title: string, body: string, tag?: string): void {
+export function showBrowserNotification(
+  title: string,
+  body: string,
+  tag?: string,
+  options?: { forceInForeground?: boolean }
+): void {
   if (typeof window === 'undefined') return;
   if (isRunningInAndroidWebView()) {
     notifyAndroidSystem(title, body);
@@ -206,7 +211,7 @@ export function showBrowserNotification(title: string, body: string, tag?: strin
   }
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
-  if (!document.hidden) return;
+  if (!document.hidden && !options?.forceInForeground) return;
   const trimmedBody = body.slice(0, 140);
   const chatId = tag || '';
   if ('serviceWorker' in navigator) {

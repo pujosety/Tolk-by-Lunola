@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Megaphone, WifiOff, X } from 'lucide-react';
+import { AlertTriangle, MessageCircle, WifiOff } from 'lucide-react';
 import type {
   Attachment,
   CallRecord,
@@ -29,6 +29,7 @@ import { t } from './lib/i18n';
 import {
   ensureWebPushSubscribed,
   playNotificationSound,
+  requestBrowserNotificationPermission,
   showBrowserNotification,
   syncPushAuthToken,
   useOnlineStatus,
@@ -125,7 +126,18 @@ export function App() {
   const [typingByChat, setTypingByChat] = useState<Record<string, string[]>>({});
   const [wsConnected, setWsConnected] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [dismissedAnnouncement, setDismissedAnnouncement] = useState('');
+  const [inAppNotif, setInAppNotif] = useState<{
+    id: string;
+    chatId: string;
+    title: string;
+    body: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!inAppNotif) return;
+    const tId = window.setTimeout(() => setInAppNotif(null), 4200);
+    return () => window.clearTimeout(tId);
+  }, [inAppNotif]);
 
   // UX & Accessibility preferences (persisted in localStorage)
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -846,12 +858,21 @@ export function App() {
               currentUserRef.current &&
               msg.mentions?.includes(currentUserRef.current.username.toLowerCase());
             if (!targetChat?.isMutedByUser || mentionedMe) {
+              const notifTitle =
+                targetChat?.type === 'group' ? `${senderName} · ${targetChat.title}` : senderName;
+              const notifBody = msg.text || msg.attachment?.name || 'Mengirim lampiran media';
               playNotificationSound(toneRef.current, vibrateRef.current);
-              showBrowserNotification(
-                targetChat?.type === 'group' ? `${senderName} · ${targetChat.title}` : senderName,
-                msg.text || msg.attachment?.name || 'Mengirim lampiran media',
-                msg.chatId
-              );
+              if (document.hidden || !isCurrentActive) {
+                showBrowserNotification(notifTitle, notifBody, msg.chatId);
+              }
+              if (!document.hidden && !isCurrentActive) {
+                setInAppNotif({
+                  id: msg.id,
+                  chatId: msg.chatId,
+                  title: notifTitle,
+                  body: notifBody,
+                });
+              }
             }
           }
           break;
@@ -1047,15 +1068,47 @@ export function App() {
       }
     };
 
-    const socket = new LunolaTalkSocket(token, handleWsEvent, setWsConnected);
+    let wasConnected = false;
+    const handleSocketStatus = (connected: boolean) => {
+      setWsConnected(connected);
+      if (connected && wasConnected && activeChatIdRef.current) {
+        void loadMessagesForChat(token, activeChatIdRef.current);
+      }
+      wasConnected = connected;
+    };
+
+    const socket = new LunolaTalkSocket(token, handleWsEvent, handleSocketStatus);
     socketRef.current = socket;
     socket.connect();
 
+    const syncOnResume = () => {
+      if (document.visibilityState === 'hidden') return;
+      socket.ensureConnected();
+      if (activeChatIdRef.current) {
+        void loadMessagesForChat(token, activeChatIdRef.current);
+      }
+      void api
+        .bootstrap(token)
+        .then((data) => {
+          setChats(sortChats(data.chats));
+          setStories(data.stories);
+          setUsers((prev) => ({ ...prev, ...data.users }));
+        })
+        .catch(() => {});
+    };
+
+    document.addEventListener('visibilitychange', syncOnResume);
+    window.addEventListener('focus', syncOnResume);
+    window.addEventListener('online', syncOnResume);
+
     return () => {
+      document.removeEventListener('visibilitychange', syncOnResume);
+      window.removeEventListener('focus', syncOnResume);
+      window.removeEventListener('online', syncOnResume);
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [token, hydrateFromToken, cleanupWebRtc, showToast]);
+  }, [token, hydrateFromToken, cleanupWebRtc, showToast, loadMessagesForChat]);
 
   const activeChat = useMemo(
     () => chats.find((c) => c.id === activeChatId) || null,
@@ -1368,6 +1421,19 @@ export function App() {
     if (!token) return;
     void ensureWebPushSubscribed(token);
 
+    // On mobile/PWA, request notification permission on first user tap if still default
+    const askPermOnInteraction = () => {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        void requestBrowserNotificationPermission().then((perm) => {
+          if (perm === 'granted') {
+            void ensureWebPushSubscribed(token);
+          }
+        });
+      }
+      window.removeEventListener('pointerdown', askPermOnInteraction);
+    };
+    window.addEventListener('pointerdown', askPermOnInteraction, { once: true });
+
     if (typeof window !== 'undefined') {
       const chatParam = new URLSearchParams(window.location.search).get('chat');
       if (chatParam) {
@@ -1420,10 +1486,6 @@ export function App() {
     [token, starredModalOpen, showToast]
   );
 
-  const showGlobalBanner =
-    Boolean(settings?.globalAnnouncement?.trim()) &&
-    settings?.globalAnnouncement !== dismissedAnnouncement;
-  const globalBannerPresence = useAnimatedPresence(showGlobalBanner, 175);
   const toastRetained = useRetainedValue(toast, 195);
 
   if (bootstrapping) {
@@ -1497,28 +1559,6 @@ export function App() {
         <div className="p5-panel-reveal px-4 py-1.5 bg-amber-500 text-[#161B26] border-b-2 border-[#E6ECF2] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-30">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>Mode Maintenance sedang aktif — beberapa fungsi mungkin dibatasi sementara.</span>
-        </div>
-      )}
-
-      {/* Global Platform Announcement */}
-      {globalBannerPresence.mounted && settings && (
-        <div
-          className={`${
-            globalBannerPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-1.5 bg-[#8C0027] text-[#FFFFFF] border-b-2 border-[#E6ECF2] text-xs font-medium flex items-center justify-between gap-3 shrink-0 z-30`}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Megaphone className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{settings.globalAnnouncement}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDismissedAnnouncement(settings.globalAnnouncement)}
-            aria-label="Tutup pengumuman"
-            className="p-0.5 hover:bg-white/15 rounded-md brutal-press"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
         </div>
       )}
 
@@ -2035,6 +2075,33 @@ export function App() {
         }}
         onNotify={showToast}
       />
+
+      {/* In-App Push Notification Banner (tappable to jump to chat) */}
+      {inAppNotif && (
+        <div className="fixed inset-x-0 top-3 pt-safe z-[75] flex justify-center px-3 pointer-events-none">
+          <button
+            type="button"
+            onClick={() => {
+              const cid = inAppNotif.chatId;
+              setInAppNotif(null);
+              handleSelectChat(cid);
+            }}
+            className="p5-toast-impact pointer-events-auto w-full max-w-sm px-4 py-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-lg flex items-center gap-3 text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-[#8C0027] text-white flex items-center justify-center shrink-0">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display font-bold text-xs text-[#161B26] dark:text-[#F5F7FA] truncate">
+                {inAppNotif.title}
+              </div>
+              <div className="text-xs text-[#5A6578] dark:text-[#94A3B8] truncate">
+                {inAppNotif.body}
+              </div>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Toast Feedback (wrapper handles horizontal centering so animation transform never shifts it) */}
       {toastRetained.renderedValue && (

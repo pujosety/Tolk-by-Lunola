@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import type { Attachment, ChatRoom, StoryItem, UserProfile } from '../types/chat';
-import { formatTimeShort } from '../lib/androidBridge';
+import { formatTimeShort, triggerAndroidHaptic } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
 import { Avatar } from './Avatar';
 import { CameraCaptureModal } from './CameraCaptureModal';
@@ -150,6 +150,14 @@ export function UpdatesView({
   const orderedPeerGroups = useMemo(
     () => [...unseenGroups, ...seenGroups],
     [unseenGroups, seenGroups]
+  );
+
+  const viewerAuthorOrder = useMemo(
+    () => [
+      ...(myStories.length > 0 ? [currentUser.id] : []),
+      ...orderedPeerGroups.map(([uid]) => uid),
+    ],
+    [myStories.length, currentUser.id, orderedPeerGroups]
   );
 
   const renderStoryCard = (uid: string, items: StoryItem[], isUnseen: boolean) => {
@@ -510,15 +518,36 @@ export function UpdatesView({
             total={Math.max(1, activeAuthorStories.length)}
             onPrev={() => {
               setOpenViewersOnMount(false);
-              setActiveStoryIndex((i) => Math.max(0, i - 1));
+              if (activeStoryIndex > 0) {
+                setActiveStoryIndex((i) => i - 1);
+                return;
+              }
+              if (activeAuthorId) {
+                const pos = viewerAuthorOrder.indexOf(activeAuthorId);
+                if (pos > 0) {
+                  const prevUid = viewerAuthorOrder[pos - 1];
+                  const prevList =
+                    groupedByAuthor.find(([uid]) => uid === prevUid)?.[1] || [];
+                  setActiveAuthorId(prevUid);
+                  setActiveStoryIndex(Math.max(0, prevList.length - 1));
+                }
+              }
             }}
             onNext={() => {
               setOpenViewersOnMount(false);
               if (activeStoryIndex + 1 < activeAuthorStories.length) {
                 setActiveStoryIndex((i) => i + 1);
-              } else {
-                setActiveAuthorId(null);
+                return;
               }
+              if (activeAuthorId) {
+                const pos = viewerAuthorOrder.indexOf(activeAuthorId);
+                if (pos >= 0 && pos + 1 < viewerAuthorOrder.length) {
+                  setActiveAuthorId(viewerAuthorOrder[pos + 1]);
+                  setActiveStoryIndex(0);
+                  return;
+                }
+              }
+              setActiveAuthorId(null);
             }}
             onClose={() => {
               setOpenViewersOnMount(false);
@@ -1311,7 +1340,7 @@ function StoryViewerModal({
     const dx = e.touches[0].clientX - start.x;
     const dy = e.touches[0].clientY - start.y;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      setDragOffsetX(dx * 0.35);
+      setDragOffsetX(dx * 0.72);
     }
   };
 
@@ -1324,9 +1353,10 @@ function StoryViewerModal({
     const dx = e.changedTouches[0].clientX - start.x;
     const dy = e.changedTouches[0].clientY - start.y;
 
-    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      triggerAndroidHaptic();
       if (dx < 0) onNext();
-      else if (index > 0) onPrev();
+      else onPrev();
       return;
     }
 
@@ -1364,10 +1394,12 @@ function StoryViewerModal({
         }}
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex flex-col justify-between bg-black brutal-shadow-lg select-none`}
+        } ${dragOffsetX === 0 ? 'transition-transform duration-200 ease-out' : ''} relative w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex flex-col justify-between bg-black brutal-shadow-lg select-none`}
         style={{
           backgroundColor: story.mediaUrl ? '#000000' : story.bgColor,
-          transform: dragOffsetX ? `translate3d(${dragOffsetX}px, 0, 0)` : undefined,
+          transform: dragOffsetX
+            ? `translate3d(${dragOffsetX}px, 0, 0) rotate(${(dragOffsetX * 0.025).toFixed(2)}deg) scale(${(1 - Math.min(0.06, Math.abs(dragOffsetX) / 1800)).toFixed(3)})`
+            : undefined,
         }}
       >
         {/* Full-Bleed Edge-to-Edge Media (with blur + spinner while loading) */}
