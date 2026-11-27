@@ -1490,13 +1490,8 @@ export function App() {
 
   if (bootstrapping) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] px-6">
-        <div className="p5-impact-slam px-7 py-6 rounded-3xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg flex flex-col items-center">
-          <TolkStackedLogo className="h-32 w-auto select-none" />
-        </div>
-        <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#5A6578] dark:text-[#CBD5E1] p5-panel-reveal">
-          {t(lang, 'connecting')}
-        </p>
+      <div className="h-full w-full flex items-center justify-center bg-[#8C0027] text-white px-6">
+        <TolkStackedLogo className="p5-impact-slam h-40 w-auto select-none brightness-0 invert" />
       </div>
     );
   }
