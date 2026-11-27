@@ -1084,7 +1084,6 @@ export function CreateChatModal({
             <Search className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              autoFocus={!showMyQr}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau @username..."
