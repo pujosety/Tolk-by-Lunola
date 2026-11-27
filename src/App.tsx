@@ -222,6 +222,40 @@ export function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'appearance' | 'notifications' | 'privacy'>('appearance');
+  const [dndEnabled, setDndEnabled] = useState(() => {
+    try { return window.localStorage.getItem('tolk_dnd') === 'true'; } catch { return false; }
+  });
+  const [notifPreview, setNotifPreview] = useState(() => {
+    try {
+      const s = window.localStorage.getItem('tolk_notif_preview');
+      return s === null ? true : s === 'true';
+    } catch { return true; }
+  });
+  const [notifGroups, setNotifGroups] = useState(() => {
+    try {
+      const s = window.localStorage.getItem('tolk_notif_groups');
+      return s === null ? true : s === 'true';
+    } catch { return true; }
+  });
+  const [readReceiptsEnabled, setReadReceiptsEnabled] = useState(() => {
+    try {
+      const s = window.localStorage.getItem('tolk_read_receipts');
+      return s === null ? true : s === 'true';
+    } catch { return true; }
+  });
+  const [typingIndicatorEnabled, setTypingIndicatorEnabled] = useState(() => {
+    try {
+      const s = window.localStorage.getItem('tolk_typing_indicator');
+      return s === null ? true : s === 'true';
+    } catch { return true; }
+  });
+  const dndRef = useRef(dndEnabled);
+  const notifPreviewRef = useRef(notifPreview);
+  const notifGroupsRef = useRef(notifGroups);
+  dndRef.current = dndEnabled;
+  notifPreviewRef.current = notifPreview;
+  notifGroupsRef.current = notifGroups;
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsList, setSessionsList] = useState<DeviceSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -862,10 +896,15 @@ export function App() {
             const mentionedMe =
               currentUserRef.current &&
               msg.mentions?.includes(currentUserRef.current.username.toLowerCase());
-            if (!targetChat?.isMutedByUser || mentionedMe) {
+            if (
+              !dndRef.current &&
+              (!targetChat?.isMutedByUser || mentionedMe) &&
+              (notifGroupsRef.current || targetChat?.type === 'dm' || mentionedMe)
+            ) {
               const notifTitle =
                 targetChat?.type === 'group' ? `${senderName} · ${targetChat.title}` : senderName;
-              const notifBody = msg.text || msg.attachment?.name || 'Mengirim lampiran media';
+              const rawBody = msg.text || msg.attachment?.name || 'Mengirim lampiran media';
+              const notifBody = notifPreviewRef.current ? rawBody : 'Pesan baru masuk';
               playNotificationSound(toneRef.current, vibrateRef.current);
               if (document.hidden || !isCurrentActive) {
                 showBrowserNotification(notifTitle, notifBody, msg.chatId);
@@ -1667,7 +1706,10 @@ export function App() {
               setSessionsModalOpen(true);
               void loadSessions();
             }}
-            onOpenSettings={() => setSettingsModalOpen(true)}
+            onOpenSettings={(tab) => {
+              setSettingsTab(tab || 'appearance');
+              setSettingsModalOpen(true);
+            }}
             onOpenAdminPanel={() => setAdminPanelOpen(true)}
             onLogout={() => void handleLogout()}
             onDeleteChat={async (chatId) => {
@@ -1774,7 +1816,11 @@ export function App() {
                   targetLabel: msg.text.slice(0, 60) || msg.attachment?.name || 'Pesan',
                 })
               }
-              onTyping={(isTyping) => socketRef.current?.sendTyping(activeChat.id, isTyping)}
+              onTyping={(isTyping) => {
+                if (typingIndicatorEnabled) {
+                  socketRef.current?.sendTyping(activeChat.id, isTyping);
+                }
+              }}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center chat-canvas-bg p-6 text-center">
@@ -2018,11 +2064,17 @@ export function App() {
 
       <SettingsModal
         open={settingsModalOpen}
+        initialTab={settingsTab}
         lang={lang}
         textScale={textScale}
         highContrast={highContrast}
         notificationTone={notificationTone}
         vibrateEnabled={vibrateEnabled}
+        dndEnabled={dndEnabled}
+        notifPreview={notifPreview}
+        notifGroups={notifGroups}
+        readReceiptsEnabled={readReceiptsEnabled}
+        typingIndicatorEnabled={typingIndicatorEnabled}
         appearance={appearance}
         darkMode={darkMode}
         user={currentUser}
@@ -2036,6 +2088,41 @@ export function App() {
           playNotificationSound(tone, vibrateEnabled);
         }}
         onToggleVibrate={() => setVibrateEnabled((v) => !v)}
+        onToggleDnd={() =>
+          setDndEnabled((v) => {
+            const next = !v;
+            try { window.localStorage.setItem('tolk_dnd', String(next)); } catch {}
+            return next;
+          })
+        }
+        onToggleNotifPreview={() =>
+          setNotifPreview((v) => {
+            const next = !v;
+            try { window.localStorage.setItem('tolk_notif_preview', String(next)); } catch {}
+            return next;
+          })
+        }
+        onToggleNotifGroups={() =>
+          setNotifGroups((v) => {
+            const next = !v;
+            try { window.localStorage.setItem('tolk_notif_groups', String(next)); } catch {}
+            return next;
+          })
+        }
+        onToggleReadReceipts={() =>
+          setReadReceiptsEnabled((v) => {
+            const next = !v;
+            try { window.localStorage.setItem('tolk_read_receipts', String(next)); } catch {}
+            return next;
+          })
+        }
+        onToggleTypingIndicator={() =>
+          setTypingIndicatorEnabled((v) => {
+            const next = !v;
+            try { window.localStorage.setItem('tolk_typing_indicator', String(next)); } catch {}
+            return next;
+          })
+        }
         onChangeAppearance={handleChangeAppearance}
         onUpdatePrivacy={async (patch: Partial<UserPrivacySettings>) => {
           const { user: updated } = await api.updatePrivacy(token, patch);

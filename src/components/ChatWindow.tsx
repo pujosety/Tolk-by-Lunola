@@ -53,7 +53,7 @@ import type {
   Message,
   UserProfile,
 } from '../types/chat';
-import { getBubbleClasses, getWallpaperStyle } from '../lib/appearance';
+import { getBubbleClasses, getCustomWallpaperLayers, getWallpaperStyle } from '../lib/appearance';
 import {
   formatBytes,
   formatDateDivider,
@@ -1144,12 +1144,23 @@ export function ChatWindow({
       )}
 
       {/* Messages Canvas */}
+      <div className="relative flex-1 min-h-0 flex flex-col">
+        {(() => {
+          const customLayers = getCustomWallpaperLayers(appearance, darkMode);
+          if (!customLayers) return null;
+          return (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden z-0">
+              <div className="absolute inset-0" style={customLayers.imageStyle} />
+              <div className="absolute inset-0" style={customLayers.overlayStyle} />
+            </div>
+          );
+        })()}
       <div
         key={chat.id}
         style={getWallpaperStyle(appearance, darkMode)}
-        className={`p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5 ${
+        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
-        }`}
+        } ${appearance.wallpaper === 'custom' && appearance.customWallpaperUrl ? '!bg-transparent' : ''}`}
         onClick={() => {
           setActiveMenuMsgId(null);
           if (document.activeElement === inputRef.current) {
@@ -2062,6 +2073,7 @@ export function ChatWindow({
 
         <div ref={messagesEndRef} />
       </div>
+      </div>
 
       {/* WhatsApp-style Scroll-to-Bottom FAB with Unread Counter */}
       {showScrollDown && (
@@ -2289,8 +2301,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Composer */}
-      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t border-[#E6ECF2] dark:border-[#2A364B] shrink-0 transition-[padding-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+      {/* Floating Capsule Composer */}
+      <footer className="mx-2.5 mb-safe-2 mt-1 px-2.5 py-2 rounded-full bg-[#FFFFFF]/92 dark:bg-[#171E2C]/92 backdrop-blur-xl border border-[#E6ECF2] dark:border-[#2A364B] shadow-[0_8px_28px_rgba(15,20,30,0.10)] shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {selectionMode ? (
           <div className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-2">
             <div className="flex items-center gap-2 min-w-0">

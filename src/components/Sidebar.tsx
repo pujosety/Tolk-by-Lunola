@@ -87,7 +87,7 @@ interface SidebarProps {
   onOpenQrCard: () => void;
   onOpenStarred: () => void;
   onOpenDevices: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (tab?: 'appearance' | 'notifications' | 'privacy') => void;
   onOpenAdminPanel: () => void;
   onLogout: () => void;
   onDeleteChat: (chatId: string) => Promise<void>;
@@ -592,11 +592,12 @@ export function Sidebar({
             !isDraggingTab && currentTabIdx !== 0 ? 'pointer-events-none' : ''
           }`}
         >
-          {/* Folder Tabs */}
-          <div
-            data-no-tab-swipe="true"
-            className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto thin-scrollbar bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0"
-          >
+          {/* Folder Capsule Slider */}
+          <div className="px-3 py-2 bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
+            <div
+              data-no-tab-swipe="true"
+              className="p-1 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-1 overflow-x-auto thin-scrollbar"
+            >
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
           const badge = unreadByFolder[folder.key];
@@ -605,10 +606,10 @@ export function Sidebar({
               key={folder.key}
               type="button"
               onClick={() => onSelectFolder(folder.key)}
-              className={`rounded-full brutal-press px-3 py-1.5 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 border shrink-0 ${
+              className={`rounded-full brutal-press px-3 py-1.5 text-xs font-display font-bold tracking-wide whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-colors ${
                 isActive
-                  ? 'bg-[#8C0027] text-[#FFFFFF] border-[#8C0027] brutal-shadow-sm'
-                  : 'bg-[#FFFFFF] dark:bg-[#1E2738] text-[#161B26] dark:text-[#E2E8F0] border-[#E6ECF2] dark:border-[#324058] hover:border-[#8C0027]'
+                  ? 'bg-[#8C0027] text-[#FFFFFF]'
+                  : 'text-[#5A6578] dark:text-[#CBD5E1] hover:text-[#161B26] dark:hover:text-white'
               }`}
             >
               <span className="flex items-center gap-1">
@@ -627,7 +628,8 @@ export function Sidebar({
             </button>
           );
         })}
-      </div>
+            </div>
+          </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto thin-scrollbar p-2.5 pb-28 md:pb-20 space-y-1.5 bg-[#FFFFFF] dark:bg-[#171E2C]">

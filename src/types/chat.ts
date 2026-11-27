@@ -37,6 +37,9 @@ export type BubbleAccentId = 'burgundy' | 'amber' | 'sky' | 'emerald' | 'violet'
 export interface ChatAppearancePrefs {
   wallpaper: ChatWallpaperId;
   customWallpaperUrl?: string | null;
+  customDim?: number;
+  customBlur?: number;
+  customFit?: 'cover' | 'contain';
   bubbleStyle: BubbleStyleId;
   bubbleAccent: BubbleAccentId;
 }

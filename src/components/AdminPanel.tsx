@@ -415,9 +415,9 @@ export function AdminPanel({
                     key={item.key}
                     type="button"
                     onClick={() => setMenu(item.key)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-bold transition-colors text-left brutal-press ${
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-colors text-left brutal-press ${
                       active
-                        ? 'bg-[#8C0027] border-[#E6ECF2] dark:border-[#F5F7FA] text-white brutal-shadow-sm'
+                        ? 'bg-[#8C0027] border-[#8C0027] text-white'
                         : 'border-transparent text-[#5A6578] dark:text-[#CBBBC2] hover:border-[#E6ECF2] dark:hover:border-[#324058] hover:bg-[#F5F7FA] dark:hover:bg-[#232D40]'
                     }`}
                   >
@@ -430,8 +430,8 @@ export function AdminPanel({
           ))}
         </nav>
 
-        {/* Mobile 4-Category Labeled Bottom Tab Bar */}
-        <nav className="md:hidden grid grid-cols-4 gap-1 px-2 pt-1.5 pb-safe-2 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95">
+        {/* Mobile 4-Category Floating Capsule Bottom Tab Bar */}
+        <nav className="md:hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/75 dark:bg-[#171E2C]/75 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14)] grid grid-cols-4 z-30">
           {ADMIN_CATEGORIES.map((cat) => {
             const active = activeCategory === cat.key;
             return (
@@ -439,20 +439,14 @@ export function AdminPanel({
                 key={cat.key}
                 type="button"
                 onClick={() => setMenu(cat.menus[0])}
-                className="py-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+                className={`py-1.5 px-2 rounded-full flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${
+                  active
+                    ? 'bg-[#8C0027] text-white'
+                    : 'text-[#5A6578] dark:text-[#94A3B8]'
+                }`}
               >
-                <span
-                  className={`px-3.5 py-1 rounded-full transition-colors ${
-                    active
-                      ? 'bg-[#8C0027] text-white brutal-shadow-sm'
-                      : 'text-[#5A6578] dark:text-[#94A3B8]'
-                  }`}
-                >
-                  {cat.icon}
-                </span>
-                <span className={active ? 'text-[#161B26] dark:text-white' : 'text-[#5A6578] dark:text-[#94A3B8]'}>
-                  {cat.shortLabel}
-                </span>
+                <span>{cat.icon}</span>
+                <span>{cat.shortLabel}</span>
               </button>
             );
           })}

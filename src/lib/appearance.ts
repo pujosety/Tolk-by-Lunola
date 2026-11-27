@@ -9,6 +9,9 @@ import type {
 export const DEFAULT_CHAT_APPEARANCE: ChatAppearancePrefs = {
   wallpaper: 'doodle-animated',
   customWallpaperUrl: null,
+  customDim: 35,
+  customBlur: 0,
+  customFit: 'cover',
   bubbleStyle: 'tiktok',
   bubbleAccent: 'burgundy',
 };
@@ -77,19 +80,36 @@ export const BUBBLE_ACCENT_OPTIONS: Array<{
   },
 ];
 
+export function getCustomWallpaperLayers(
+  prefs: ChatAppearancePrefs,
+  isDark: boolean
+): { imageStyle: CSSProperties; overlayStyle: CSSProperties } | null {
+  if (prefs.wallpaper !== 'custom' || !prefs.customWallpaperUrl) return null;
+  const dim = Math.max(0, Math.min(85, prefs.customDim ?? (isDark ? 55 : 30))) / 100;
+  const blur = Math.max(0, Math.min(20, prefs.customBlur ?? 0));
+  const fit = prefs.customFit === 'contain' ? 'contain' : 'cover';
+  return {
+    imageStyle: {
+      backgroundImage: `url(${prefs.customWallpaperUrl})`,
+      backgroundSize: fit,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      filter: blur > 0 ? `blur(${blur}px)` : undefined,
+      transform: blur > 0 ? 'scale(1.06)' : undefined,
+    },
+    overlayStyle: {
+      backgroundColor: isDark ? `rgba(15, 20, 30, ${dim})` : `rgba(245, 247, 250, ${dim * 0.75})`,
+    },
+  };
+}
+
 export function getWallpaperStyle(
   prefs: ChatAppearancePrefs,
   isDark: boolean
 ): CSSProperties {
   if (prefs.wallpaper === 'custom' && prefs.customWallpaperUrl) {
     return {
-      backgroundImage: `${
-        isDark
-          ? 'linear-gradient(rgba(15, 20, 30, 0.58), rgba(15, 20, 30, 0.58))'
-          : 'linear-gradient(rgba(245, 247, 250, 0.35), rgba(245, 247, 250, 0.35))'
-      }, url(${prefs.customWallpaperUrl})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
+      backgroundColor: isDark ? '#0F141E' : '#F5F7FA',
     };
   }
   switch (prefs.wallpaper) {

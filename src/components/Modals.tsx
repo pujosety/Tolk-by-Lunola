@@ -62,6 +62,7 @@ import {
   DEFAULT_CHAT_APPEARANCE,
   WALLPAPER_OPTIONS,
   getBubbleClasses,
+  getCustomWallpaperLayers,
   getWallpaperStyle,
 } from '../lib/appearance';
 import { DigitalProfileQrCard, QrCodeBox } from './QrCodeBox';
@@ -957,14 +958,14 @@ export function CreateChatModal({
   const modeIndex = mode === 'dm' ? 0 : mode === 'group' ? 1 : 2;
 
   const renderModeSwitcher = () => (
-    <div className="relative grid grid-cols-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
+    <div className="relative grid grid-cols-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
       <span
         aria-hidden="true"
         style={{
           width: 'calc((100% - 8px) / 3)',
           transform: `translate3d(${modeIndex * 100}%, 0, 0)`,
         }}
-        className="pointer-events-none absolute top-1 bottom-1 left-1 rounded-xl bg-[#8C0027] brutal-shadow-sm transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+        className="pointer-events-none absolute top-1 bottom-1 left-1 rounded-full bg-[#8C0027] transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
       />
       {(
         [
@@ -979,7 +980,7 @@ export function CreateChatModal({
             key={tab.key}
             type="button"
             onClick={() => setMode(tab.key)}
-            className={`relative min-h-[40px] py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-200 z-10 touch-manipulation ${
+            className={`relative min-h-[40px] py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors duration-200 z-10 touch-manipulation ${
               active
                 ? 'text-white'
                 : 'text-[#5A6578] dark:text-[#94A3B8] hover:text-[#161B26] dark:hover:text-[#F5F7FA]'
@@ -1501,11 +1502,17 @@ export function SessionsModal({
 
 export function SettingsModal({
   open,
+  initialTab = 'appearance',
   lang,
   textScale,
   highContrast,
   notificationTone,
   vibrateEnabled,
+  dndEnabled,
+  notifPreview,
+  notifGroups,
+  readReceiptsEnabled,
+  typingIndicatorEnabled,
   appearance,
   darkMode,
   user,
@@ -1516,16 +1523,27 @@ export function SettingsModal({
   onToggleHighContrast,
   onChangeTone,
   onToggleVibrate,
+  onToggleDnd,
+  onToggleNotifPreview,
+  onToggleNotifGroups,
+  onToggleReadReceipts,
+  onToggleTypingIndicator,
   onChangeAppearance,
   onUpdatePrivacy,
   onUnblockUser,
 }: {
   open: boolean;
+  initialTab?: 'appearance' | 'notifications' | 'privacy';
   lang: LanguageCode;
   textScale: TextScale;
   highContrast: boolean;
   notificationTone: NotificationTone;
   vibrateEnabled: boolean;
+  dndEnabled: boolean;
+  notifPreview: boolean;
+  notifGroups: boolean;
+  readReceiptsEnabled: boolean;
+  typingIndicatorEnabled: boolean;
   appearance: ChatAppearancePrefs;
   darkMode: boolean;
   user: UserProfile;
@@ -1536,11 +1554,21 @@ export function SettingsModal({
   onToggleHighContrast: () => void;
   onChangeTone: (tone: NotificationTone) => void;
   onToggleVibrate: () => void;
+  onToggleDnd: () => void;
+  onToggleNotifPreview: () => void;
+  onToggleNotifGroups: () => void;
+  onToggleReadReceipts: () => void;
+  onToggleTypingIndicator: () => void;
   onChangeAppearance: (next: ChatAppearancePrefs) => void;
   onUpdatePrivacy: (patch: Partial<UserPrivacySettings>) => Promise<void>;
   onUnblockUser: (targetId: string) => Promise<void>;
 }) {
   const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
+  const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'privacy'>(initialTab);
+  useEffect(() => {
+    if (open) setActiveTab(initialTab);
+  }, [open, initialTab]);
+
   const [notifPermission, setNotifPermission] = useState<string>(() =>
     typeof window !== 'undefined' && 'Notification' in window
       ? Notification.permission
@@ -1560,15 +1588,56 @@ export function SettingsModal({
     setNotifPermission(result);
   };
 
+  const tabMeta = {
+    appearance: {
+      title: 'Tampilan & Wallpaper',
+      subtitle: 'Tema, wallpaper foto kustom, gaya bubble, dan aksesibilitas.',
+    },
+    notifications: {
+      title: 'Notifikasi & Nada',
+      subtitle: 'Izin HP, mode jangan ganggu, pratinjau pesan, dan nada dering.',
+    },
+    privacy: {
+      title: 'Privasi & Keamanan',
+      subtitle: 'Kontrol visibilitas profil, tanda baca, dan daftar blokir.',
+    },
+  }[activeTab];
+
   return (
     <ModalShell
       open={open}
-      title="Privasi, Notifikasi & Tampilan"
-      subtitle="Bahasa, aksesibilitas, nada notifikasi, serta kendali privasi Tolk by Lunola."
+      title={tabMeta.title}
+      subtitle={tabMeta.subtitle}
       maxWidth="max-w-lg"
       onClose={onClose}
     >
       <div className="space-y-5 text-xs">
+        {/* 3-Capsule Segmented Switcher */}
+        <div className="grid grid-cols-3 p-1 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] gap-1">
+          {(
+            [
+              { key: 'appearance', label: 'Tampilan' },
+              { key: 'notifications', label: 'Notifikasi' },
+              { key: 'privacy', label: 'Privasi' },
+            ] as const
+          ).map((tItem) => (
+            <button
+              key={tItem.key}
+              type="button"
+              onClick={() => setActiveTab(tItem.key)}
+              className={`h-9 rounded-full text-xs font-bold transition-colors ${
+                activeTab === tItem.key
+                  ? 'bg-[#8C0027] text-white'
+                  : 'text-[#5A6578] dark:text-[#CBD5E1] hover:text-[#161B26] dark:hover:text-white'
+              }`}
+            >
+              {tItem.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'appearance' && (
+          <>
         {/* Chat Personalization (Wallpaper & Bubble Style) */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -1588,14 +1657,24 @@ export function SettingsModal({
           {/* Live Mini Chat Preview */}
           <div
             style={getWallpaperStyle(appearance, darkMode)}
-            className={`p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col gap-2 ${
+            className={`relative p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#0F141E] overflow-hidden flex flex-col gap-2 ${
               appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
             }`}
           >
-            <div className={`self-start max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, false)}`}>
+            {(() => {
+              const customLayers = getCustomWallpaperLayers(appearance, darkMode);
+              if (!customLayers) return null;
+              return (
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div className="absolute inset-0" style={customLayers.imageStyle} />
+                  <div className="absolute inset-0" style={customLayers.overlayStyle} />
+                </div>
+              );
+            })()}
+            <div className={`relative z-10 self-start max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, false)}`}>
               Wih, tampilan chatnya kece banget!
             </div>
-            <div className={`self-end max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, true)}`}>
+            <div className={`relative z-10 self-end max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, true)}`}>
               Bisa ganti wallpaper &amp; style bubble sesuka hati.
             </div>
           </div>
@@ -1714,6 +1793,98 @@ export function SettingsModal({
                 <div className="text-[11px] font-bold truncate">Foto Sendiri</div>
               </button>
             </div>
+
+            {/* Custom Photo Wallpaper Customization */}
+            {appearance.wallpaper === 'custom' && appearance.customWallpaperUrl && (
+              <div className="mt-3 p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#161B26] dark:text-[#F5F7FA]">
+                    Kustomisasi Foto Wallpaper
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => wallpaperInputRef.current?.click()}
+                      className="px-2.5 py-1 rounded-full bg-white dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[11px] font-bold"
+                    >
+                      Ganti
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onChangeAppearance({
+                          ...appearance,
+                          wallpaper: 'doodle-animated',
+                          customWallpaperUrl: null,
+                        })
+                      }
+                      className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-[11px] font-bold"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+
+                <label className="block space-y-1">
+                  <div className="flex justify-between text-[11px] text-[#5A6578] dark:text-[#CBD5E1]">
+                    <span>Kegelapan Latar</span>
+                    <span className="font-mono font-bold">{appearance.customDim ?? 35}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={80}
+                    value={appearance.customDim ?? 35}
+                    onChange={(e) =>
+                      onChangeAppearance({ ...appearance, customDim: Number(e.target.value) })
+                    }
+                    className="w-full accent-[#8C0027]"
+                  />
+                </label>
+
+                <label className="block space-y-1">
+                  <div className="flex justify-between text-[11px] text-[#5A6578] dark:text-[#CBD5E1]">
+                    <span>Blur Foto</span>
+                    <span className="font-mono font-bold">{appearance.customBlur ?? 0}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={16}
+                    value={appearance.customBlur ?? 0}
+                    onChange={(e) =>
+                      onChangeAppearance({ ...appearance, customBlur: Number(e.target.value) })
+                    }
+                    className="w-full accent-[#8C0027]"
+                  />
+                </label>
+
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-[#5A6578] dark:text-[#CBD5E1]">Ukuran Foto</span>
+                  <div className="grid grid-cols-2 p-0.5 rounded-full bg-white dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]">
+                    {(
+                      [
+                        { key: 'cover', label: 'Isi Penuh' },
+                        { key: 'contain', label: 'Muat Utuh' },
+                      ] as const
+                    ).map((fitOpt) => (
+                      <button
+                        key={fitOpt.key}
+                        type="button"
+                        onClick={() => onChangeAppearance({ ...appearance, customFit: fitOpt.key })}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                          (appearance.customFit ?? 'cover') === fitOpt.key
+                            ? 'bg-[#8C0027] text-white'
+                            : 'text-[#5A6578] dark:text-[#CBD5E1]'
+                        }`}
+                      >
+                        {fitOpt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -1778,9 +1949,12 @@ export function SettingsModal({
             />
           </label>
         </section>
+          </>
+        )}
 
         {/* Notifications */}
-        <section className="pt-4 border-t-2 border-[#161B26]/15 dark:border-[#2A364B] space-y-3">
+        {activeTab === 'notifications' && (
+        <section className="space-y-3">
           <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
             <Bell className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Notifikasi & Nada</span>
@@ -1849,10 +2023,51 @@ export function SettingsModal({
               className="h-4 w-4 accent-[#8C0027]"
             />
           </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Mode Jangan Ganggu (DND)</div>
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Senyapkan semua banner & bunyi sementara</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={dndEnabled}
+              onChange={onToggleDnd}
+              className="h-4 w-4 accent-[#8C0027]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Tampilkan Pratinjau Pesan</div>
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Tampilkan isi teks di banner notifikasi</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={notifPreview}
+              onChange={onToggleNotifPreview}
+              className="h-4 w-4 accent-[#8C0027]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Notifikasi Grup & Channel</div>
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Matikan untuk hanya terima notif DM & mention</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={notifGroups}
+              onChange={onToggleNotifGroups}
+              className="h-4 w-4 accent-[#8C0027]"
+            />
+          </label>
         </section>
+        )}
 
         {/* Privacy */}
-        <section className="pt-4 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-3">
+        {activeTab === 'privacy' && (
+        <section className="space-y-3">
           <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
             <span>Privasi & Kontrol Kontak</span>
@@ -1880,6 +2095,32 @@ export function SettingsModal({
               </select>
             </div>
           ))}
+
+          <label className="flex items-center justify-between cursor-pointer pt-1">
+            <div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Tanda Baca Dibaca</div>
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Tampilkan centang biru saat pesan dibaca</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={readReceiptsEnabled}
+              onChange={onToggleReadReceipts}
+              className="h-4 w-4 accent-[#8C0027]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Indikator Sedang Mengetik</div>
+              <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Perlihatkan saat Anda sedang mengetik pesan</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={typingIndicatorEnabled}
+              onChange={onToggleTypingIndicator}
+              className="h-4 w-4 accent-[#8C0027]"
+            />
+          </label>
 
           {/* Blocked Users */}
           <div className="pt-2">
@@ -1912,6 +2153,7 @@ export function SettingsModal({
             )}
           </div>
         </section>
+        )}
       </div>
     </ModalShell>
   );

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import {
+  Bell,
   ChevronRight,
   Download,
+  Lock,
   LogOut,
   MonitorSmartphone,
   Moon,
   Palette,
   QrCode,
   Shield,
-  Sliders,
   Star,
   Sun,
   UserCircle2,
@@ -27,7 +28,7 @@ interface YouViewProps {
   onOpenQrCard: () => void;
   onOpenStarred: () => void;
   onOpenDevices: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (tab?: 'appearance' | 'notifications' | 'privacy') => void;
   onOpenAdminPanel: () => void;
   onLogout: () => void;
 }
@@ -77,9 +78,23 @@ export function YouView({
         {
           icon: <Palette className="w-5 h-5" />,
           iconBg: 'bg-[#FFF2A7] text-[#161B26]',
-          label: 'Tampilan & Tema Chat',
-          subtitle: 'Wallpaper chat, gaya bubble & warna',
-          onClick: onOpenSettings,
+          label: 'Tampilan & Wallpaper',
+          subtitle: 'Wallpaper foto, blur, gaya bubble & warna',
+          onClick: () => onOpenSettings('appearance'),
+        },
+        {
+          icon: <Bell className="w-5 h-5" />,
+          iconBg: 'bg-[#BEDEFF] text-[#161B26]',
+          label: 'Notifikasi & Nada',
+          subtitle: 'Mode jangan ganggu, pratinjau & nada dering',
+          onClick: () => onOpenSettings('notifications'),
+        },
+        {
+          icon: <Lock className="w-5 h-5" />,
+          iconBg: 'bg-[#E6ECF2] dark:bg-[#2B364B] text-[#161B26] dark:text-[#F1F5F9]',
+          label: 'Privasi & Keamanan',
+          subtitle: 'Terakhir dilihat, tanda baca & daftar blokir',
+          onClick: () => onOpenSettings('privacy'),
         },
         {
           icon: <Star className="w-5 h-5" />,
@@ -99,13 +114,6 @@ export function YouView({
           label: t(lang, 'devices'),
           subtitle: 'Kelola HP & browser yang aktif',
           onClick: onOpenDevices,
-        },
-        {
-          icon: <Sliders className="w-5 h-5" />,
-          iconBg: 'bg-[#E6ECF2] dark:bg-[#2B364B] text-[#161B26] dark:text-[#F1F5F9]',
-          label: t(lang, 'settings'),
-          subtitle: 'Bahasa, ukuran teks, nada & privasi',
-          onClick: onOpenSettings,
         },
         ...(user.role !== 'user'
           ? [
