@@ -1335,7 +1335,7 @@ export function ChatWindow({
       <div
         key={chat.id}
         style={getWallpaperStyle(appearance, darkMode)}
-        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-28 space-y-2.5 ${
+        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-32 space-y-2.5 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
         } ${appearance.wallpaper === 'custom' && appearance.customWallpaperUrl ? '!bg-transparent' : ''}`}
         onClick={() => {
@@ -2441,7 +2441,7 @@ export function ChatWindow({
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           }}
           aria-label="Gulir ke pesan terbaru"
-          className="p5-panel-reveal absolute bottom-24 right-4 z-20 h-11 w-11 rounded-full liquid-glass text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center brutal-press"
+          className="p5-panel-reveal absolute bottom-28 right-4 z-20 h-11 w-11 rounded-full liquid-glass text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center brutal-press"
         >
           {unreadWhileScrolledUp > 0 && (
             <span className="absolute -top-2 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-[#8C0027] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-sm">
@@ -2453,7 +2453,7 @@ export function ChatWindow({
       )}
 
       {/* Floating Liquid-Glass Dock (Popovers + Composer Capsule) */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col justify-end px-2.5 pb-safe-2">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col justify-end px-3 pb-[calc(env(safe-area-inset-bottom,0px)+18px)] sm:pb-4">
         <div className="pointer-events-auto flex flex-col">
       {/* Mention Autocomplete Popover */}
       {mentionCandidates.length > 0 && (
