@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
@@ -82,6 +82,7 @@ const QUICK_REACTIONS = ['👍', '❤️', '🔥', '😂', '👏', '😮'];
 interface ChatWindowProps {
   lang: LanguageCode;
   chat: ChatRoom;
+  openSeq?: number;
   messages: Message[];
   scheduledMessages: Message[];
   loading: boolean;
@@ -354,6 +355,7 @@ function renderSafeMessageText(text: string, isOwn: boolean): React.ReactNode {
 export function ChatWindow({
   lang,
   chat,
+  openSeq = 0,
   messages,
   scheduledMessages,
   loading,
@@ -489,6 +491,7 @@ export function ChatWindow({
   const showScrollDownRef = useRef(false);
   const prevMsgLenRef = useRef(messages.length);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const messagesInnerRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottomNow = () => {
     const el = scrollContainerRef.current;
@@ -643,8 +646,22 @@ export function ChatWindow({
     return () => window.clearTimeout(tId);
   }, [chat.id]);
 
+  useLayoutEffect(() => {
+    showScrollDownRef.current = false;
+    setShowScrollDown(false);
+    setUnreadWhileScrolledUp(0);
+    scrollToBottomNow();
+    const t1 = window.setTimeout(scrollToBottomNow, 60);
+    const t2 = window.setTimeout(scrollToBottomNow, 220);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [chat.id, openSeq]);
+
   useEffect(() => {
     const el = scrollContainerRef.current;
+    const inner = messagesInnerRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(() => {
       if (!showScrollDownRef.current && el.clientHeight > 0) {
@@ -652,6 +669,7 @@ export function ChatWindow({
       }
     });
     ro.observe(el);
+    if (inner) ro.observe(inner);
     return () => ro.disconnect();
   }, [chat.id]);
 
@@ -1366,9 +1384,14 @@ export function ChatWindow({
         key={chat.id}
         ref={scrollContainerRef}
         style={getWallpaperStyle(appearance, darkMode)}
-        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-[88px] sm:pb-24 space-y-2.5 ${
+        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-[88px] sm:pb-24 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
         } ${appearance.wallpaper === 'custom' && appearance.customWallpaperUrl ? '!bg-transparent' : ''}`}
+        onLoadCapture={() => {
+          if (!showScrollDownRef.current) {
+            scrollToBottomNow();
+          }
+        }}
         onClick={() => {
           setActiveMenuMsgId(null);
           if (document.activeElement === inputRef.current) {
@@ -1403,6 +1426,7 @@ export function ChatWindow({
           }
         }}
       >
+        <div ref={messagesInnerRef} className="space-y-2.5 min-h-full">
         {loading ? (
           <div className="h-full flex items-center justify-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
             Memuat riwayat pesan...
@@ -2459,6 +2483,7 @@ export function ChatWindow({
         })}
 
         <div ref={messagesEndRef} />
+        </div>
       </div>
       </div>
 

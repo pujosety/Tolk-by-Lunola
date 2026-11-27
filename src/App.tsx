@@ -202,6 +202,7 @@ export function App() {
   const autoRepliedAtRef = useRef<Record<string, number>>({});
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [chatOpenSeq, setChatOpenSeq] = useState(0);
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
   const [activeFolder, setActiveFolder] = useState<FolderKey>('all');
@@ -1260,6 +1261,7 @@ export function App() {
   const handleSelectChat = useCallback(
     (chatId: string) => {
       setActiveChatId(chatId);
+      setChatOpenSeq((n) => n + 1);
       setMobileShowChat(true);
       triggerAndroidHaptic();
       if (token) {
@@ -2138,6 +2140,7 @@ export function App() {
             <ChatWindow
               lang={lang}
               chat={activeChat}
+              openSeq={chatOpenSeq}
               messages={messagesByChat[activeChat.id] || []}
               scheduledMessages={scheduledByChat[activeChat.id] || []}
               loading={loadingChatId === activeChat.id && !messagesByChat[activeChat.id]}
