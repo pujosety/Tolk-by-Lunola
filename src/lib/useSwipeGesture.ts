@@ -145,3 +145,88 @@ export function useSwipeGesture({
     },
   };
 }
+
+/**
+ * Interactive horizontal swipe hook for segmented capsule navbars.
+ * Tracks live finger offset (with edge resistance) and computes a continuous
+ * `visualIndex` so the capsule pill indicator glides smoothly with the gesture.
+ */
+export function useCapsuleSwipe(
+  count: number,
+  activeIndex: number,
+  onSelectIndex: (nextIndex: number) => void,
+  viewportWidth = 340
+) {
+  const [dragOffsetPx, setDragOffsetPx] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ x: number; y: number; locked: boolean; ignore: boolean } | null>(null);
+
+  const onTouchStart = (e: TouchEvent<HTMLElement>) => {
+    if (e.touches.length !== 1) return;
+    const target = e.target as HTMLElement | null;
+    const ignore = Boolean(
+      target?.closest('input[type="range"], input, textarea, select, [data-no-tab-swipe]')
+    );
+    dragRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      locked: false,
+      ignore,
+    };
+  };
+
+  const onTouchMove = (e: TouchEvent<HTMLElement>) => {
+    const start = dragRef.current;
+    if (!start || start.ignore || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - start.x;
+    const dy = e.touches[0].clientY - start.y;
+
+    if (!start.locked) {
+      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        start.locked = true;
+        setIsDragging(true);
+      } else if (Math.abs(dy) > 12) {
+        start.ignore = true;
+        return;
+      } else {
+        return;
+      }
+    }
+
+    const atStartEdge = activeIndex === 0 && dx > 0;
+    const atEndEdge = activeIndex === count - 1 && dx < 0;
+    const damped = atStartEdge || atEndEdge ? dx * 0.28 : dx;
+    setDragOffsetPx(Math.max(-viewportWidth * 0.6, Math.min(viewportWidth * 0.6, damped)));
+  };
+
+  const finish = () => {
+    const start = dragRef.current;
+    dragRef.current = null;
+    if (start?.locked) {
+      if (dragOffsetPx < -52 && activeIndex < count - 1) {
+        onSelectIndex(activeIndex + 1);
+      } else if (dragOffsetPx > 52 && activeIndex > 0) {
+        onSelectIndex(activeIndex - 1);
+      }
+    }
+    setDragOffsetPx(0);
+    setIsDragging(false);
+  };
+
+  const visualIndex = Math.max(
+    0,
+    Math.min(count - 1, activeIndex + (isDragging ? -dragOffsetPx / viewportWidth : 0))
+  );
+
+  return {
+    dragOffsetPx,
+    isDragging,
+    visualIndex,
+    handlers: {
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd: finish,
+      onTouchCancel: finish,
+    },
+  };
+}

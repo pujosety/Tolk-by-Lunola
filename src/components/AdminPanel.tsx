@@ -35,7 +35,7 @@ import type {
 import { api } from '../lib/api';
 import { formatTimeShort } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
-import { useSwipeGesture } from '../lib/useSwipeGesture';
+import { useCapsuleSwipe, useSwipeGesture } from '../lib/useSwipeGesture';
 
 type AdminMenu =
   | 'dashboard'
@@ -343,6 +343,16 @@ export function AdminPanel({
 
   const activeCategory: AdminCategory =
     ADMIN_MENUS.find((m) => m.key === menu)?.category || 'overview';
+  const activeCatIdx = Math.max(
+    0,
+    ADMIN_CATEGORIES.findIndex((c) => c.key === activeCategory)
+  );
+  const adminSwipe = useCapsuleSwipe(
+    ADMIN_CATEGORIES.length,
+    activeCatIdx,
+    (idx) => setMenu(ADMIN_CATEGORIES[idx].menus[0]),
+    typeof window !== 'undefined' ? window.innerWidth : 390
+  );
   const categorySubMenus = ADMIN_MENUS.filter((m) => m.category === activeCategory);
 
   return (
@@ -430,8 +440,20 @@ export function AdminPanel({
           ))}
         </nav>
 
-        {/* Mobile 4-Category Floating Capsule Bottom Tab Bar */}
+        {/* Mobile 4-Category Floating Capsule Bottom Tab Bar with Sliding Pill */}
         <nav className="md:hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/75 dark:bg-[#171E2C]/75 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14)] grid grid-cols-4 z-30">
+          <span
+            aria-hidden="true"
+            style={{
+              width: 'calc((100% - 12px) / 4)',
+              transform: `translate3d(${adminSwipe.visualIndex * 100}%, 0, 0)`,
+            }}
+            className={`pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 rounded-full bg-[#8C0027] will-change-transform ${
+              adminSwipe.isDragging
+                ? ''
+                : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+            }`}
+          />
           {ADMIN_CATEGORIES.map((cat) => {
             const active = activeCategory === cat.key;
             return (
@@ -439,9 +461,9 @@ export function AdminPanel({
                 key={cat.key}
                 type="button"
                 onClick={() => setMenu(cat.menus[0])}
-                className={`py-1.5 px-2 rounded-full flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${
+                className={`relative z-10 py-1.5 px-2 rounded-full flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${
                   active
-                    ? 'bg-[#8C0027] text-white'
+                    ? 'text-white'
                     : 'text-[#5A6578] dark:text-[#94A3B8]'
                 }`}
               >
@@ -511,8 +533,21 @@ export function AdminPanel({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto thin-scrollbar p-6">
-          <div key={menu} className="p5-panel-reveal max-w-6xl mx-auto space-y-6">
+        <div
+          {...adminSwipe.handlers}
+          className="flex-1 overflow-y-auto thin-scrollbar p-6 pb-28 md:pb-6"
+        >
+          <div
+            key={menu}
+            style={
+              adminSwipe.dragOffsetPx !== 0
+                ? { transform: `translate3d(${adminSwipe.dragOffsetPx}px, 0, 0)` }
+                : undefined
+            }
+            className={`p5-panel-reveal max-w-6xl mx-auto space-y-6 ${
+              adminSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+            }`}
+          >
             {/* 1. DASHBOARD */}
             {menu === 'dashboard' && overview && (
               <>

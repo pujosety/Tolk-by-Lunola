@@ -55,7 +55,7 @@ import { formatTimeShort, isRunningInAndroidWebView, openAndroidNotificationSett
 import { requestBrowserNotificationPermission, showBrowserNotification } from '../lib/pwa';
 import { Avatar } from './Avatar';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
-import { useSwipeGesture } from '../lib/useSwipeGesture';
+import { useCapsuleSwipe, useSwipeGesture } from '../lib/useSwipeGesture';
 import {
   BUBBLE_ACCENT_OPTIONS,
   BUBBLE_STYLE_OPTIONS,
@@ -956,6 +956,8 @@ export function CreateChatModal({
   };
 
   const modeIndex = mode === 'dm' ? 0 : mode === 'group' ? 1 : 2;
+  const modeOrder = ['dm', 'group', 'channel'] as const;
+  const createSwipe = useCapsuleSwipe(3, modeIndex, (idx) => setMode(modeOrder[idx]));
 
   const renderModeSwitcher = () => (
     <div className="relative grid grid-cols-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
@@ -963,9 +965,11 @@ export function CreateChatModal({
         aria-hidden="true"
         style={{
           width: 'calc((100% - 8px) / 3)',
-          transform: `translate3d(${modeIndex * 100}%, 0, 0)`,
+          transform: `translate3d(${createSwipe.visualIndex * 100}%, 0, 0)`,
         }}
-        className="pointer-events-none absolute top-1 bottom-1 left-1 rounded-full bg-[#8C0027] transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+        className={`pointer-events-none absolute top-1 bottom-1 left-1 rounded-full bg-[#8C0027] will-change-transform ${
+          createSwipe.isDragging ? '' : 'transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]'
+        }`}
       />
       {(
         [
@@ -1004,13 +1008,22 @@ export function CreateChatModal({
     >
       <div className="hidden md:block mb-4">{renderModeSwitcher()}</div>
 
+      <div
+        {...createSwipe.handlers}
+        style={
+          createSwipe.dragOffsetPx !== 0
+            ? { transform: `translate3d(${createSwipe.dragOffsetPx}px, 0, 0)` }
+            : undefined
+        }
+        className={createSwipe.isDragging ? 'touch-pan-y' : 'touch-pan-y transition-transform duration-200 ease-out'}
+      >
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={mode}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
         >
       {mode === 'dm' ? (
         <div className="space-y-3.5">
@@ -1276,6 +1289,7 @@ export function CreateChatModal({
       )}
         </motion.div>
       </AnimatePresence>
+      </div>
 
       <CameraCaptureModal
         open={scanQrOpen}
@@ -1603,6 +1617,12 @@ export function SettingsModal({
     },
   }[activeTab];
 
+  const settingsTabOrder = ['appearance', 'notifications', 'privacy'] as const;
+  const settingsTabIndex = settingsTabOrder.indexOf(activeTab);
+  const settingsSwipe = useCapsuleSwipe(3, settingsTabIndex, (idx) =>
+    setActiveTab(settingsTabOrder[idx])
+  );
+
   return (
     <ModalShell
       open={open}
@@ -1612,8 +1632,20 @@ export function SettingsModal({
       onClose={onClose}
     >
       <div className="space-y-5 text-xs">
-        {/* 3-Capsule Segmented Switcher */}
-        <div className="grid grid-cols-3 p-1 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] gap-1">
+        {/* 3-Capsule Segmented Switcher with Sliding Pill */}
+        <div className="relative grid grid-cols-3 p-1 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]">
+          <span
+            aria-hidden="true"
+            style={{
+              width: 'calc((100% - 8px) / 3)',
+              transform: `translate3d(${settingsSwipe.visualIndex * 100}%, 0, 0)`,
+            }}
+            className={`pointer-events-none absolute top-1 bottom-1 left-1 rounded-full bg-[#8C0027] will-change-transform ${
+              settingsSwipe.isDragging
+                ? ''
+                : 'transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]'
+            }`}
+          />
           {(
             [
               { key: 'appearance', label: 'Tampilan' },
@@ -1625,9 +1657,9 @@ export function SettingsModal({
               key={tItem.key}
               type="button"
               onClick={() => setActiveTab(tItem.key)}
-              className={`h-9 rounded-full text-xs font-bold transition-colors ${
+              className={`relative z-10 h-9 rounded-full text-xs font-bold transition-colors ${
                 activeTab === tItem.key
-                  ? 'bg-[#8C0027] text-white'
+                  ? 'text-white'
                   : 'text-[#5A6578] dark:text-[#CBD5E1] hover:text-[#161B26] dark:hover:text-white'
               }`}
             >
@@ -1635,6 +1667,29 @@ export function SettingsModal({
             </button>
           ))}
         </div>
+
+        <div
+          {...settingsSwipe.handlers}
+          style={
+            settingsSwipe.dragOffsetPx !== 0
+              ? { transform: `translate3d(${settingsSwipe.dragOffsetPx}px, 0, 0)` }
+              : undefined
+          }
+          className={
+            settingsSwipe.isDragging
+              ? 'touch-pan-y space-y-5'
+              : 'touch-pan-y space-y-5 transition-transform duration-200 ease-out'
+          }
+        >
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-5"
+        >
 
         {activeTab === 'appearance' && (
           <>
@@ -2154,6 +2209,9 @@ export function SettingsModal({
           </div>
         </section>
         )}
+        </motion.div>
+        </AnimatePresence>
+        </div>
       </div>
     </ModalShell>
   );
