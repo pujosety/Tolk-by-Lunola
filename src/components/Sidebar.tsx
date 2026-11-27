@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
-import { TolkHorizontalLogo, TolkSymbolSmallLogo } from './TolkLogo';
+import { AnimatePresence, motion } from 'framer-motion';
+import { TolkSymbolSmallLogo } from './TolkLogo';
 import {
   Archive,
   AtSign,
@@ -18,7 +19,6 @@ import {
   Menu,
   MessageCircle,
   Mic,
-  MoreVertical,
   PanelLeftClose,
   PanelLeftOpen,
   Phone,
@@ -160,7 +160,7 @@ export function Sidebar({
   onSelectFolder,
   onSearchChange,
   onSelectChat,
-  onOpenOverflowMenu,
+  onOpenOverflowMenu: _onOpenOverflowMenu,
   onOpenQuickCamera,
   onOpenNewChat,
   onOpenNewChannel,
@@ -187,6 +187,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingChatIds, setDeletingChatIds] = useState<Set<string>>(() => new Set());
   const [activeLabel, setActiveLabel] = useState<string>('all');
   const longPressTimerRef = useRef<number | null>(null);
 
@@ -389,10 +390,10 @@ export function Sidebar({
 
           <button
             type="button"
-            onClick={onOpenOverflowMenu}
-            aria-label="Buka menu navigasi"
-            title="Menu Tolk by Lunola"
-            className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#2B364B] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
+            onClick={onToggleMinimize}
+            aria-label="Perluas sidebar"
+            title="Tolk by Lunola"
+            className="h-11 w-11 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#2B364B] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
           >
             <TolkSymbolSmallLogo className="tolk-logo-adaptive w-full h-full" />
           </button>
@@ -476,27 +477,44 @@ export function Sidebar({
       key="sidebar-full"
       className="p5-sidebar-swap relative flex flex-col h-full w-full bg-[#FFFFFF] dark:bg-[#171E2C] select-none overflow-hidden"
     >
-      {/* Top Header (Seamless Futuristic) */}
-      <div className="pt-safe-3 px-3 pb-2.5 space-y-2.5 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] shrink-0 z-10">
+      {/* Top Header (Seamless Futuristic with Morphing Search & Persistent Logo Icon) */}
+      <div className="pt-safe-3 px-3 pb-2.5 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_14px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.22)] shrink-0 z-10 transition-all duration-300">
         <div className="flex items-center justify-between gap-2">
-          {/* Clean Left Logo (Chats) or Tab Title */}
-          <div className="h-11 px-1 flex items-center min-w-0">
-            {activeTab === 'chats' ? (
-              <TolkHorizontalLogo className="tolk-logo-adaptive h-10 w-auto select-none" />
-            ) : (
-              <h1 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA] truncate">
-                {activeTab === 'status'
-                  ? 'Status'
-                  : activeTab === 'updates'
-                    ? 'Update'
-                    : activeTab === 'calls'
-                      ? 'Panggilan'
-                      : 'Kamu'}
-              </h1>
-            )}
+          {/* Persistent Tolk Icon + Morphing Title */}
+          <div className="h-11 px-1 flex items-center gap-2.5 min-w-0">
+            <TolkSymbolSmallLogo className="tolk-logo-adaptive h-8 w-8 shrink-0 select-none" />
+            <div className="min-w-0 overflow-hidden">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.h1
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 6, filter: 'blur(3px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -6, filter: 'blur(3px)' }}
+                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  className="font-display font-extrabold text-lg text-[#161B26] dark:text-[#F5F7FA] truncate leading-tight"
+                >
+                  {activeTab === 'chats' ? (
+                    <span>
+                      Tolk{' '}
+                      <span className="font-semibold text-xs text-[#5A6578] dark:text-[#94A3B8]">
+                        by Lunola
+                      </span>
+                    </span>
+                  ) : activeTab === 'status' ? (
+                    'Status'
+                  ) : activeTab === 'updates' ? (
+                    'Update'
+                  ) : activeTab === 'calls' ? (
+                    'Panggilan'
+                  ) : (
+                    'Kamu'
+                  )}
+                </motion.h1>
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Right Actions: Privacy Blur, Camera Shortcut, Overflow Menu, Minimize */}
+          {/* Right Actions: Privacy Blur, Camera Shortcut, Minimize */}
           <div className="flex items-center gap-1.5 shrink-0">
             {onTogglePrivacyBlur && (
               <button
@@ -524,15 +542,6 @@ export function Sidebar({
             </button>
             <button
               type="button"
-              onClick={onOpenOverflowMenu}
-              aria-label="Menu opsi"
-              title="Menu"
-              className="h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
               onClick={onToggleMinimize}
               aria-label="Perkecil sidebar"
               title="Perkecil sidebar (Ctrl+B)"
@@ -544,7 +553,7 @@ export function Sidebar({
         </div>
 
         {/* Desktop 5-Tab Switcher (Smooth Sliding Pill) */}
-        <div className="hidden md:grid relative grid-cols-5 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
+        <div className="hidden md:grid relative mt-2.5 grid-cols-5 p-1 rounded-2xl bg-[#F5F7FA] dark:bg-[#131924] border border-[#E6ECF2] dark:border-[#2A364B]">
           <span
             aria-hidden="true"
             style={{
@@ -585,30 +594,39 @@ export function Sidebar({
           })}
         </div>
 
-        {activeTab === 'chats' && (
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#5A6578] dark:text-[#CBD5E1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={t(lang, 'searchPlaceholder')}
-              aria-label={t(lang, 'searchPlaceholder')}
-              className="w-full h-10 pl-9 pr-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border-0 text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:ring-2 focus:ring-[#8C0027]/25 transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => onSearchChange('')}
-                aria-label="Hapus pencarian"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center text-[#5A6578] hover:text-[#8C0027]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+        {/* Smooth Morphing Search Bar */}
+        <div
+          className={`grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            activeTab === 'chats'
+              ? 'grid-rows-[1fr] opacity-100 mt-2.5 scale-100'
+              : 'grid-rows-[0fr] opacity-0 mt-0 scale-95 pointer-events-none'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="relative">
+              <Search className="w-4 h-4 text-[#5A6578] dark:text-[#CBD5E1] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={t(lang, 'searchPlaceholder')}
+                aria-label={t(lang, 'searchPlaceholder')}
+                className="w-full h-10 pl-9 pr-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border-0 text-sm text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] focus:outline-none focus:ring-2 focus:ring-[#8C0027]/25 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange('')}
+                  aria-label="Hapus pencarian"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full flex items-center justify-center text-[#5A6578] hover:text-[#8C0027]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div
@@ -773,6 +791,7 @@ export function Sidebar({
 
             const showUnread = chat.unreadCount > 0 || Boolean(chat.markedUnreadByUser);
 
+            const isDeleting = deletingChatIds.has(chat.id);
             return (
               <button
                 key={chat.id}
@@ -787,7 +806,11 @@ export function Sidebar({
                   setConfirmDeleteId(null);
                   setPreviewChat(chat);
                 }}
-                className={`p5-row-motion w-full px-3 py-2.5 rounded-2xl flex items-center gap-3 text-left select-none transition-colors ${
+                className={`p5-row-motion w-full px-3 py-2.5 rounded-2xl flex items-center gap-3 text-left select-none transition-all duration-260 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  isDeleting
+                    ? 'opacity-0 -translate-x-8 scale-95 max-h-0 !py-0 !my-0 overflow-hidden pointer-events-none'
+                    : 'max-h-24'
+                } ${
                   isSelected
                     ? 'bg-[#FFFFFF] dark:bg-[#171E2C] text-[#161B26] dark:text-[#F5F7FA] md:bg-[#8C0027] md:text-[#FFFFFF] md:dark:bg-[#8C0027] md:shadow-sm'
                     : 'bg-transparent text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#F5F7FA] dark:hover:bg-[#1E2738]'
@@ -1290,7 +1313,14 @@ export function Sidebar({
                         const id = previewChat.id;
                         setPreviewChat(null);
                         setConfirmDeleteId(null);
+                        setDeletingChatIds((prev) => new Set(prev).add(id));
+                        await new Promise((r) => window.setTimeout(r, 260));
                         await onDeleteChat(id);
+                        setDeletingChatIds((prev) => {
+                          const next = new Set(prev);
+                          next.delete(id);
+                          return next;
+                        });
                       }}
                       className="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold brutal-shadow-sm flex items-center justify-center gap-1.5"
                     >

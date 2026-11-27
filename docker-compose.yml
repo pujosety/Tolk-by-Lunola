@@ -32,7 +32,7 @@ services:
   tinode:
     image: tinode/tinode-postgres:latest
     environment:
-      POSTGRES_DSN: "postgres://tinode:${POSTGRES_PASSWORD:-change_me_in_env}@postgres:5432/tinode?sslmode=disable"
+      POSTGRES_DSN: "postgres://tinode:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/tinode?sslmode=disable"
     ports:
       - "6060:6060"
     depends_on:
@@ -44,7 +44,7 @@ services:
     environment:
       POSTGRES_DB: tinode
       POSTGRES_USER: tinode
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - pg_data:/var/lib/postgresql/data
     restart: unless-stopped

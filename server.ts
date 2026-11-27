@@ -63,11 +63,29 @@ const UPLOADS_DIR = resolveWritableDir(
 const STORE_PATH = path.resolve(DATA_DIR, 'store.json');
 const SERVER_START_MS = Date.now();
 
-// Signing key: reads from env if provided, otherwise ephemeral random secret in memory
-const SESSION_SECRET =
-  process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16
-    ? process.env.SESSION_SECRET
-    : crypto.randomBytes(32).toString('hex');
+// Signing key: reads from env, or persists a generated secret in DATA_DIR across restarts.
+// If REQUIRE_SESSION_SECRET=true in production, fail closed when SESSION_SECRET env is missing.
+function resolveSessionSecret(): string {
+  const envSecret = process.env.SESSION_SECRET?.trim();
+  if (envSecret && envSecret.length >= 16) return envSecret;
+  if (IS_PROD && process.env.REQUIRE_SESSION_SECRET === 'true') {
+    throw new Error('SESSION_SECRET (>= 16 chars) wajib diset di environment production.');
+  }
+  const secretFile = path.resolve(DATA_DIR, '.session-secret');
+  try {
+    if (fs.existsSync(secretFile)) {
+      const saved = fs.readFileSync(secretFile, 'utf8').trim();
+      if (saved.length >= 32) return saved;
+    }
+    const generated = crypto.randomBytes(32).toString('hex');
+    fs.writeFileSync(secretFile, generated, { mode: 0o600 });
+    return generated;
+  } catch {
+    return crypto.randomBytes(32).toString('hex');
+  }
+}
+
+const SESSION_SECRET = resolveSessionSecret();
 
 interface StoredUser extends UserProfile {
   passwordHash?: string;
@@ -293,10 +311,13 @@ function createDefaultAdminConfig(now: number): {
   adminUser: StoredUser;
   adminPasscodeHash: string;
   adminPasscodeSalt: string;
-} {
-  const defaultUsername = (process.env.DEFAULT_ADMIN_USERNAME || 'pujo').trim().toLowerCase();
-  const defaultEmail = (process.env.DEFAULT_ADMIN_EMAIL || 'pujosetyo16@gmail.com').trim().toLowerCase();
-  const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Pujopinter';
+} | null {
+  const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD?.trim();
+  const defaultUsername = process.env.DEFAULT_ADMIN_USERNAME?.trim().toLowerCase();
+  const defaultEmail = process.env.DEFAULT_ADMIN_EMAIL?.trim().toLowerCase();
+  if (!defaultPassword || !defaultUsername) {
+    return null;
+  }
   const pw = hashSecret(defaultPassword);
   const passcodeSeed = process.env.ADMIN_PASSCODE && process.env.ADMIN_PASSCODE.length >= 6
     ? process.env.ADMIN_PASSCODE
@@ -306,7 +327,7 @@ function createDefaultAdminConfig(now: number): {
   const adminUser: StoredUser = {
     id: 'usr_pujo',
     username: defaultUsername,
-    displayName: 'Pujo',
+    displayName: process.env.DEFAULT_ADMIN_NAME?.trim() || defaultUsername,
     email: defaultEmail,
     bio: 'Super Admin · Tolk by Lunola',
     statusText: 'Administrator Utama Tolk by Lunola',
@@ -341,7 +362,12 @@ function createSeedStore(): StoreData {
   const min = 60 * 1000;
   const hour = 60 * min;
 
-  const { adminUser: pujo, adminPasscodeHash, adminPasscodeSalt } = createDefaultAdminConfig(now);
+  const adminConfig = createDefaultAdminConfig(now);
+  const envPasscode = process.env.ADMIN_PASSCODE?.trim();
+  const passcodeFallback =
+    !adminConfig && envPasscode && envPasscode.length >= 6 ? hashSecret(envPasscode) : null;
+  const adminPasscodeHash = adminConfig?.adminPasscodeHash || passcodeFallback?.hash;
+  const adminPasscodeSalt = adminConfig?.adminPasscodeSalt || passcodeFallback?.salt;
 
   const raka: StoredUser = {
     id: 'usr_raka',
@@ -425,8 +451,8 @@ function createSeedStore(): StoreData {
         'Diskusi backend self-hosted (Tinode/Node.js), deploy Wasmer Edge, Docker Compose, WebSocket real-time, dan Android WebView.',
       avatarUrl: '/src/assets/images/avatar_wasmer_group_1795619607932.jpg',
       avatarColor: '#0284C7',
-      memberIds: ['usr_pujo', 'usr_raka', 'usr_nadia', 'usr_dito'],
-      adminIds: ['usr_pujo', 'usr_raka'],
+      memberIds: [...(adminConfig ? ['usr_pujo'] : []), 'usr_raka', 'usr_nadia', 'usr_dito'],
+      adminIds: [...(adminConfig ? ['usr_pujo'] : []), 'usr_raka'],
       moderatorIds: ['usr_dito'],
       adminOnlyPost: false,
       pinnedMessageId: 'msg_w_2',
@@ -445,8 +471,8 @@ function createSeedStore(): StoreData {
         'Pengumuman resmi pembaruan Tolk by Lunola, fitur lintas platform (Web, PWA, Android), serta rilis server self-hosted.',
       avatarUrl: '/src/assets/images/avatar_wasmer_group_1795619607932.jpg',
       avatarColor: '#0369A1',
-      memberIds: ['usr_pujo', 'usr_raka', 'usr_nadia', 'usr_dito'],
-      adminIds: ['usr_pujo', 'usr_raka'],
+      memberIds: [...(adminConfig ? ['usr_pujo'] : []), 'usr_raka', 'usr_nadia', 'usr_dito'],
+      adminIds: [...(adminConfig ? ['usr_pujo'] : []), 'usr_raka'],
       moderatorIds: [],
       adminOnlyPost: true,
       pinnedMessageId: 'msg_ch_1',
@@ -596,19 +622,19 @@ function createSeedStore(): StoreData {
   const auditLogs: AuditLogEntry[] = [
     {
       id: `aud_${crypto.randomBytes(4).toString('hex')}`,
-      actorId: 'usr_pujo',
-      actorName: 'Pujo',
-      actorRole: 'super_admin',
+      actorId: adminConfig ? adminConfig.adminUser.id : 'usr_raka',
+      actorName: adminConfig ? adminConfig.adminUser.displayName : 'Raka Pratama',
+      actorRole: adminConfig ? 'super_admin' : 'administrator',
       action: 'platform:initialized',
       target: 'Tolk by Lunola Server',
-      details: 'Inisialisasi awal server komunikasi real-time & akun Super Admin default.',
+      details: 'Inisialisasi awal server komunikasi real-time.',
       createdAt: now - 24 * hour,
     },
   ];
 
   return {
     users: {
-      usr_pujo: pujo,
+      ...(adminConfig ? { usr_pujo: adminConfig.adminUser } : {}),
       usr_raka: raka,
       usr_nadia: nadia,
       usr_dito: dito,
@@ -1240,8 +1266,14 @@ async function startServer(): Promise<void> {
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self)');
+    if (IS_PROD) {
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' ws: wss: https:; frame-ancestors 'none'; base-uri 'self'"
+      );
+    }
     next();
   });
   app.use(express.json({ limit: '24mb' }));
@@ -1523,9 +1555,9 @@ async function startServer(): Promise<void> {
     res.json({ challengeId, secret, expiresAt });
   });
 
-  app.get('/api/auth/qr/status', async (req, res) => {
-    const challengeId = typeof req.query.challengeId === 'string' ? req.query.challengeId : '';
-    const secret = typeof req.query.secret === 'string' ? req.query.secret : '';
+  app.post('/api/auth/qr/status', async (req, res) => {
+    const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId : '';
+    const secret = typeof req.body?.secret === 'string' ? req.body.secret : '';
     const now = Date.now();
 
     let entry: { secret: string; expiresAt: number; approvedByUserId?: string | null } | undefined;
@@ -4098,12 +4130,58 @@ async function startServer(): Promise<void> {
     });
   }
 
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 256 * 1024 });
+  const wsUpgradeHits = new Map<string, { count: number; resetAt: number }>();
 
   httpServer.on('upgrade', (request, socket, head) => {
     try {
       const reqUrl = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
       if (reqUrl.pathname === '/ws') {
+        if (IS_PROD) {
+          const origin = request.headers.origin;
+          const host = request.headers.host || '';
+          const allowedExtra = (process.env.ALLOWED_ORIGINS || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (origin) {
+            let allowed = false;
+            try {
+              const oUrl = new URL(origin);
+              if (
+                oUrl.host === host ||
+                origin === 'capacitor://localhost' ||
+                origin === 'http://localhost' ||
+                origin === 'https://localhost' ||
+                allowedExtra.includes(origin)
+              ) {
+                allowed = true;
+              }
+            } catch {
+              allowed = false;
+            }
+            if (!allowed) {
+              socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+              socket.destroy();
+              return;
+            }
+          }
+          const ip = String(request.headers['x-forwarded-for'] || request.socket.remoteAddress || 'unknown')
+            .split(',')[0]
+            .trim();
+          const now = Date.now();
+          const rec = wsUpgradeHits.get(ip);
+          if (!rec || rec.resetAt < now) {
+            wsUpgradeHits.set(ip, { count: 1, resetAt: now + 60_000 });
+          } else {
+            rec.count += 1;
+            if (rec.count > 40) {
+              socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n');
+              socket.destroy();
+              return;
+            }
+          }
+        }
         wss.handleUpgrade(request, socket, head, (ws) => {
           wss.emit('connection', ws, request);
         });

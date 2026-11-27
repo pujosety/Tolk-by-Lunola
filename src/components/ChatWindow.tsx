@@ -640,8 +640,11 @@ export function ChatWindow({
       setUnreadWhileScrolledUp((c) => c + added);
       return;
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, chat.id]);
+    const raf = window.requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: added > 0 ? 'smooth' : 'auto' });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [messages.length, chat.id, loading]);
 
   useEffect(() => {
     const vv = window.visualViewport;
@@ -1335,7 +1338,7 @@ export function ChatWindow({
       <div
         key={chat.id}
         style={getWallpaperStyle(appearance, darkMode)}
-        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-32 space-y-2.5 ${
+        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-[88px] sm:pb-24 space-y-2.5 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
         } ${appearance.wallpaper === 'custom' && appearance.customWallpaperUrl ? '!bg-transparent' : ''}`}
         onClick={() => {

@@ -45,7 +45,8 @@ export function CallsView({
   }, [users, currentUser.id, query]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scrollbar pb-28 md:pb-4">
+    <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scrollbar pb-28 md:pb-4">
       {/* Quick Action Banner */}
       <div className="px-4 py-3 border-b border-[#E6ECF2] dark:border-[#2A364B] flex items-center justify-between gap-3 bg-[#FFFFFF] dark:bg-[#171E2C]">
         <div>
@@ -56,14 +57,6 @@ export function CallsView({
             Suara & video WebRTC pribadi
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setPickerOpen((v) => !v)}
-          className="h-10 px-3.5 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold flex items-center gap-1.5 brutal-press shrink-0"
-        >
-          {pickerOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          <span>{pickerOpen ? 'Tutup' : 'Panggilan Baru'}</span>
-        </button>
       </div>
 
       {/* Inline New Call Contact Picker */}
@@ -216,6 +209,18 @@ export function CallsView({
           })
         )}
       </div>
+      </div>
+
+      {/* Floating New Call FAB (matching Status & Chat List) */}
+      <button
+        type="button"
+        onClick={() => setPickerOpen((v) => !v)}
+        aria-label={pickerOpen ? 'Tutup pemilih panggilan' : 'Panggilan baru'}
+        title={pickerOpen ? 'Tutup' : 'Panggilan Baru'}
+        className="flex absolute bottom-[calc(env(safe-area-inset-bottom,0px)+98px)] md:bottom-6 right-4 md:right-5 h-12 w-12 min-h-[44px] min-w-[44px] rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-white/60 dark:border-[#F5F7FA]/40 brutal-shadow-maroon brutal-press p5-slash-btn items-center justify-center z-20"
+      >
+        {pickerOpen ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+      </button>
     </div>
   );
 }

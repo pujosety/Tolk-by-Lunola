@@ -152,9 +152,10 @@ export const api = {
       status: 'pending' | 'approved' | 'expired';
       token?: string;
       user?: UserProfile;
-    }>(
-      `/api/auth/qr/status?challengeId=${encodeURIComponent(challengeId)}&secret=${encodeURIComponent(secret)}`
-    ),
+    }>('/api/auth/qr/status', {
+      method: 'POST',
+      body: { challengeId, secret },
+    }),
 
   approveQrLogin: (token: string, challengeId: string, secret: string) =>
     requestJson<{ ok: boolean }>('/api/auth/qr/approve', {
