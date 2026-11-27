@@ -11,8 +11,8 @@ android {
         applicationId = "com.lunolatalk.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.68"
+        versionCode = 4
+        versionName = "1.0.74"
 
         // URL Wasmer Edge produksi Tolk by Lunola
         buildConfigField("String", "WASMER_APP_URL", "\"https://tolks.wasmer.app\"")

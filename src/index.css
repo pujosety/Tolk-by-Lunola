@@ -758,8 +758,39 @@ html[data-text-scale="lg"] {
 html.high-contrast body {
   filter: contrast(1.14);
 }
-html.high-contrast .chat-canvas-bg {
+/* Animated WhatsApp-style Doodle Wallpaper */
+@keyframes doodleDrift {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position: 220px 220px;
+  }
+}
+
+.doodle-wallpaper-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220' fill='none' stroke='%23161B26' stroke-opacity='0.065' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 32h22a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H32l-8 7V38a6 6 0 0 1 6-6z'/%3E%3Ccircle cx='98' cy='34' r='10'/%3E%3Cpath d='M94 33h.01M102 33h.01M94 37c1.5 2 6.5 2 8 0'/%3E%3Cpath d='M158 24l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z'/%3E%3Cpath d='M38 96c0-5 7-7 10-2 3-5 10-3 10 2 0 7-10 13-10 13s-10-6-10-13z'/%3E%3Cpath d='M110 88l18 7-18 7 3-7-3-7z'/%3E%3Cpath d='M168 86v18a4 4 0 0 1-8 0V86a4 4 0 0 1 8 0zM156 98a8 8 0 0 0 16 0M164 106v6'/%3E%3Cpath d='M28 156c4-6 12-6 16 0M62 150l14-6v16l-14 6z'/%3E%3Ccircle cx='120' cy='156' r='8'/%3E%3Cpath d='M120 144v4M120 164v4M108 156h4M128 156h4'/%3E%3Cpath d='M172 152c3-5 11-5 14 0l4 8c2 4-1 8-5 8h-12c-4 0-7-4-5-8z'/%3E%3Cpath d='M80 198l5-10 5 10-5 3zM186 196h12m-6-6v12'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  background-repeat: repeat;
+  animation: doodleDrift 28s linear infinite;
+}
+
+.dark .doodle-wallpaper-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220' fill='none' stroke='%23F5F7FA' stroke-opacity='0.06' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 32h22a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H32l-8 7V38a6 6 0 0 1 6-6z'/%3E%3Ccircle cx='98' cy='34' r='10'/%3E%3Cpath d='M94 33h.01M102 33h.01M94 37c1.5 2 6.5 2 8 0'/%3E%3Cpath d='M158 24l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z'/%3E%3Cpath d='M38 96c0-5 7-7 10-2 3-5 10-3 10 2 0 7-10 13-10 13s-10-6-10-13z'/%3E%3Cpath d='M110 88l18 7-18 7 3-7-3-7z'/%3E%3Cpath d='M168 86v18a4 4 0 0 1-8 0V86a4 4 0 0 1 8 0zM156 98a8 8 0 0 0 16 0M164 106v6'/%3E%3Cpath d='M28 156c4-6 12-6 16 0M62 150l14-6v16l-14 6z'/%3E%3Ccircle cx='120' cy='156' r='8'/%3E%3Cpath d='M120 144v4M120 164v4M108 156h4M128 156h4'/%3E%3Cpath d='M172 152c3-5 11-5 14 0l4 8c2 4-1 8-5 8h-12c-4 0-7-4-5-8z'/%3E%3Cpath d='M80 198l5-10 5 10-5 3zM186 196h12m-6-6v12'/%3E%3C/svg%3E");
+}
+
+.doodle-call-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220' fill='none' stroke='%23FFFFFF' stroke-opacity='0.075' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M28 28c0 12 10 22 22 22l4-4a3 3 0 0 0 0-4l-5-5a3 3 0 0 0-4 0l-2 2a14 14 0 0 1-8-8l2-2a3 3 0 0 0 0-4l-5-5a3 3 0 0 0-4 0l-4 4z'/%3E%3Cpath d='M98 28h20a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6h-12l-7 6V34a6 6 0 0 1 6-6z'/%3E%3Cpath d='M168 24l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z'/%3E%3Cpath d='M42 96v18a4 4 0 0 1-8 0V96a4 4 0 0 1 8 0zM30 108a8 8 0 0 0 16 0M38 116v6'/%3E%3Ccircle cx='112' cy='102' r='10'/%3E%3Cpath d='M108 101h.01M116 101h.01M108 105c1.5 2 6.5 2 8 0'/%3E%3Cpath d='M164 96l16 8-16 8z'/%3E%3Cpath d='M36 164c0-5 7-7 10-2 3-5 10-3 10 2 0 7-10 13-10 13s-10-6-10-13z'/%3E%3Cpath d='M110 164l18 7-18 7 3-7-3-7z'/%3E%3Ccircle cx='178' cy='168' r='8'/%3E%3Cpath d='M178 156v4M178 176v4M166 168h4M186 168h4'/%3E%3Cpath d='M84 202l5-10 5 10-5 3zM146 200h12m-6-6v12'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  background-repeat: repeat;
+  animation: doodleDrift 26s linear infinite;
+}
+
+html.high-contrast .chat-canvas-bg,
+html.high-contrast .doodle-wallpaper-bg,
+html.high-contrast .doodle-call-bg {
   background-image: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -789,7 +820,9 @@ html.high-contrast .chat-canvas-bg {
   .p5-panel-out,
   .p5-menu-in,
   .p5-menu-out,
-  .p5-sidebar-swap {
+  .p5-sidebar-swap,
+  .doodle-wallpaper-bg,
+  .doodle-call-bg {
     animation: none !important;
   }
 }

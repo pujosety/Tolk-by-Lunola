@@ -22,6 +22,7 @@ export type TextScale = 'sm' | 'md' | 'lg';
 export type NotificationTone = 'lunola' | 'crystal' | 'soft' | 'mute';
 
 export type ChatWallpaperId =
+  | 'doodle-animated'
   | 'default'
   | 'sky-breeze'
   | 'butter-warm'

@@ -1587,7 +1587,9 @@ export function SettingsModal({
           {/* Live Mini Chat Preview */}
           <div
             style={getWallpaperStyle(appearance, darkMode)}
-            className="p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col gap-2"
+            className={`p-3.5 rounded-2xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col gap-2 ${
+              appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
+            }`}
           >
             <div className={`self-start max-w-[78%] px-3 py-2 text-xs ${getBubbleClasses(appearance, false)}`}>
               Wih, tampilan chatnya kece banget!

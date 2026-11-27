@@ -137,6 +137,12 @@ export function CallOverlay({
           closing ? 'p5-modal-out' : 'p5-modal-impact'
         } relative w-full h-full sm:h-[88dvh] sm:max-h-[760px] sm:max-w-lg rounded-none sm:rounded-3xl bg-gradient-to-b from-[#23101B] via-[#141A26] to-[#0F141E] sm:border sm:border-[#F5F7FA]/30 overflow-hidden brutal-shadow-lg text-[#F5F7FA] flex flex-col justify-between`}
       >
+        {/* Animated WhatsApp-style Doodle Wallpaper */}
+        <div
+          aria-hidden="true"
+          className="doodle-call-bg pointer-events-none absolute inset-0"
+        />
+
         {/* Full-Bleed Video Canvas when video call active */}
         {activeSession.kind === 'video' && (
           <div className="absolute inset-0 bg-[#0F141E] flex items-center justify-center">

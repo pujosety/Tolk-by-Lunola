@@ -981,7 +981,9 @@ export function ChatWindow({
       <div
         key={chat.id}
         style={getWallpaperStyle(appearance, darkMode)}
-        className="p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5"
+        className={`p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5 ${
+          appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
+        }`}
         onClick={() => {
           setActiveMenuMsgId(null);
           if (document.activeElement === inputRef.current) {

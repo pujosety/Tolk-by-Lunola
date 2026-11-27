@@ -7,7 +7,7 @@ import type {
 } from '../types/chat';
 
 export const DEFAULT_CHAT_APPEARANCE: ChatAppearancePrefs = {
-  wallpaper: 'default',
+  wallpaper: 'doodle-animated',
   customWallpaperUrl: null,
   bubbleStyle: 'tiktok',
   bubbleAccent: 'burgundy',
@@ -18,6 +18,7 @@ export const WALLPAPER_OPTIONS: Array<{
   label: string;
   swatch: string;
 }> = [
+  { id: 'doodle-animated', label: 'Doodle Animasi', swatch: 'radial-gradient(circle at 25% 25%, #8C0027 0%, #1E2738 55%, #0F141E 100%)' },
   { id: 'default', label: 'Sky & Butter', swatch: 'linear-gradient(135deg, #BEDEFF 0%, #FFF2A7 100%)' },
   { id: 'sky-breeze', label: 'Sky Pastel', swatch: 'linear-gradient(135deg, #BEDEFF 0%, #EAF4FF 100%)' },
   { id: 'butter-warm', label: 'Butter Cream', swatch: 'linear-gradient(135deg, #FFF2A7 0%, #FFF9D6 100%)' },
@@ -92,6 +93,10 @@ export function getWallpaperStyle(
     };
   }
   switch (prefs.wallpaper) {
+    case 'doodle-animated':
+      return {
+        backgroundColor: isDark ? '#0D131D' : '#EEF2F7',
+      };
     case 'sky-breeze':
       return {
         backgroundImage: isDark
