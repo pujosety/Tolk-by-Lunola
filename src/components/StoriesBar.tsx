@@ -24,6 +24,7 @@ import {
 import type { Attachment, ChatRoom, StoryItem, UserProfile } from '../types/chat';
 import { formatTimeShort, triggerAndroidHaptic } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 import { Avatar } from './Avatar';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
@@ -1307,6 +1308,12 @@ function StoryViewerModal({
   const swipeStartRef = useRef<{ x: number; y: number; ignore: boolean } | null>(null);
   const justSwipedRef = useRef(false);
   const viewersPresence = useAnimatedPresence(showViewers, 175);
+  const viewersSwipe = useSwipeGesture({
+    direction: 'down',
+    threshold: 55,
+    enabled: showViewers,
+    onTrigger: () => setShowViewers(false),
+  });
 
   useEffect(() => {
     setProgressPct(0);
@@ -1684,8 +1691,16 @@ function StoryViewerModal({
               </div>
               {viewersPresence.mounted && (
                 <div
+                  {...viewersSwipe.handlers}
+                  style={
+                    viewersSwipe.offsetY > 0
+                      ? { transform: `translate3d(0, ${viewersSwipe.offsetY}px, 0)` }
+                      : undefined
+                  }
                   className={`${
                     viewersPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
+                  } ${
+                    viewersSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
                   } p-3 rounded-2xl bg-[#171E2C]/95 backdrop-blur-md border border-white/15 text-white max-h-52 overflow-y-auto thin-scrollbar space-y-2 text-xs`}
                 >
                   {viewers.length === 0 ? (

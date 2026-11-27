@@ -18,6 +18,7 @@ import {
 import type { CallRecord, UserProfile } from '../types/chat';
 import { formatDuration, formatTimeShort, setAndroidCallAudioMode } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 import { Avatar } from './Avatar';
 
 export interface ActiveCallSession {
@@ -321,6 +322,12 @@ export function CallHistoryModal({
   onStartCall: (peerId: string, kind: 'voice' | 'video') => void;
 }) {
   const { mounted, closing } = useAnimatedPresence(open, 200);
+  const edgeSwipe = useSwipeGesture({
+    direction: 'right',
+    edgeOnlyPx: 28,
+    threshold: 75,
+    onTrigger: onClose,
+  });
   if (!mounted) return null;
 
   return (
@@ -338,8 +345,19 @@ export function CallHistoryModal({
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full h-full sm:h-auto sm:max-w-md sm:max-h-[82dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] sm:border sm:border-[#E6ECF2] sm:dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full sm:h-auto sm:max-w-md sm:max-h-[82dvh]`}
       >
+        <div
+          {...edgeSwipe.handlers}
+          style={
+            edgeSwipe.offsetX > 0
+              ? { transform: `translate3d(${edgeSwipe.offsetX}px, 0, 0)` }
+              : undefined
+          }
+          className={`${
+            edgeSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+          } touch-pan-y w-full h-full flex flex-col rounded-none sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] sm:border sm:border-[#E6ECF2] sm:dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
+        >
         <div className="pt-safe-2 sm:pt-4 flex items-center justify-between px-5 pb-4 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
           <div>
             <h2 className="font-display font-extrabold text-xl leading-tight text-[#161B26] dark:text-[#F5F7FA]">
@@ -417,6 +435,7 @@ export function CallHistoryModal({
               );
             })
           )}
+        </div>
         </div>
       </div>
     </div>

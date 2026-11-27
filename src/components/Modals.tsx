@@ -55,6 +55,7 @@ import { formatTimeShort, isRunningInAndroidWebView } from '../lib/androidBridge
 import { requestBrowserNotificationPermission } from '../lib/pwa';
 import { Avatar } from './Avatar';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 import {
   BUBBLE_ACCENT_OPTIONS,
   BUBBLE_STYLE_OPTIONS,
@@ -86,6 +87,13 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   const { mounted, closing } = useAnimatedPresence(open, 200);
+  const edgeSwipe = useSwipeGesture({
+    direction: 'right',
+    edgeOnlyPx: 28,
+    threshold: 75,
+    enabled: closable && (typeof window === 'undefined' || window.innerWidth < 768),
+    onTrigger: onClose,
+  });
   if (!mounted) return null;
   return (
     <div
@@ -102,8 +110,19 @@ function ModalShell({
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full h-full md:h-auto ${maxWidth} md:max-h-[88dvh] flex flex-col rounded-none md:rounded-3xl bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full md:h-auto ${maxWidth} md:max-h-[88dvh]`}
       >
+        <div
+          {...edgeSwipe.handlers}
+          style={
+            edgeSwipe.offsetX > 0
+              ? { transform: `translate3d(${edgeSwipe.offsetX}px, 0, 0)` }
+              : undefined
+          }
+          className={`${
+            edgeSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+          } touch-pan-y w-full h-full flex flex-col rounded-none md:rounded-3xl bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg overflow-hidden`}
+        >
         <div className="pt-safe-2 md:pt-4 pb-3 px-4 md:px-5 flex items-center justify-between gap-3 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.25)] shrink-0 z-10">
           <div className="flex items-center gap-3 min-w-0">
             {closable && (
@@ -144,6 +163,7 @@ function ModalShell({
             {mobileBottomBar}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import {
 import type { ChatRoom, Message, UserProfile } from '../types/chat';
 import { formatBytes, formatDuration, formatLastSeen } from '../lib/androidBridge';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 import { Avatar } from './Avatar';
 import { QrCodeBox } from './QrCodeBox';
 
@@ -127,6 +128,12 @@ export function ChatInfoDrawer({
 
   const { mounted, closing } = useAnimatedPresence(open, 230);
 
+  const drawerSwipe = useSwipeGesture({
+    direction: 'right',
+    threshold: 80,
+    onTrigger: onClose,
+  });
+
   if (!mounted) return null;
 
   const isGroupAdmin = chat.adminIds.includes(currentUser.id);
@@ -177,8 +184,19 @@ export function ChatInfoDrawer({
       <aside
         className={`${
           closing ? 'p5-drawer-right-out pointer-events-none' : 'p5-drawer-right'
-        } fixed inset-0 lg:inset-y-0 lg:left-auto lg:right-0 z-40 w-full lg:static lg:z-0 lg:w-[356px] shrink-0 bg-[#F5F7FA] dark:bg-[#0F141E] lg:shadow-[-4px_0_24px_rgba(15,20,30,0.04)] dark:lg:shadow-[-4px_0_24px_rgba(0,0,0,0.28)] flex flex-col`}
+        } fixed inset-0 lg:inset-y-0 lg:left-auto lg:right-0 z-40 w-full lg:static lg:z-0 lg:w-[356px] shrink-0`}
       >
+        <div
+          {...drawerSwipe.handlers}
+          style={
+            drawerSwipe.offsetX > 0
+              ? { transform: `translate3d(${drawerSwipe.offsetX}px, 0, 0)` }
+              : undefined
+          }
+          className={`${
+            drawerSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+          } touch-pan-y w-full h-full bg-[#F5F7FA] dark:bg-[#0F141E] lg:shadow-[-4px_0_24px_rgba(15,20,30,0.04)] dark:lg:shadow-[-4px_0_24px_rgba(0,0,0,0.28)] flex flex-col`}
+        >
       {/* Seamless Header */}
       <div className="pt-safe-2 pb-2 min-h-[62px] px-4 flex items-center justify-between bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_12px_rgba(15,20,30,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.22)] shrink-0 z-10">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -777,6 +795,7 @@ export function ChatInfoDrawer({
             )}
           </div>
         )}
+      </div>
       </div>
     </aside>
     </>

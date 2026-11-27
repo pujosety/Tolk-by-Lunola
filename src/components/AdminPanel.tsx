@@ -35,6 +35,7 @@ import type {
 import { api } from '../lib/api';
 import { formatTimeShort } from '../lib/androidBridge';
 import { useAnimatedPresence, useRetainedValue } from '../lib/useAnimatedPresence';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 
 type AdminMenu =
   | 'dashboard'
@@ -212,6 +213,13 @@ export function AdminPanel({
 
   const { mounted, closing } = useAnimatedPresence(open, 210);
   const confirmRetained = useRetainedValue(confirmAction, 200);
+  const edgeSwipe = useSwipeGesture({
+    direction: 'right',
+    edgeOnlyPx: 28,
+    threshold: 80,
+    enabled: typeof window === 'undefined' || window.innerWidth < 768,
+    onTrigger: onClose,
+  });
 
   if (!mounted) return null;
 
@@ -345,8 +353,19 @@ export function AdminPanel({
       }}
       className={`${
         closing ? 'p5-modal-out pointer-events-none' : 'p5-modal-impact'
-      } fixed inset-x-0 z-50 bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col md:flex-row overflow-hidden transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+      } fixed inset-x-0 z-50 overflow-hidden transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
     >
+      <div
+        {...edgeSwipe.handlers}
+        style={
+          edgeSwipe.offsetX > 0
+            ? { transform: `translate3d(${edgeSwipe.offsetX}px, 0, 0)` }
+            : undefined
+        }
+        className={`${
+          edgeSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+        } touch-pan-y w-full h-full bg-[#F5F7FA] dark:bg-[#0F141E] flex flex-col md:flex-row overflow-hidden`}
+      >
       {/* Navigation: Left Sidebar on Desktop, Bottom Icon Bar on Mobile */}
       <aside className="order-last md:order-first w-full md:w-64 shrink-0 bg-[#FFFFFF] dark:bg-[#171E2C] border-t md:border-t-0 md:border-r border-[#E6ECF2] dark:border-[#2A364B] flex flex-col z-20">
         <div className="hidden md:flex pt-safe-2 pb-2 px-3.5 min-h-16 items-center justify-between gap-2 border-b border-[#E6ECF2] dark:border-[#2A364B] p5-maroon-banner shrink-0">
@@ -1335,6 +1354,7 @@ export function AdminPanel({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ import {
 import { api } from '../lib/api';
 import { QrCodeBox } from './QrCodeBox';
 import { TolkHorizontalLogo } from './TolkLogo';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 
 interface AuthScreenProps {
   darkMode: boolean;
@@ -116,6 +117,20 @@ export function AuthScreen({
   }, []);
 
   const isMobileKeyboardOpen = keyboardInset > 90 || isInputFocused;
+
+  const authSwipe = useSwipeGesture({
+    direction: 'horizontal',
+    threshold: 65,
+    onTrigger: (dir) => {
+      if (dir === 'left' && mode === 'login') {
+        setMode('register');
+        setError('');
+      } else if (dir === 'right' && mode === 'register') {
+        setMode('login');
+        setError('');
+      }
+    },
+  });
 
   const handleFormFocusCapture = (e: React.FocusEvent<HTMLFormElement>) => {
     const target = e.target as HTMLElement | null;
@@ -264,11 +279,17 @@ export function AuthScreen({
             </div>
           </div>
 
-          {/* Right Panel: Morphing Auth Form */}
+          {/* Right Panel: Morphing Auth Form (supports horizontal swipe Masuk <-> Daftar) */}
           <motion.div
             layout
             transition={SPRING_MORPH}
-            className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center"
+            {...(authSwipe.handlers as Record<string, unknown>)}
+            style={
+              authSwipe.offsetX !== 0
+                ? { transform: `translate3d(${(authSwipe.offsetX * 0.35).toFixed(1)}px, 0, 0)` }
+                : undefined
+            }
+            className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center touch-pan-y"
           >
             {/* Smooth Sliding Pill Mode Switcher */}
             <div className="relative grid grid-cols-2 md:grid-cols-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#0F141E] border border-[#E6ECF2] dark:border-[#2A364B] p-1.5 mb-5">

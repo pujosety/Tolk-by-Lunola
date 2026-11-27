@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TolkHorizontalLogo } from './TolkLogo';
+import { useSwipeGesture } from '../lib/useSwipeGesture';
 import {
   ArrowLeft,
   ChevronRight,
@@ -61,6 +62,12 @@ export function DrawerMenu({
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const { mounted, closing } = useAnimatedPresence(open, 230);
+
+  const drawerSwipe = useSwipeGesture({
+    direction: 'left',
+    threshold: 80,
+    onTrigger: onClose,
+  });
 
   if (!mounted) return null;
 
@@ -169,8 +176,19 @@ export function DrawerMenu({
       <div
         className={`${
           closing ? 'p5-drawer-left-out' : 'p5-drawer-left'
-        } relative z-10 w-full md:w-[332px] h-full bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border-r md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg flex flex-col`}
+        } relative z-10 w-full md:w-[332px] h-full`}
       >
+        <div
+          {...drawerSwipe.handlers}
+          style={
+            drawerSwipe.offsetX < 0
+              ? { transform: `translate3d(${drawerSwipe.offsetX}px, 0, 0)` }
+              : undefined
+          }
+          className={`${
+            drawerSwipe.isDragging ? '' : 'transition-transform duration-200 ease-out'
+          } touch-pan-y w-full h-full bg-[#F5F7FA] md:bg-[#FFFFFF] dark:bg-[#0F141E] md:dark:bg-[#171E2C] md:border-r md:border-[#E6ECF2] md:dark:border-[#2A364B] brutal-shadow-lg flex flex-col`}
+        >
         {/* WhatsApp "You / Kamu" Style Header */}
         <div className="pt-safe-3 px-4 pb-5 p5-maroon-banner text-white shrink-0">
           <div className="flex items-center justify-between gap-2">
@@ -310,6 +328,7 @@ export function DrawerMenu({
             <TolkHorizontalLogo className="tolk-logo-adaptive h-6 w-auto select-none" />
           </div>
           <span className="font-mono font-bold">Tolk by Lunola</span>
+        </div>
         </div>
       </div>
     </div>
