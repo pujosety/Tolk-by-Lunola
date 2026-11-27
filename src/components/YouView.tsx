@@ -31,6 +31,7 @@ interface YouViewProps {
   onOpenSettings: (tab?: 'appearance' | 'notifications' | 'privacy') => void;
   onOpenAdminPanel: () => void;
   onLogout: () => void;
+  onQuickStatus?: (statusText: string) => Promise<void>;
 }
 
 export function YouView({
@@ -45,6 +46,7 @@ export function YouView({
   onOpenSettings,
   onOpenAdminPanel,
   onLogout,
+  onQuickStatus,
 }: YouViewProps) {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
@@ -188,6 +190,29 @@ export function YouView({
           </div>
         </div>
       </div>
+
+      {/* Quick Status Pills (#7) */}
+      {onQuickStatus && (
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          {['Sedang Sibuk', 'Lagi Meeting', 'Di Kantor', 'Siap Ngobrol', 'Liburan'].map((st) => {
+            const active = user.statusText === st;
+            return (
+              <button
+                key={st}
+                type="button"
+                onClick={() => void onQuickStatus(active ? '' : st)}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap transition-colors ${
+                  active
+                    ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                    : 'bg-white dark:bg-[#171E2C] text-[#5A6578] dark:text-[#CBD5E1] border-[#E6ECF2] dark:border-[#2A364B]'
+                }`}
+              >
+                {st}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* PWA Install CTA */}
       {!isInstalled && (isInstallable || isIOS) && (

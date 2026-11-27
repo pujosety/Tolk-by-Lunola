@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   BarChart3,
+  BellRing,
   CalendarClock,
   Camera,
   Check,
@@ -16,6 +17,7 @@ import {
   Download,
   Edit2,
   Eye,
+  EyeOff,
   FileText,
   Flag,
   Forward,
@@ -23,6 +25,7 @@ import {
   Languages,
   Lock,
   MapPin,
+  MessageSquare,
   Mic,
   MoreVertical,
   Paperclip,
@@ -44,6 +47,7 @@ import {
   UploadCloud,
   UserCheck,
   Video,
+  Volume2,
   X,
   ZoomIn,
   ZoomOut,
@@ -134,6 +138,7 @@ interface ChatWindowProps {
   onTranslateMessage: (messageId: string, text: string) => Promise<string>;
   onSummarizeChat: () => Promise<string>;
   onReportMessage: (message: Message) => void;
+  onRemindMessage?: (message: Message, delayMs: number) => void;
   onTyping: (isTyping: boolean) => void;
 }
 
@@ -141,10 +146,12 @@ function VoiceNotePlayer({
   url,
   durationSec,
   isOwn,
+  onPlayChange,
 }: {
   url: string;
   durationSec?: number;
   isOwn: boolean;
+  onPlayChange?: (playing: boolean) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -157,10 +164,15 @@ function VoiceNotePlayer({
     if (playing) {
       audio.pause();
       setPlaying(false);
+      onPlayChange?.(false);
     } else {
       audio.playbackRate = speed;
-      void audio.play().catch(() => setPlaying(false));
+      void audio.play().catch(() => {
+        setPlaying(false);
+        onPlayChange?.(false);
+      });
       setPlaying(true);
+      onPlayChange?.(true);
     }
   };
 
@@ -248,11 +260,40 @@ function VoiceNotePlayer({
   );
 }
 
+function SpoilerSpan({ text }: { text: string }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        setRevealed((v) => !v);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setRevealed((v) => !v);
+        }
+      }}
+      title={revealed ? 'Sembunyikan spoiler' : 'Ketuk untuk lihat spoiler'}
+      className={`px-1 rounded cursor-pointer transition-all ${
+        revealed ? 'bg-black/10' : 'bg-[#161B26]/80 text-transparent select-none blur-[4px]'
+      }`}
+    >
+      {text}
+    </span>
+  );
+}
+
 function renderFormattedSegment(seg: string, keyPrefix: string): React.ReactNode {
-  const fmtRegex = /(\*[^*\n]+\*|_[^_\n]+_|`[^`\n]+`|~[^~\n]+~)/g;
+  const fmtRegex = /(\|\|[^|\n]+\|\||\*[^*\n]+\*|_[^_\n]+_|`[^`\n]+`|~[^~\n]+~)/g;
   const parts = seg.split(fmtRegex);
   return parts.map((p, i) => {
     const k = `${keyPrefix}_${i}`;
+    if (p.startsWith('||') && p.endsWith('||') && p.length > 4) {
+      return <SpoilerSpan key={k} text={p.slice(2, -2)} />;
+    }
     if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
       return <strong key={k} className="font-bold">{p.slice(1, -1)}</strong>;
     }
@@ -345,6 +386,7 @@ export function ChatWindow({
   onTranslateMessage,
   onSummarizeChat,
   onReportMessage,
+  onRemindMessage,
   onTyping,
 }: ChatWindowProps) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
@@ -390,11 +432,25 @@ export function ChatWindow({
   const [contactPickerOpen, setContactPickerOpen] = useState(false);
   const [scheduledDrawerOpen, setScheduledDrawerOpen] = useState(false);
   const [msgInfoTarget, setMsgInfoTarget] = useState<Message | null>(null);
+  const [threadRootMsg, setThreadRootMsg] = useState<Message | null>(null);
+  const [threadReplyText, setThreadReplyText] = useState('');
+  const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(() => new Set());
+  const [miniAudio, setMiniAudio] = useState<{ msgId: string; senderName: string; url: string } | null>(null);
+  const [customStickers, setCustomStickers] = useState<Array<{ id: string; dataUrl: string; label: string }>>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_custom_stickers');
+      return raw ? (JSON.parse(raw) as Array<{ id: string; dataUrl: string; label: string }>) : [];
+    } catch {
+      return [];
+    }
+  });
+  const customStickerInputRef = useRef<HTMLInputElement | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxMsgId, setLightboxMsgId] = useState<string | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState<number>(1);
   const [viewOnceModalMsg, setViewOnceModalMsg] = useState<Message | null>(null);
   const [pendingViewOnce, setPendingViewOnce] = useState(false);
+  const [pendingSpoiler, setPendingSpoiler] = useState(false);
   const [pollModalOpen, setPollModalOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
@@ -527,6 +583,16 @@ export function ChatWindow({
         (m.attachment?.name || '').toLowerCase().includes(q)
     );
   }, [messages, searchTerm]);
+
+  const replyCountByMsgId = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const m of messages) {
+      if (m.replyToId) {
+        map[m.replyToId] = (map[m.replyToId] || 0) + 1;
+      }
+    }
+    return map;
+  }, [messages]);
 
   const mentionCandidates = useMemo(() => {
     if (chat.type !== 'group') return [];
@@ -680,6 +746,13 @@ export function ChatWindow({
         (uploadedAttachment.kind === 'image' || uploadedAttachment.kind === 'video')
       ) {
         uploadedAttachment = { ...uploadedAttachment, viewOnce: true, viewedBy: [] };
+      }
+      if (
+        pendingSpoiler &&
+        (uploadedAttachment.kind === 'image' || uploadedAttachment.kind === 'video')
+      ) {
+        uploadedAttachment = { ...uploadedAttachment, isSpoiler: true };
+        setPendingSpoiler(false);
       }
       await onSendMessage({
         text: item.text,
@@ -1223,6 +1296,26 @@ export function ChatWindow({
 
       {/* Messages Canvas */}
       <div className="relative flex-1 min-h-0 flex flex-col">
+        {miniAudio && (
+          <div className="mx-3 mt-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF]/95 dark:bg-[#1E2738]/95 border border-[#E6ECF2] dark:border-[#324058] shadow-md flex items-center justify-between gap-2 z-20 p5-panel-reveal">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="h-6 w-6 rounded-full bg-[#8C0027] text-white flex items-center justify-center shrink-0">
+                <Volume2 className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
+                Memutar suara · {miniAudio.senderName}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMiniAudio(null)}
+              aria-label="Tutup mini player"
+              className="h-6 w-6 rounded-full flex items-center justify-center text-[#5A6578] hover:text-[#8C0027]"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         {(() => {
           const customLayers = getCustomWallpaperLayers(appearance, darkMode);
           if (!customLayers) return null;
@@ -1636,9 +1729,25 @@ export function ChatWindow({
                               <img
                                 src={msg.attachment.url}
                                 alt={msg.attachment.name}
-                                className="block w-full max-h-80 object-contain rounded-2xl"
+                                className={`block w-full max-h-80 object-contain rounded-2xl transition-all ${
+                                  msg.attachment.isSpoiler && !revealedSpoilers.has(msg.id)
+                                    ? 'blur-xl scale-105 brightness-75'
+                                    : ''
+                                }`}
                                 loading="lazy"
                               />
+                              {msg.attachment.isSpoiler && !revealedSpoilers.has(msg.id) && (
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRevealedSpoilers((prev) => new Set(prev).add(msg.id));
+                                  }}
+                                  className="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-xs font-bold gap-1.5"
+                                >
+                                  <EyeOff className="w-4 h-4" />
+                                  <span>Spoiler · Ketuk</span>
+                                </span>
+                              )}
                             </button>
                           )}
 
@@ -1729,6 +1838,17 @@ export function ChatWindow({
                           url={msg.attachment.url}
                           durationSec={msg.attachment.durationSec}
                           isOwn={isOwn}
+                          onPlayChange={(isPlaying) => {
+                            if (isPlaying) {
+                              setMiniAudio({
+                                msgId: msg.id,
+                                senderName: users[msg.senderId]?.displayName || 'Pengguna',
+                                url: msg.attachment!.url,
+                              });
+                            } else if (miniAudio?.msgId === msg.id) {
+                              setMiniAudio(null);
+                            }
+                          }}
                         />
                       )}
 
@@ -1764,8 +1884,16 @@ export function ChatWindow({
 
                       {/* Sticker */}
                       {msg.sticker && (
-                        <div className="mb-1 py-1 text-5xl leading-none select-none text-center">
-                          {msg.sticker.id}
+                        <div className="mb-1 py-1 text-5xl leading-none select-none text-center flex justify-center">
+                          {msg.sticker.id.startsWith('data:') ? (
+                            <img
+                              src={msg.sticker.id}
+                              alt={msg.sticker.label}
+                              className="w-24 h-24 rounded-2xl object-cover"
+                            />
+                          ) : (
+                            msg.sticker.id
+                          )}
                         </div>
                       )}
 
@@ -1922,6 +2050,20 @@ export function ChatWindow({
                       </div>
                     </div>
 
+                    {/* Thread Reply Count Chip (#2) */}
+                    {(replyCountByMsgId[msg.id] || 0) > 0 && (
+                      <div className={`mt-1 flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                        <button
+                          type="button"
+                          onClick={() => setThreadRootMsg(msg)}
+                          className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] flex items-center gap-1 hover:border-[#8C0027]"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>{replyCountByMsgId[msg.id]} balasan</span>
+                        </button>
+                      </div>
+                    )}
+
                     {/* Reactions Row */}
                     {msg.reactions.length > 0 && (
                       <div
@@ -2035,6 +2177,20 @@ export function ChatWindow({
                           <Info className="w-3.5 h-3.5" />
                           <span>Info Pesan</span>
                         </button>
+
+                        {onRemindMessage && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onRemindMessage(msg, 3600_000);
+                              setActiveMenuMsgId(null);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                          >
+                            <BellRing className="w-3.5 h-3.5" />
+                            <span>Ingatkan 1 Jam</span>
+                          </button>
+                        )}
 
                         <button
                           type="button"
@@ -2349,22 +2505,38 @@ export function ChatWindow({
               </div>
 
               {(pendingFile.type.startsWith('image/') || pendingFile.type.startsWith('video/')) && (
-                <button
-                  type="button"
-                  onClick={() => setPendingViewOnce((v) => !v)}
-                  aria-label="Aktifkan mode sekali lihat"
-                  title="Sekali Lihat"
-                  className={`h-8 px-2.5 rounded-full border text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors ${
-                    pendingViewOnce
-                      ? 'bg-[#8C0027] border-[#8C0027] text-white'
-                      : 'bg-white dark:bg-[#171E2C] border-[#E6ECF2] dark:border-[#324058] text-[#5A6578] dark:text-[#CBD5E1]'
-                  }`}
-                >
-                  <span className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[9px] font-mono">
-                    1
-                  </span>
-                  <span className="hidden sm:inline">Sekali Lihat</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setPendingViewOnce((v) => !v)}
+                    aria-label="Aktifkan mode sekali lihat"
+                    title="Sekali Lihat"
+                    className={`h-8 px-2.5 rounded-full border text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors ${
+                      pendingViewOnce
+                        ? 'bg-[#8C0027] border-[#8C0027] text-white'
+                        : 'bg-white dark:bg-[#171E2C] border-[#E6ECF2] dark:border-[#324058] text-[#5A6578] dark:text-[#CBD5E1]'
+                    }`}
+                  >
+                    <span className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[9px] font-mono">
+                      1
+                    </span>
+                    <span className="hidden sm:inline">Sekali Lihat</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingSpoiler((v) => !v)}
+                    aria-label="Aktifkan mode spoiler"
+                    title="Spoiler (Blur)"
+                    className={`h-8 px-2.5 rounded-full border text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors ${
+                      pendingSpoiler
+                        ? 'bg-[#8C0027] border-[#8C0027] text-white'
+                        : 'bg-white dark:bg-[#171E2C] border-[#E6ECF2] dark:border-[#324058] text-[#5A6578] dark:text-[#CBD5E1]'
+                    }`}
+                  >
+                    <EyeOff className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Spoiler</span>
+                  </button>
+                </>
               )}
 
               <button
@@ -2575,30 +2747,89 @@ export function ChatWindow({
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { id: '👋', label: 'Halo!' },
-                { id: '🔥', label: 'Mantap' },
-                { id: '❤️', label: 'Sayang' },
-                { id: '😂', label: 'Ngakak' },
-                { id: '🥳', label: 'Gas!' },
-                { id: '🙏', label: 'Makasih' },
-                { id: '🫶', label: 'Oke Siap' },
-                { id: '☕', label: 'Ngopi Yuk' },
-              ].map((st) => (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={async () => {
-                    setEmojiOpen(false);
-                    await onSendMessage({ text: '', sticker: st });
-                  }}
-                  className="p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
-                >
-                  <span className="text-2xl leading-none">{st.id}</span>
-                  <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1]">{st.label}</span>
-                </button>
-              ))}
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { id: '👋', label: 'Halo!' },
+                  { id: '🔥', label: 'Mantap' },
+                  { id: '❤️', label: 'Sayang' },
+                  { id: '😂', label: 'Ngakak' },
+                  { id: '🥳', label: 'Gas!' },
+                  { id: '🙏', label: 'Makasih' },
+                  { id: '🫶', label: 'Oke Siap' },
+                  { id: '☕', label: 'Ngopi Yuk' },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={async () => {
+                      setEmojiOpen(false);
+                      await onSendMessage({ text: '', sticker: st });
+                    }}
+                    className="p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
+                  >
+                    <span className="text-2xl leading-none">{st.id}</span>
+                    <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1]">{st.label}</span>
+                  </button>
+                ))}
+                {customStickers.map((cs) => (
+                  <button
+                    key={cs.id}
+                    type="button"
+                    onClick={async () => {
+                      setEmojiOpen(false);
+                      await onSendMessage({ text: '', sticker: { id: cs.dataUrl, label: cs.label } });
+                    }}
+                    className="p-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
+                  >
+                    <img src={cs.dataUrl} alt={cs.label} className="w-8 h-8 rounded-lg object-cover" />
+                    <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1] truncate w-full text-center">
+                      {cs.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <input
+                ref={customStickerInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!f) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      canvas.width = 160;
+                      canvas.height = 160;
+                      const ctx = canvas.getContext('2d');
+                      if (!ctx) return;
+                      ctx.drawImage(img, 0, 0, 160, 160);
+                      const dataUrl = canvas.toDataURL('image/webp', 0.8);
+                      const next = [
+                        ...customStickers.slice(-11),
+                        { id: `cs_${Date.now()}`, dataUrl, label: f.name.slice(0, 10) },
+                      ];
+                      setCustomStickers(next);
+                      try {
+                        window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
+                      } catch {}
+                    };
+                    img.src = String(reader.result || '');
+                  };
+                  reader.readAsDataURL(f);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => customStickerInputRef.current?.click()}
+                className="w-full py-1.5 rounded-xl border border-dashed border-[#8C0027]/50 text-[#8C0027] dark:text-[#F47296] text-xs font-bold hover:bg-[#8C0027]/5"
+              >
+                + Tambah Stiker Kustom
+              </button>
             </div>
           )}
         </div>
@@ -3457,6 +3688,80 @@ export function ChatWindow({
                   );
                 })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Thread Drawer (#2) */}
+      {threadRootMsg && (
+        <div
+          onClick={() => setThreadRootMsg(null)}
+          className="fixed inset-0 z-[80] bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 pb-safe-3 space-y-3 p5-modal-impact max-h-[82dvh] flex flex-col"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+                <span>Thread Balasan</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setThreadRootMsg(null)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#1E2738] border-l-4 border-[#8C0027] text-xs">
+              <div className="font-bold text-[#8C0027] dark:text-[#F47296] mb-0.5">
+                {users[threadRootMsg.senderId]?.displayName || 'Pengguna'}
+              </div>
+              <div className="text-[#161B26] dark:text-[#F5F7FA]">
+                {threadRootMsg.text || threadRootMsg.attachment?.name || 'Pesan media'}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto thin-scrollbar space-y-2">
+              {messages
+                .filter((m) => m.replyToId === threadRootMsg.id)
+                .map((rm) => (
+                  <div key={rm.id} className="p-2.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] text-xs space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#161B26] dark:text-[#F5F7FA]">
+                        {users[rm.senderId]?.displayName || 'Pengguna'}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#6B768A]">{formatTimeShort(rm.createdAt)}</span>
+                    </div>
+                    <div className="text-[#161B26] dark:text-[#E2E8F0]">{rm.text}</div>
+                  </div>
+                ))}
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const txt = threadReplyText.trim();
+                if (!txt) return;
+                setThreadReplyText('');
+                await onSendMessage({ text: txt, replyToId: threadRootMsg.id });
+              }}
+              className="flex items-center gap-2 pt-1"
+            >
+              <input
+                type="text"
+                value={threadReplyText}
+                onChange={(e) => setThreadReplyText(e.target.value)}
+                placeholder="Balas di thread ini..."
+                className="flex-1 h-9 px-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA]"
+              />
+              <button
+                type="submit"
+                className="h-9 px-4 rounded-full bg-[#8C0027] text-white text-xs font-bold"
+              >
+                Kirim
+              </button>
+            </form>
           </div>
         </div>
       )}

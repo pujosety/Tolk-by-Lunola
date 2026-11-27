@@ -359,6 +359,37 @@ export const api = {
       preview: { url: string; title: string; description?: string; image?: string; domain?: string };
     }>(`/api/link-preview?url=${encodeURIComponent(url)}`, { token }),
 
+  searchMessages: (token: string, q: string) =>
+    requestJson<{
+      results: Array<{ chatId: string; chatTitle: string; message: Message }>;
+    }>(`/api/search?q=${encodeURIComponent(q)}`, { token }),
+
+  setGroupApprovalMode: (token: string, chatId: string, requireApproval: boolean) =>
+    requestJson<{ requireApproval: boolean }>(
+      `/api/chats/${encodeURIComponent(chatId)}/approval-mode`,
+      { method: 'POST', token, body: { requireApproval } }
+    ),
+
+  respondJoinRequest: (
+    token: string,
+    chatId: string,
+    targetUserId: string,
+    action: 'approve' | 'reject'
+  ) =>
+    requestJson<{ memberIds: string[]; pendingMemberIds: string[] }>(
+      `/api/chats/${encodeURIComponent(chatId)}/pending/${encodeURIComponent(targetUserId)}`,
+      { method: 'POST', token, body: { action } }
+    ),
+
+  sendBroadcast: (
+    token: string,
+    payload: { recipientIds: string[]; text: string; attachment?: Attachment | null }
+  ) =>
+    requestJson<{ ok: boolean; sentCount: number; createdChats: ChatRoom[] }>(
+      '/api/broadcast',
+      { method: 'POST', token, body: payload }
+    ),
+
   updateChatPreferences: (
     token: string,
     chatId: string,

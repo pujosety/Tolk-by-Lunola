@@ -842,6 +842,7 @@ export function CreateChatModal({
   onLookupUsers,
   onSendContactRequest,
   onCreateChat,
+  onSendBroadcast,
 }: {
   open: boolean;
   initialMode: 'dm' | 'group' | 'channel' | 'qr';
@@ -860,10 +861,13 @@ export function CreateChatModal({
     handle?: string;
     memberIds?: string[];
   }) => Promise<void>;
+  onSendBroadcast?: (recipientIds: string[], text: string) => Promise<void>;
 }) {
   const [mode, setMode] = useState<'dm' | 'group' | 'channel'>(
     initialMode === 'qr' ? 'dm' : initialMode
   );
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastText, setBroadcastText] = useState('');
   const [showMyQr, setShowMyQr] = useState(initialMode === 'qr');
   const [scanQrOpen, setScanQrOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -1090,9 +1094,74 @@ export function CreateChatModal({
           <div className="max-h-64 overflow-y-auto thin-scrollbar space-y-2">
             {filteredUsers.length > 0 && (
               <div className="space-y-1">
-                <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
-                  Kontak Anda ({filteredUsers.length})
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+                    Kontak Anda ({filteredUsers.length})
+                  </span>
+                  {onSendBroadcast && (
+                    <button
+                      type="button"
+                      onClick={() => setBroadcastOpen((v) => !v)}
+                      className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] hover:underline"
+                    >
+                      {broadcastOpen ? 'Tutup Siaran' : 'Siaran Baru'}
+                    </button>
+                  )}
                 </div>
+                {broadcastOpen && onSendBroadcast && (
+                  <div className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] space-y-2 mb-2">
+                    <div className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA]">
+                      Kirim Siaran (Broadcast) ke {selectedMembers.length} kontak
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                      {filteredUsers.map((u) => {
+                        const sel = selectedMembers.includes(u.id);
+                        return (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => toggleMember(u.id)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                              sel
+                                ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                                : 'bg-white dark:bg-[#171E2C] text-[#5A6578] dark:text-[#CBD5E1] border-[#E6ECF2] dark:border-[#324058]'
+                            }`}
+                          >
+                            {u.displayName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={broadcastText}
+                        onChange={(e) => setBroadcastText(e.target.value)}
+                        placeholder="Pesan siaran..."
+                        className="flex-1 h-9 px-3 rounded-full bg-white dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] text-xs"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy || selectedMembers.length === 0 || !broadcastText.trim()}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            await onSendBroadcast(selectedMembers, broadcastText.trim());
+                            setBroadcastText('');
+                            setSelectedMembers([]);
+                            setBroadcastOpen(false);
+                            onClose();
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="h-9 px-4 rounded-full bg-[#8C0027] text-white text-xs font-bold disabled:opacity-40"
+                      >
+                        Kirim
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {filteredUsers.map((u) => (
                   <button
                     key={u.id}
@@ -1550,6 +1619,10 @@ export function SettingsModal({
   hasAppLockPin = false,
   onSetAppLockPin,
   onClearAppLockPin,
+  dndAutoReplyEnabled = false,
+  onToggleDndAutoReply,
+  dndAutoReplyText = '',
+  onChangeDndAutoReplyText,
 }: {
   open: boolean;
   initialTab?: 'appearance' | 'notifications' | 'privacy';
@@ -1586,6 +1659,10 @@ export function SettingsModal({
   hasAppLockPin?: boolean;
   onSetAppLockPin?: (pin: string) => Promise<void>;
   onClearAppLockPin?: () => void;
+  dndAutoReplyEnabled?: boolean;
+  onToggleDndAutoReply?: () => void;
+  dndAutoReplyText?: string;
+  onChangeDndAutoReplyText?: (text: string) => void;
 }) {
   const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'privacy'>(initialTab);
@@ -2135,6 +2212,33 @@ export function SettingsModal({
               className="h-4 w-4 accent-[#8C0027]"
             />
           </label>
+
+          {/* DND Auto-Responder (#13) */}
+          {onToggleDndAutoReply && (
+            <div className="pt-3 border-t border-[#E6ECF2] dark:border-[#2A364B] space-y-2">
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <div className="text-[#161B26] dark:text-[#F5F7FA] font-semibold">Balasan Otomatis saat DND</div>
+                  <div className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">Balas DM baru otomatis ketika mode Jangan Ganggu aktif</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={dndAutoReplyEnabled}
+                  onChange={onToggleDndAutoReply}
+                  className="h-4 w-4 accent-[#8C0027]"
+                />
+              </label>
+              {dndAutoReplyEnabled && onChangeDndAutoReplyText && (
+                <input
+                  type="text"
+                  value={dndAutoReplyText}
+                  onChange={(e) => onChangeDndAutoReplyText(e.target.value)}
+                  placeholder="Pesan balasan otomatis..."
+                  className="w-full px-3 py-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA]"
+                />
+              )}
+            </div>
+          )}
         </section>
         )}
 

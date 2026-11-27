@@ -64,6 +64,10 @@ interface ChatInfoDrawerProps {
   onToggleLockChat?: () => void;
   onClearChat?: () => Promise<void>;
   onSetSlowMode?: (seconds: number) => Promise<void>;
+  labels?: string[];
+  onToggleLabel?: (label: string) => void;
+  onSetApprovalMode?: (requireApproval: boolean) => Promise<void>;
+  onRespondJoinRequest?: (targetUserId: string, action: 'approve' | 'reject') => Promise<void>;
 }
 
 const TIMER_OPTIONS = [
@@ -106,6 +110,10 @@ export function ChatInfoDrawer({
   onToggleLockChat,
   onClearChat,
   onSetSlowMode,
+  labels = [],
+  onToggleLabel,
+  onSetApprovalMode,
+  onRespondJoinRequest,
 }: ChatInfoDrawerProps) {
   const [tab, setTab] = useState<'members' | 'media' | 'files' | 'links' | 'voice'>(
     chat.type === 'dm' ? 'media' : 'members'
@@ -608,6 +616,101 @@ export function ChatInfoDrawer({
               >
                 .JSON
               </button>
+            </div>
+          </div>
+
+          {/* Custom Chat Labels (#6) */}
+          {onToggleLabel && (
+            <div className="px-3 py-2 space-y-1.5">
+              <div className="text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                Label Kategori Chat
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {['Kerja', 'Keluarga', 'Penting', 'Selesai'].map((lbl) => {
+                  const active = labels.includes(lbl);
+                  return (
+                    <button
+                      key={lbl}
+                      type="button"
+                      onClick={() => onToggleLabel(lbl)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+                        active
+                          ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                          : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#5A6578] dark:text-[#CBD5E1] border-[#E6ECF2] dark:border-[#324058]'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Group Join Approval (#12) */}
+          {chat.type === 'group' && isGroupAdmin && onSetApprovalMode && (
+            <div className="px-3 py-2 space-y-2">
+              <label className="flex items-center justify-between cursor-pointer text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                <span>Setujui Anggota Baru</span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(chat.requireApproval)}
+                  onChange={(e) => void onSetApprovalMode(e.target.checked)}
+                  className="h-4 w-4 accent-[#8C0027]"
+                />
+              </label>
+              {(chat.pendingMemberIds?.length || 0) > 0 && onRespondJoinRequest && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
+                    Menunggu Persetujuan ({chat.pendingMemberIds!.length})
+                  </div>
+                  {chat.pendingMemberIds!.map((pid) => (
+                    <div key={pid} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] text-xs">
+                      <span className="font-semibold truncate">{users[pid]?.displayName || pid}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => void onRespondJoinRequest(pid, 'approve')}
+                          className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold"
+                        >
+                          Terima
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void onRespondJoinRequest(pid, 'reject')}
+                          className="px-2 py-0.5 rounded-full bg-[#B91C1C] text-white text-[10px] font-bold"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Chat Insights (#14) */}
+          <div className="px-3 py-2">
+            <div className="p-2.5 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="font-mono font-extrabold text-sm text-[#161B26] dark:text-[#F5F7FA]">
+                  {messages.length}
+                </div>
+                <div className="text-[10px] text-[#5A6578] dark:text-[#94A3B8]">Total Pesan</div>
+              </div>
+              <div>
+                <div className="font-mono font-extrabold text-sm text-[#8C0027] dark:text-[#F47296]">
+                  {mediaMessages.length}
+                </div>
+                <div className="text-[10px] text-[#5A6578] dark:text-[#94A3B8]">Media</div>
+              </div>
+              <div>
+                <div className="font-mono font-extrabold text-sm text-[#161B26] dark:text-[#F5F7FA]">
+                  {linkMessages.length}
+                </div>
+                <div className="text-[10px] text-[#5A6578] dark:text-[#94A3B8]">Tautan</div>
+              </div>
             </div>
           </div>
         </div>

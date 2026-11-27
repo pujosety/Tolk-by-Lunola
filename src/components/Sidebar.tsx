@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type RefObject } from 'react';
 import { TolkHorizontalLogo, TolkSymbolSmallLogo } from './TolkLogo';
 import {
   Archive,
+  AtSign,
   Bell,
   BellOff,
   Camera,
@@ -9,6 +10,8 @@ import {
   CheckCheck,
   CircleDot,
   Edit3,
+  Eye,
+  EyeOff,
   FileText,
   Film,
   Image as ImageIcon,
@@ -35,6 +38,7 @@ import type {
   FolderKey,
   FriendRequest,
   LanguageCode,
+  Message,
   PlatformSettings,
   StoryItem,
   UserProfile,
@@ -64,6 +68,10 @@ interface SidebarProps {
   typingByChat: Record<string, string[]>;
   draftsByChat: Record<string, string>;
   lockedChatIds?: string[];
+  chatLabels?: Record<string, string[]>;
+  globalSearchResults?: Array<{ chatId: string; chatTitle: string; message: Message }>;
+  privacyBlur?: boolean;
+  onTogglePrivacyBlur?: () => void;
   activeChatId: string | null;
   activeFolder: FolderKey;
   searchQuery: string;
@@ -91,6 +99,7 @@ interface SidebarProps {
   onOpenSettings: (tab?: 'appearance' | 'notifications' | 'privacy') => void;
   onOpenAdminPanel: () => void;
   onLogout: () => void;
+  onQuickStatus?: (statusText: string) => Promise<void>;
   onDeleteChat: (chatId: string) => Promise<void>;
   onTogglePinChat: (chatId: string) => Promise<void>;
   onToggleArchiveChat: (chatId: string) => Promise<void>;
@@ -133,6 +142,10 @@ export function Sidebar({
   typingByChat,
   draftsByChat,
   lockedChatIds = [],
+  chatLabels = {},
+  globalSearchResults = [],
+  privacyBlur = false,
+  onTogglePrivacyBlur,
   activeChatId,
   activeFolder,
   searchQuery,
@@ -160,6 +173,7 @@ export function Sidebar({
   onOpenSettings,
   onOpenAdminPanel,
   onLogout,
+  onQuickStatus,
   onDeleteChat,
   onTogglePinChat,
   onToggleArchiveChat,
@@ -173,6 +187,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [previewChat, setPreviewChat] = useState<ChatRoom | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [activeLabel, setActiveLabel] = useState<string>('all');
   const longPressTimerRef = useRef<number | null>(null);
 
   const navOrder: MainNavTab[] = ['chats', 'status', 'updates', 'calls', 'you'];
@@ -315,6 +330,11 @@ export function Sidebar({
         }
       }
 
+      if (activeLabel !== 'all') {
+        const labels = chatLabels[chat.id] || [];
+        if (!labels.includes(activeLabel)) return false;
+      }
+
       if (!q) return true;
       const inTitle = chat.title.toLowerCase().includes(q);
       const inHandle = (chat.handle || '').toLowerCase().includes(q);
@@ -322,7 +342,7 @@ export function Sidebar({
       const inLast = (chat.lastMessage?.text || '').toLowerCase().includes(q);
       return inTitle || inHandle || inPeer || inLast;
     });
-  }, [chats, activeFolder, searchQuery, lockedSet]);
+  }, [chats, activeFolder, searchQuery, lockedSet, activeLabel, chatLabels]);
 
   const unreadByFolder = useMemo(() => {
     const counts: Record<FolderKey, number> = {
@@ -476,8 +496,23 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Right Actions: Camera Shortcut, Overflow Menu (top-right dropdown), Minimize (desktop) */}
+          {/* Right Actions: Privacy Blur, Camera Shortcut, Overflow Menu, Minimize */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {onTogglePrivacyBlur && (
+              <button
+                type="button"
+                onClick={onTogglePrivacyBlur}
+                aria-label={privacyBlur ? 'Matikan mode privasi layar' : 'Aktifkan mode privasi layar'}
+                title={privacyBlur ? 'Mode Privasi Aktif' : 'Blur Pratinjau Chat'}
+                className={`h-10 w-10 rounded-full border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 transition-colors ${
+                  privacyBlur
+                    ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                    : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
+                }`}
+              >
+                {privacyBlur ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            )}
             <button
               type="button"
               onClick={onOpenQuickCamera}
@@ -643,6 +678,24 @@ export function Sidebar({
           );
         })}
             </div>
+            {Object.values(chatLabels).some((arr) => arr.length > 0) && (
+              <div className="mt-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar">
+                {['all', 'Kerja', 'Keluarga', 'Penting', 'Selesai'].map((lbl) => (
+                  <button
+                    key={lbl}
+                    type="button"
+                    onClick={() => setActiveLabel(lbl)}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap transition-colors ${
+                      activeLabel === lbl
+                        ? 'bg-[#8C0027] text-white border-[#8C0027]'
+                        : 'bg-[#F5F7FA] dark:bg-[#232D40] text-[#5A6578] dark:text-[#CBD5E1] border-[#E6ECF2] dark:border-[#324058]'
+                    }`}
+                  >
+                    {lbl === 'all' ? 'Semua Label' : lbl}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
       {/* Chat List */}
@@ -824,6 +877,8 @@ export function Sidebar({
                   <div className="mt-0.5 flex items-center justify-between gap-2">
                     <div
                       className={`flex items-center gap-1 text-xs truncate ${
+                        privacyBlur ? 'blur-[4px] select-none' : ''
+                      } ${
                         typingIds.length > 0
                           ? isSelected
                             ? 'text-[#F59B00] dark:text-[#BEDEFF] md:text-[#FFFFFF] md:dark:text-[#FFFFFF] font-semibold'
@@ -849,6 +904,12 @@ export function Sidebar({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                      {showUnread &&
+                        (lastMsg?.text || '').toLowerCase().includes(`@${currentUser.username.toLowerCase()}`) && (
+                          <span className="h-5 w-5 rounded-full bg-[#8C0027]/15 text-[#8C0027] dark:text-[#F47296] flex items-center justify-center">
+                            <AtSign className="w-3 h-3" />
+                          </span>
+                        )}
                       {chat.isPinnedByUser && !showUnread && (
                         <Pin
                           className={`w-3 h-3 rotate-45 ${
@@ -879,6 +940,30 @@ export function Sidebar({
               </button>
             );
           })
+        )}
+
+        {/* Global Message Search Results (#8) */}
+        {searchQuery.trim().length >= 2 && globalSearchResults.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-[#E6ECF2] dark:border-[#2A364B]">
+            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#5A6578] dark:text-[#94A3B8]">
+              Pesan Ditemukan ({globalSearchResults.length})
+            </div>
+            {globalSearchResults.map((res) => (
+              <button
+                key={res.message.id}
+                type="button"
+                onClick={() => onSelectChat(res.chatId)}
+                className="w-full px-3 py-2 rounded-xl text-left hover:bg-[#EAF4FF] dark:hover:bg-[#1E2738] flex flex-col gap-0.5"
+              >
+                <div className="text-xs font-bold text-[#8C0027] dark:text-[#F47296] truncate">
+                  {res.chatTitle}
+                </div>
+                <div className={`text-xs text-[#161B26] dark:text-[#F5F7FA] truncate ${privacyBlur ? 'blur-[4px] select-none' : ''}`}>
+                  {res.message.text || res.message.attachment?.name || 'Lampiran'}
+                </div>
+              </button>
+            ))}
+          </div>
         )}
 
       </div>
@@ -970,6 +1055,7 @@ export function Sidebar({
             onOpenSettings={onOpenSettings}
             onOpenAdminPanel={onOpenAdminPanel}
             onLogout={onLogout}
+            onQuickStatus={onQuickStatus}
           />
         </div>
         </div>

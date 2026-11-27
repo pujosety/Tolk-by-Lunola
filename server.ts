@@ -107,6 +107,8 @@ interface StoredChat {
   pinnedMessageId: string | null;
   selfDestructSec: number;
   slowModeSec?: number;
+  requireApproval?: boolean;
+  pendingMemberIds?: string[];
   subscriberCount?: number;
   inviteExpiresAt?: number | null;
   inviteMaxUses?: number | null;
@@ -958,6 +960,9 @@ function buildChatRoomForUser(chat: StoredChat, userId: string): ChatRoom {
     isArchivedByUser: user?.archivedChatIds?.includes(chat.id) || false,
     markedUnreadByUser: markedUnread,
     selfDestructSec: chat.selfDestructSec || 0,
+    slowModeSec: chat.slowModeSec || 0,
+    requireApproval: Boolean(chat.requireApproval),
+    pendingMemberIds: chat.pendingMemberIds || [],
     subscriberCount: chat.subscriberCount,
     inviteExpiresAt: chat.inviteExpiresAt ?? null,
     inviteMaxUses: chat.inviteMaxUses ?? null,
@@ -2809,6 +2814,134 @@ async function startServer(): Promise<void> {
     store.scheduledMessages.splice(idx, 1);
     saveStore(store);
     res.json({ ok: true });
+  });
+
+  // Global Message Search (#8)
+  app.get('/api/search', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const q = String(req.query.q || '').trim().toLowerCase();
+    if (q.length < 2) {
+      res.json({ results: [] });
+      return;
+    }
+    const results: Array<{ chatId: string; chatTitle: string; message: Message }> = [];
+    for (const chat of Object.values(store.chats)) {
+      if (!chat.memberIds.includes(userId)) continue;
+      const msgs = store.messages[chat.id] || [];
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        const m = msgs[i];
+        const textMatch = (m.text || '').toLowerCase().includes(q);
+        const fileMatch = (m.attachment?.name || '').toLowerCase().includes(q);
+        if (textMatch || fileMatch) {
+          results.push({
+            chatId: chat.id,
+            chatTitle: buildChatRoomForUser(chat, userId).title,
+            message: m,
+          });
+          if (results.length >= 40) break;
+        }
+      }
+      if (results.length >= 40) break;
+    }
+    results.sort((a, b) => b.message.createdAt - a.message.createdAt);
+    res.json({ results: results.slice(0, 40) });
+  });
+
+  // Group Join Approval Mode (#12)
+  app.post('/api/chats/:chatId/approval-mode', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const chat = store.chats[req.params.chatId];
+    if (!chat || chat.type !== 'group' || !chat.adminIds.includes(userId)) {
+      res.status(403).json({ error: 'Hanya admin grup yang dapat mengubah mode persetujuan.' });
+      return;
+    }
+    chat.requireApproval = Boolean(req.body?.requireApproval);
+    saveStore(store);
+    broadcastToChat(chat, {
+      type: 'chat:updated',
+      chatId: chat.id,
+      patch: { requireApproval: chat.requireApproval },
+    });
+    res.json({ requireApproval: chat.requireApproval });
+  });
+
+  app.post('/api/chats/:chatId/pending/:targetUserId', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const chat = store.chats[req.params.chatId];
+    const targetUserId = req.params.targetUserId;
+    if (!chat || (!chat.adminIds.includes(userId) && !chat.moderatorIds.includes(userId))) {
+      res.status(403).json({ error: 'Hanya admin grup yang dapat memproses permintaan masuk.' });
+      return;
+    }
+    const action = req.body?.action === 'approve' ? 'approve' : 'reject';
+    chat.pendingMemberIds = (chat.pendingMemberIds || []).filter((id) => id !== targetUserId);
+    if (action === 'approve' && store.users[targetUserId] && !chat.memberIds.includes(targetUserId)) {
+      chat.memberIds.push(targetUserId);
+    }
+    saveStore(store);
+    broadcastToChat(chat, {
+      type: 'chat:updated',
+      chatId: chat.id,
+      patch: { memberIds: chat.memberIds, pendingMemberIds: chat.pendingMemberIds },
+    });
+    res.json({ memberIds: chat.memberIds, pendingMemberIds: chat.pendingMemberIds });
+  });
+
+  // Broadcast List (#4)
+  app.post('/api/broadcast', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const rawList: string[] = Array.isArray(req.body?.recipientIds)
+      ? (req.body.recipientIds as unknown[]).map((v) => String(v))
+      : [];
+    const recipientIds: string[] = Array.from(new Set(rawList)).filter(
+      (id) => id !== userId && Boolean(store.users[id])
+    );
+    const text = String(req.body?.text || '').trim();
+    const attachment = req.body?.attachment || null;
+    if (recipientIds.length === 0 || (!text && !attachment)) {
+      res.status(400).json({ error: 'Pilih minimal satu kontak dan isi pesan siaran.' });
+      return;
+    }
+    const createdChats: ChatRoom[] = [];
+    let sentCount = 0;
+    for (const targetId of recipientIds.slice(0, 50)) {
+      const dmId = `dm_${[userId, targetId].sort().join('_')}`;
+      let chat = store.chats[dmId];
+      if (!chat) {
+        chat = {
+          id: dmId,
+          type: 'dm',
+          title: store.users[targetId].displayName,
+          description: '',
+          avatarUrl: null,
+          avatarColor: '#8C0027',
+          memberIds: [userId, targetId],
+          adminIds: [userId, targetId],
+          moderatorIds: [],
+          pinnedMessageId: null,
+          selfDestructSec: 0,
+          createdAt: Date.now(),
+        };
+        store.chats[dmId] = chat;
+        store.messages[dmId] = [];
+        createdChats.push(buildChatRoomForUser(chat, userId));
+      }
+      const msg: Message = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        chatId: dmId,
+        senderId: userId,
+        text,
+        attachment,
+        createdAt: Date.now(),
+        reactions: [],
+        readBy: [userId],
+      };
+      store.messages[dmId] = [...(store.messages[dmId] || []), msg];
+      sentCount += 1;
+      broadcastToChat(chat, { type: 'message:new', message: msg });
+    }
+    saveStore(store);
+    res.json({ ok: true, sentCount, createdChats });
   });
 
   // OpenGraph Link Preview

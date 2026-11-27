@@ -57,6 +57,7 @@ export interface UserProfile {
   email?: string;
   bio: string;
   statusText?: string;
+  statusExpiresAt?: number | null;
   avatarUrl: string | null;
   avatarColor: string;
   isGuest?: boolean;
@@ -103,6 +104,7 @@ export interface Attachment {
   durationSec?: number;
   viewOnce?: boolean;
   viewedBy?: string[];
+  isSpoiler?: boolean;
 }
 
 export interface PollOption {
@@ -199,6 +201,8 @@ export interface ChatRoom {
   markedUnreadByUser?: boolean;
   selfDestructSec: number; // 0 = off
   slowModeSec?: number; // 0 = off
+  requireApproval?: boolean;
+  pendingMemberIds?: string[];
   subscriberCount?: number;
   inviteExpiresAt?: number | null;
   inviteMaxUses?: number | null;

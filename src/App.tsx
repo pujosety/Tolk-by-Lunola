@@ -164,6 +164,42 @@ export function App() {
       { trigger: '/makasih', text: 'Terima kasih banyak atas informasinya!' },
     ];
   });
+  const [chatLabels, setChatLabels] = useState<Record<string, string[]>>(() => {
+    try {
+      const raw = window.localStorage.getItem('tolk_chat_labels');
+      return raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [privacyBlur, setPrivacyBlur] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('tolk_privacy_blur') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [globalSearchResults, setGlobalSearchResults] = useState<
+    Array<{ chatId: string; chatTitle: string; message: Message }>
+  >([]);
+  const [dndAutoReplyEnabled, setDndAutoReplyEnabled] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('tolk_dnd_autoreply') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [dndAutoReplyText, setDndAutoReplyText] = useState<string>(() => {
+    try {
+      return (
+        window.localStorage.getItem('tolk_dnd_autoreply_text') ||
+        'Sedang mode Jangan Ganggu. Saya akan membalas pesan Anda segera.'
+      );
+    } catch {
+      return 'Sedang mode Jangan Ganggu. Saya akan membalas pesan Anda segera.';
+    }
+  });
+  const autoRepliedAtRef = useRef<Record<string, number>>({});
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
@@ -961,8 +997,20 @@ export function App() {
                   id: msg.id,
                   chatId: msg.chatId,
                   title: notifTitle,
-                  body: notifBody,
+                  body: privacyBlur ? 'Pesan baru (Mode Privasi)' : notifBody,
                 });
+              }
+              if (
+                dndEnabled &&
+                dndAutoReplyEnabled &&
+                targetChat?.type === 'dm' &&
+                dndAutoReplyText.trim()
+              ) {
+                const lastSent = autoRepliedAtRef.current[msg.senderId] || 0;
+                if (Date.now() - lastSent > 3600_000) {
+                  autoRepliedAtRef.current[msg.senderId] = Date.now();
+                  void api.sendMessage(token, msg.chatId, { text: dndAutoReplyText.trim() }).catch(() => {});
+                }
               }
             }
           }
@@ -1340,6 +1388,91 @@ export function App() {
       }
     },
     [token]
+  );
+
+  useEffect(() => {
+    if (!token || searchQuery.trim().length < 2) {
+      setGlobalSearchResults([]);
+      return;
+    }
+    let cancelled = false;
+    const tId = window.setTimeout(() => {
+      void api
+        .searchMessages(token, searchQuery.trim())
+        .then((res) => {
+          if (!cancelled) setGlobalSearchResults(res.results);
+        })
+        .catch(() => {
+          if (!cancelled) setGlobalSearchResults([]);
+        });
+    }, 280);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(tId);
+    };
+  }, [token, searchQuery]);
+
+  const handleToggleLabel = useCallback((chatId: string, label: string) => {
+    setChatLabels((prev) => {
+      const current = prev[chatId] || [];
+      const nextList = current.includes(label)
+        ? current.filter((l) => l !== label)
+        : [...current, label];
+      const next = { ...prev, [chatId]: nextList };
+      try {
+        window.localStorage.setItem('tolk_chat_labels', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const handleRemindMessage = useCallback(
+    (msg: Message, delayMs: number) => {
+      showToast('Pengingat pesan disetel.');
+      window.setTimeout(() => {
+        showBrowserNotification(
+          'Pengingat Pesan Tolk',
+          msg.text || msg.attachment?.name || 'Pesan yang diingatkan',
+          msg.chatId,
+          { forceInForeground: true }
+        );
+        setInAppNotif({
+          id: `rem_${msg.id}`,
+          chatId: msg.chatId,
+          title: 'Pengingat Pesan',
+          body: msg.text || msg.attachment?.name || 'Pesan yang diingatkan',
+        });
+      }, delayMs);
+    },
+    [showToast]
+  );
+
+  const handleQuickStatus = useCallback(
+    async (statusText: string) => {
+      if (!token || !currentUser) return;
+      const { user: updated } = await api.updateProfile(token, {
+        displayName: currentUser.displayName,
+        username: currentUser.username,
+        bio: currentUser.bio,
+        statusText,
+      });
+      setCurrentUser(updated);
+      setUsers((prev) => ({ ...prev, [updated.id]: updated }));
+      showToast(statusText ? `Status diubah ke "${statusText}".` : 'Status dihapus.');
+    },
+    [token, currentUser, showToast]
+  );
+
+  const handleSendBroadcast = useCallback(
+    async (recipientIds: string[], text: string) => {
+      if (!token) return;
+      const res = await api.sendBroadcast(token, { recipientIds, text });
+      if (res.createdChats.length > 0) {
+        setChats((prev) => sortChats([...res.createdChats, ...prev]));
+      }
+      showToast(`Pesan siaran terkirim ke ${res.sentCount} kontak.`);
+    },
+    [token, showToast]
   );
 
   const handleSendMessage = useCallback(
@@ -1876,6 +2009,19 @@ export function App() {
             typingByChat={typingByChat}
             draftsByChat={draftsByChat}
             lockedChatIds={lockedChatIds}
+            chatLabels={chatLabels}
+            globalSearchResults={globalSearchResults}
+            privacyBlur={privacyBlur}
+            onTogglePrivacyBlur={() =>
+              setPrivacyBlur((v) => {
+                const next = !v;
+                try {
+                  window.localStorage.setItem('tolk_privacy_blur', String(next));
+                } catch {}
+                return next;
+              })
+            }
+            onQuickStatus={handleQuickStatus}
             activeChatId={activeChatId}
             activeFolder={activeFolder}
             searchQuery={searchQuery}
@@ -2037,6 +2183,7 @@ export function App() {
               onForwardMessage={(msg) => setForwardMsg(msg)}
               onTranslateMessage={handleTranslateMessage}
               onSummarizeChat={handleSummarizeChat}
+              onRemindMessage={handleRemindMessage}
               onReportMessage={(msg) =>
                 setReportTarget({
                   targetType: 'message',
@@ -2110,6 +2257,26 @@ export function App() {
               onToggleLockChat={() => handleToggleLockChat(activeChat.id)}
               onClearChat={() => handleClearChat(activeChat.id)}
               onSetSlowMode={(sec) => handleSetSlowMode(activeChat.id, sec)}
+              labels={chatLabels[activeChat.id] || []}
+              onToggleLabel={(lbl) => handleToggleLabel(activeChat.id, lbl)}
+              onSetApprovalMode={async (requireApproval) => {
+                await api.setGroupApprovalMode(token, activeChat.id, requireApproval);
+                setChats((prev) =>
+                  prev.map((c) => (c.id === activeChat.id ? { ...c, requireApproval } : c))
+                );
+                showToast(requireApproval ? 'Persetujuan anggota diaktifkan.' : 'Persetujuan anggota dimatikan.');
+              }}
+              onRespondJoinRequest={async (targetUserId, action) => {
+                const res = await api.respondJoinRequest(token, activeChat.id, targetUserId, action);
+                setChats((prev) =>
+                  prev.map((c) =>
+                    c.id === activeChat.id
+                      ? { ...c, memberIds: res.memberIds, pendingMemberIds: res.pendingMemberIds }
+                      : c
+                  )
+                );
+                showToast(action === 'approve' ? 'Anggota disetujui.' : 'Permintaan ditolak.');
+              }}
               onStartDmWithUser={(uid) => {
                 setInfoOpen(false);
                 void handleCreateChat({ type: 'dm', targetUserId: uid });
@@ -2243,6 +2410,7 @@ export function App() {
           }
         }}
         onCreateChat={handleCreateChat}
+        onSendBroadcast={handleSendBroadcast}
       />
 
       <NotificationsModal
@@ -2379,6 +2547,23 @@ export function App() {
         hasAppLockPin={Boolean(appLockHash)}
         onSetAppLockPin={handleSetAppLockPin}
         onClearAppLockPin={handleClearAppLockPin}
+        dndAutoReplyEnabled={dndAutoReplyEnabled}
+        onToggleDndAutoReply={() =>
+          setDndAutoReplyEnabled((v) => {
+            const next = !v;
+            try {
+              window.localStorage.setItem('tolk_dnd_autoreply', String(next));
+            } catch {}
+            return next;
+          })
+        }
+        dndAutoReplyText={dndAutoReplyText}
+        onChangeDndAutoReplyText={(txt) => {
+          setDndAutoReplyText(txt);
+          try {
+            window.localStorage.setItem('tolk_dnd_autoreply_text', txt);
+          } catch {}
+        }}
       />
 
       <ReportModal
