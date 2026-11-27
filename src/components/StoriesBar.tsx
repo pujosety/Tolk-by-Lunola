@@ -1768,6 +1768,7 @@ function StoryViewerModal({
                   if (!replyText.trim()) return;
                   await onReply(replyText.trim());
                   setReplyText('');
+                  (document.activeElement as HTMLElement | null)?.blur();
                 }}
                 className="flex items-center justify-center gap-2"
               >

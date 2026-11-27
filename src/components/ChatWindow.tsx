@@ -536,6 +536,10 @@ export function ChatWindow({
         clearPendingFile();
       }
       onTyping(false);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        inputRef.current?.blur();
+        setComposerFocused(false);
+      }
     } catch (err) {
       if (pendingFile) {
         setUploadError(err instanceof Error ? err.message : 'Gagal mengunggah lampiran.');
