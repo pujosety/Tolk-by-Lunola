@@ -335,6 +335,9 @@ export function ChatWindow({
   const edgeSwipeRef = useRef<{ x: number; y: number } | null>(null);
   const lightboxTouchRef = useRef<{ y: number } | null>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [unreadWhileScrolledUp, setUnreadWhileScrolledUp] = useState(0);
+  const showScrollDownRef = useRef(false);
+  const prevMsgLenRef = useRef(messages.length);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
@@ -432,10 +435,20 @@ export function ChatWindow({
     setScheduledFor(null);
     setSummaryText(null);
     setMobileHeaderMenuOpen(false);
+    setShowScrollDown(false);
+    showScrollDownRef.current = false;
+    setUnreadWhileScrolledUp(0);
+    prevMsgLenRef.current = messages.length;
     clearPendingFile();
   }, [chat.id]);
 
   useEffect(() => {
+    const added = messages.length - prevMsgLenRef.current;
+    prevMsgLenRef.current = messages.length;
+    if (added > 0 && showScrollDownRef.current) {
+      setUnreadWhileScrolledUp((c) => c + added);
+      return;
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, chat.id]);
 
@@ -975,7 +988,10 @@ export function ChatWindow({
           if (activeMenuMsgId) setActiveMenuMsgId(null);
           const el = e.currentTarget;
           const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-          setShowScrollDown(distFromBottom > 180);
+          const far = distFromBottom > 180;
+          showScrollDownRef.current = far;
+          setShowScrollDown(far);
+          if (!far) setUnreadWhileScrolledUp(0);
         }}
         onTouchStart={(e) => {
           if (e.touches.length === 1 && e.touches[0].clientX < 28) {
@@ -1642,17 +1658,23 @@ export function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* WhatsApp-style Scroll-to-Bottom FAB */}
+      {/* WhatsApp-style Scroll-to-Bottom FAB with Unread Counter */}
       {showScrollDown && (
         <button
           type="button"
           onClick={() => {
             triggerAndroidHaptic();
+            setUnreadWhileScrolledUp(0);
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           }}
           aria-label="Gulir ke pesan terbaru"
-          className="p5-panel-reveal absolute bottom-20 right-4 z-20 h-10 w-10 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] brutal-shadow flex items-center justify-center brutal-press"
+          className="p5-panel-reveal absolute bottom-20 right-4 z-20 h-11 w-11 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] brutal-shadow flex items-center justify-center brutal-press"
         >
+          {unreadWhileScrolledUp > 0 && (
+            <span className="absolute -top-2 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-[#8C0027] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-sm">
+              {unreadWhileScrolledUp > 99 ? '99+' : unreadWhileScrolledUp}
+            </span>
+          )}
           <ChevronDown className="w-5 h-5" />
         </button>
       )}
@@ -1719,7 +1741,7 @@ export function ChatWindow({
                 type="button"
                 onClick={clearPendingFile}
                 aria-label="Hapus pratinjau file"
-                className="p-1.5 text-[#5A6578] hover:text-[#8C0027]"
+                className="h-9 w-9 rounded-full flex items-center justify-center text-[#5A6578] hover:text-[#8C0027] hover:bg-black/5 dark:hover:bg-white/5 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
