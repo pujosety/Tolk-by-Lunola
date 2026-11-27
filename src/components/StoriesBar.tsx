@@ -503,16 +503,24 @@ export function UpdatesView({
         )}
 
       {/* Full-Screen Story Viewer (portaled above all headers/navbars) */}
-      {viewerRetained.renderedValue &&
-        createPortal(
+      {viewerRetained.renderedValue && (() => {
+        const curUid = viewerRetained.renderedValue.userId;
+        const pos = viewerAuthorOrder.indexOf(curUid);
+        const prevUid = pos > 0 ? viewerAuthorOrder[pos - 1] : null;
+        const nextUid = pos >= 0 && pos + 1 < viewerAuthorOrder.length ? viewerAuthorOrder[pos + 1] : null;
+        const prevUserStory = prevUid ? (groupedByAuthor.find(([uid]) => uid === prevUid)?.[1]?.[0] || null) : null;
+        const nextUserStory = nextUid ? (groupedByAuthor.find(([uid]) => uid === nextUid)?.[1]?.[0] || null) : null;
+        return createPortal(
           <StoryViewerModal
             closing={viewerRetained.closing}
             story={viewerRetained.renderedValue}
             nextStory={activeAuthorStories[activeStoryIndex + 1] || null}
-            author={users[viewerRetained.renderedValue.userId]}
+            prevUserStory={prevUserStory}
+            nextUserStory={nextUserStory}
+            author={users[curUid]}
             users={users}
             currentUserId={currentUser.id}
-            isOwn={viewerRetained.renderedValue.userId === currentUser.id}
+            isOwn={curUid === currentUser.id}
             initialShowViewers={openViewersOnMount}
             index={activeStoryIndex}
             total={Math.max(1, activeAuthorStories.length)}
@@ -522,15 +530,10 @@ export function UpdatesView({
                 setActiveStoryIndex((i) => i - 1);
                 return;
               }
-              if (activeAuthorId) {
-                const pos = viewerAuthorOrder.indexOf(activeAuthorId);
-                if (pos > 0) {
-                  const prevUid = viewerAuthorOrder[pos - 1];
-                  const prevList =
-                    groupedByAuthor.find(([uid]) => uid === prevUid)?.[1] || [];
-                  setActiveAuthorId(prevUid);
-                  setActiveStoryIndex(Math.max(0, prevList.length - 1));
-                }
+              if (prevUid) {
+                const prevList = groupedByAuthor.find(([uid]) => uid === prevUid)?.[1] || [];
+                setActiveAuthorId(prevUid);
+                setActiveStoryIndex(Math.max(0, prevList.length - 1));
               }
             }}
             onNext={() => {
@@ -539,15 +542,29 @@ export function UpdatesView({
                 setActiveStoryIndex((i) => i + 1);
                 return;
               }
-              if (activeAuthorId) {
-                const pos = viewerAuthorOrder.indexOf(activeAuthorId);
-                if (pos >= 0 && pos + 1 < viewerAuthorOrder.length) {
-                  setActiveAuthorId(viewerAuthorOrder[pos + 1]);
-                  setActiveStoryIndex(0);
-                  return;
-                }
+              if (nextUid) {
+                setActiveAuthorId(nextUid);
+                setActiveStoryIndex(0);
+                return;
               }
               setActiveAuthorId(null);
+            }}
+            onPrevUser={() => {
+              if (!prevUid) return false;
+              setOpenViewersOnMount(false);
+              setActiveAuthorId(prevUid);
+              setActiveStoryIndex(0);
+              return true;
+            }}
+            onNextUser={() => {
+              if (!nextUid) {
+                setActiveAuthorId(null);
+                return true;
+              }
+              setOpenViewersOnMount(false);
+              setActiveAuthorId(nextUid);
+              setActiveStoryIndex(0);
+              return true;
             }}
             onClose={() => {
               setOpenViewersOnMount(false);
@@ -585,7 +602,8 @@ export function UpdatesView({
             }}
           />,
           document.body
-        )}
+        );
+      })()}
     </>
   );
 }
@@ -1237,6 +1255,8 @@ function StoryViewerModal({
   closing,
   story,
   nextStory,
+  prevUserStory,
+  nextUserStory,
   author,
   users,
   currentUserId,
@@ -1246,6 +1266,8 @@ function StoryViewerModal({
   total,
   onPrev,
   onNext,
+  onPrevUser,
+  onNextUser,
   onClose,
   onDelete,
   onMuteAuthor,
@@ -1256,6 +1278,8 @@ function StoryViewerModal({
   closing: boolean;
   story: StoryItem;
   nextStory?: StoryItem | null;
+  prevUserStory?: StoryItem | null;
+  nextUserStory?: StoryItem | null;
   author?: UserProfile;
   users: Record<string, UserProfile>;
   currentUserId: string;
@@ -1265,6 +1289,8 @@ function StoryViewerModal({
   total: number;
   onPrev: () => void;
   onNext: () => void;
+  onPrevUser: () => boolean;
+  onNextUser: () => boolean;
   onClose: () => void;
   onDelete: () => Promise<void>;
   onMuteAuthor: () => Promise<void>;
@@ -1277,7 +1303,9 @@ function StoryViewerModal({
   const [paused, setPaused] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
   const [dragOffsetX, setDragOffsetX] = useState(0);
+  const [userSlideDir, setUserSlideDir] = useState<'next' | 'prev' | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number; ignore: boolean } | null>(null);
+  const justSwipedRef = useRef(false);
   const viewersPresence = useAnimatedPresence(showViewers, 175);
 
   useEffect(() => {
@@ -1354,9 +1382,19 @@ function StoryViewerModal({
     const dy = e.changedTouches[0].clientY - start.y;
 
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      justSwipedRef.current = true;
+      window.setTimeout(() => {
+        justSwipedRef.current = false;
+      }, 220);
       triggerAndroidHaptic();
-      if (dx < 0) onNext();
-      else onPrev();
+      if (dx < 0) {
+        setUserSlideDir('next');
+        onNextUser();
+      } else {
+        if (onPrevUser()) {
+          setUserSlideDir('prev');
+        }
+      }
       return;
     }
 
@@ -1378,9 +1416,46 @@ function StoryViewerModal({
       }}
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-x-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4 transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+      } fixed inset-x-0 z-[80] bg-black/95 flex items-center justify-center p-0 sm:p-4 overflow-hidden transition-[height,top] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)]`}
     >
+      {/* Interactive Adjacent User Preview Card during horizontal swipe */}
+      {dragOffsetX < -10 && nextUserStory && (
+        <div
+          style={{
+            backgroundColor: nextUserStory.mediaUrl ? '#000000' : nextUserStory.bgColor,
+            opacity: Math.min(1, 0.35 + Math.abs(dragOffsetX) / 220),
+            transform: `scale(${(0.92 + Math.min(0.08, Math.abs(dragOffsetX) / 2400)).toFixed(3)})`,
+          }}
+          className="pointer-events-none absolute w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex items-center justify-center"
+        >
+          {nextUserStory.mediaUrl && nextUserStory.kind === 'image' && (
+            <img src={nextUserStory.mediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+          )}
+          <div className="relative z-10 px-4 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold">
+            {users[nextUserStory.userId]?.displayName || 'Berikutnya'} →
+          </div>
+        </div>
+      )}
+      {dragOffsetX > 10 && prevUserStory && (
+        <div
+          style={{
+            backgroundColor: prevUserStory.mediaUrl ? '#000000' : prevUserStory.bgColor,
+            opacity: Math.min(1, 0.35 + Math.abs(dragOffsetX) / 220),
+            transform: `scale(${(0.92 + Math.min(0.08, Math.abs(dragOffsetX) / 2400)).toFixed(3)})`,
+          }}
+          className="pointer-events-none absolute w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex items-center justify-center"
+        >
+          {prevUserStory.mediaUrl && prevUserStory.kind === 'image' && (
+            <img src={prevUserStory.mediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+          )}
+          <div className="relative z-10 px-4 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold">
+            ← {users[prevUserStory.userId]?.displayName || 'Sebelumnya'}
+          </div>
+        </div>
+      )}
+
       <div
+        key={story.userId}
         onPointerDown={() => setPaused(true)}
         onPointerUp={() => setPaused(false)}
         onPointerCancel={() => setPaused(false)}
@@ -1393,7 +1468,13 @@ function StoryViewerModal({
           setDragOffsetX(0);
         }}
         className={`${
-          closing ? 'p5-modal-out' : 'p5-modal-impact'
+          closing
+            ? 'p5-modal-out'
+            : userSlideDir === 'next'
+              ? 'p5-tab-from-right'
+              : userSlideDir === 'prev'
+                ? 'p5-tab-from-left'
+                : 'p5-modal-impact'
         } ${dragOffsetX === 0 ? 'transition-transform duration-200 ease-out' : ''} relative w-full h-full sm:h-[90dvh] sm:max-h-[820px] sm:aspect-[9/16] sm:w-auto sm:max-w-[440px] rounded-none sm:rounded-3xl overflow-hidden flex flex-col justify-between bg-black brutal-shadow-lg select-none`}
         style={{
           backgroundColor: story.mediaUrl ? '#000000' : story.bgColor,
@@ -1432,7 +1513,8 @@ function StoryViewerModal({
             aria-label="Status sebelumnya"
             onClick={(e) => {
               e.stopPropagation();
-              if (index > 0) onPrev();
+              if (justSwipedRef.current) return;
+              onPrev();
             }}
             className="w-[30%] h-full bg-transparent focus:outline-none"
           />
@@ -1441,6 +1523,7 @@ function StoryViewerModal({
             aria-label="Status berikutnya"
             onClick={(e) => {
               e.stopPropagation();
+              if (justSwipedRef.current) return;
               onNext();
             }}
             className="w-[70%] h-full bg-transparent focus:outline-none"
