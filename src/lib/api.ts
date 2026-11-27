@@ -568,6 +568,23 @@ export const api = {
       body: { text, pinGlobalBanner },
     }),
 
+  adminGetAnnouncements: (token: string) =>
+    requestJson<{ globalAnnouncement: string; items: Message[] }>('/api/admin/announcements', {
+      token,
+    }),
+
+  adminClearAnnouncement: (token: string) =>
+    requestJson<{ ok: boolean; settings: PlatformSettings }>('/api/admin/announcements', {
+      method: 'DELETE',
+      token,
+    }),
+
+  adminDeleteAnnouncementMessage: (token: string, messageId: string) =>
+    requestJson<{ ok: boolean }>(`/api/admin/announcements/${encodeURIComponent(messageId)}`, {
+      method: 'DELETE',
+      token,
+    }),
+
   adminUpdateSettings: (token: string, payload: Partial<PlatformSettings>) =>
     requestJson<{ settings: PlatformSettings }>('/api/admin/settings', {
       method: 'PATCH',

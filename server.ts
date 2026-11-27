@@ -3530,6 +3530,45 @@ async function startServer(): Promise<void> {
     res.status(201).json({ ok: true, settings: store.settings });
   });
 
+  app.get('/api/admin/announcements', requireAuth, requireAdminPermission('announcements:write'), (_req, res) => {
+    const list = (store.messages['chat_lunolatalk_news'] || []).slice().reverse().slice(0, 30);
+    res.json({
+      globalAnnouncement: store.settings.globalAnnouncement || '',
+      items: list,
+    });
+  });
+
+  app.delete('/api/admin/announcements', requireAuth, requireAdminPermission('announcements:write'), (req: AuthedRequest, res) => {
+    const actor = store.users[req.userId!];
+    store.settings.globalAnnouncement = '';
+    appendAudit(actor, 'announcement:cleared', 'Global Broadcast', 'Pengumuman global dihapus');
+    saveStore(store);
+    broadcastAll({ type: 'settings:updated', settings: store.settings });
+    res.json({ ok: true, settings: store.settings });
+  });
+
+  app.delete('/api/admin/announcements/:messageId', requireAuth, requireAdminPermission('announcements:write'), (req: AuthedRequest, res) => {
+    const actor = store.users[req.userId!];
+    const officialChannel = store.chats['chat_lunolatalk_news'];
+    const list = store.messages['chat_lunolatalk_news'] || [];
+    const idx = list.findIndex((m) => m.id === req.params.messageId);
+    if (idx === -1) {
+      res.status(404).json({ error: 'Pengumuman tidak ditemukan.' });
+      return;
+    }
+    const [removed] = list.splice(idx, 1);
+    if (officialChannel) {
+      broadcastToChat(officialChannel, {
+        type: 'message:deleted',
+        chatId: officialChannel.id,
+        messageId: removed.id,
+      });
+    }
+    appendAudit(actor, 'announcement:deleted', removed.id, removed.text.slice(0, 80));
+    saveStore(store);
+    res.json({ ok: true });
+  });
+
   // 7. Backup Export & Verification
   app.get('/api/admin/backup', requireAuth, requireAdminPermission('server:write'), (req: AuthedRequest, res) => {
     const actor = store.users[req.userId!];

@@ -157,6 +157,7 @@ export function AdminPanel({
 
   const [announcementText, setAnnouncementText] = useState('');
   const [pinGlobalBanner, setPinGlobalBanner] = useState(true);
+  const [announcementHistory, setAnnouncementHistory] = useState<Array<{ id: string; text: string; createdAt: number }>>([]);
   const [loading, setLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     label: string;
@@ -191,6 +192,9 @@ export function AdminPanel({
       } else if (menu === 'stories') {
         const res = await api.adminStories(token);
         setStories(res.stories);
+      } else if (menu === 'announcements') {
+        const res = await api.adminGetAnnouncements(token);
+        setAnnouncementHistory(res.items);
       } else if (menu === 'audit') {
         const res = await api.adminAuditLogs(token);
         setAuditLogs(res.logs);
@@ -776,44 +780,119 @@ export function AdminPanel({
 
             {/* 6. NOTIFICATIONS & ANNOUNCEMENTS */}
             {menu === 'announcements' && (
-              <div className="max-w-xl p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm space-y-4">
-                <div>
-                  <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
-                    Kirim Pengumuman Resmi Tolk by Lunola
-                  </h3>
-                  <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] mt-0.5">
-                    Pesan akan disiarkan ke Channel Resmi Tolk by Lunola dan opsional disematkan sebagai banner global.
-                  </p>
-                </div>
-                <textarea
-                  rows={4}
-                  value={announcementText}
-                  onChange={(e) => setAnnouncementText(e.target.value)}
-                  placeholder="Tulis pengumuman resmi atau info pemeliharaan sistem..."
-                  className="w-full p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
-                />
-                <label className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
-                  <input
-                    type="checkbox"
-                    checked={pinGlobalBanner}
-                    onChange={(e) => setPinGlobalBanner(e.target.checked)}
-                    className="accent-[#8C0027]"
+              <div className="max-w-xl space-y-5">
+                <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm space-y-4">
+                  <div>
+                    <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                      Kirim Pengumuman Resmi Tolk by Lunola
+                    </h3>
+                    <p className="text-xs text-[#5A6578] dark:text-[#94A3B8] mt-0.5">
+                      Pesan akan disiarkan ke Channel Resmi Tolk by Lunola dan opsional disematkan sebagai pengumuman aktif.
+                    </p>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={announcementText}
+                    onChange={(e) => setAnnouncementText(e.target.value)}
+                    placeholder="Tulis pengumuman resmi atau info pemeliharaan sistem..."
+                    className="w-full p-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
                   />
-                  <span>Tampilkan juga sebagai banner pengumuman global di aplikasi</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!announcementText.trim()) return;
-                    const res = await api.adminSendAnnouncement(token, announcementText.trim(), pinGlobalBanner);
-                    onSettingsUpdated(res.settings);
-                    setAnnouncementText('');
-                    onNotify('Pengumuman resmi berhasil disiarkan');
-                  }}
-                  className="px-5 py-2.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-xs font-bold"
-                >
-                  Siarkan Pengumuman
-                </button>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA]">
+                    <input
+                      type="checkbox"
+                      checked={pinGlobalBanner}
+                      onChange={(e) => setPinGlobalBanner(e.target.checked)}
+                      className="accent-[#8C0027]"
+                    />
+                    <span>Simpan juga sebagai pengumuman global aktif</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!announcementText.trim()) return;
+                      const res = await api.adminSendAnnouncement(token, announcementText.trim(), pinGlobalBanner);
+                      onSettingsUpdated(res.settings);
+                      setSettingsDraft(res.settings);
+                      setAnnouncementText('');
+                      onNotify('Pengumuman resmi berhasil disiarkan');
+                      void refreshSection();
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-sm brutal-press text-white text-xs font-bold"
+                  >
+                    Siarkan Pengumuman
+                  </button>
+                </div>
+
+                {settingsDraft?.globalAnnouncement?.trim() && (
+                  <div className="p-4 rounded-3xl bg-[#FFF9D6] dark:bg-[#2A2210] border border-[#F59B00]/40 flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-[#9A5B00] dark:text-[#FDE68A]">
+                        Pengumuman Global Aktif
+                      </div>
+                      <p className="mt-1 text-xs text-[#161B26] dark:text-[#F5F7FA] break-words">
+                        {settingsDraft.globalAnnouncement}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const res = await api.adminClearAnnouncement(token);
+                        onSettingsUpdated(res.settings);
+                        setSettingsDraft(res.settings);
+                        onNotify('Pengumuman global dihapus');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 brutal-press"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="p-5 rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#2A364B] brutal-shadow-sm space-y-3">
+                  <h4 className="font-display font-extrabold text-sm text-[#161B26] dark:text-[#F5F7FA]">
+                    Riwayat Siaran Resmi ({announcementHistory.length})
+                  </h4>
+                  {announcementHistory.length === 0 ? (
+                    <p className="text-xs text-[#5A6578] dark:text-[#94A3B8]">
+                      Belum ada siaran di Channel Resmi.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-80 overflow-y-auto thin-scrollbar pr-1">
+                      {announcementHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3 rounded-2xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] flex items-start justify-between gap-3"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-[#161B26] dark:text-[#F5F7FA] whitespace-pre-wrap break-words">
+                              {item.text}
+                            </p>
+                            <div className="mt-1 text-[10px] font-mono text-[#5A6578] dark:text-[#94A3B8]">
+                              {new Date(item.createdAt).toLocaleString('id-ID', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await api.adminDeleteAnnouncementMessage(token, item.id);
+                              setAnnouncementHistory((prev) => prev.filter((x) => x.id !== item.id));
+                              onNotify('Siaran pengumuman dihapus');
+                            }}
+                            aria-label="Hapus siaran pengumuman"
+                            className="h-8 px-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-600 hover:text-white text-xs font-bold flex items-center gap-1 shrink-0 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
