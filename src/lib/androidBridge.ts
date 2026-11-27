@@ -5,10 +5,13 @@ declare global {
       hapticClick?: () => void;
       setStatusBarTheme?: (isDark: boolean) => void;
       setCallAudioMode?: (inCall: boolean) => void;
-      showNotification?: (title: string, body: string) => void;
+      showNotification?: (title: string, body: string, chatId?: string) => void;
+      saveMediaBase64?: (base64Data: string, filename: string, mimeType: string) => boolean;
       showToast?: (message: string) => void;
     };
     __lunolaTalkHandleBack?: () => boolean;
+    __lunolaOpenChat?: (chatId: string) => void;
+    __onAndroidInsets?: (topDp: number, bottomDp: number, imeDp: number) => void;
   }
 }
 
@@ -42,9 +45,9 @@ export function notifyAndroidToast(message: string): void {
   }
 }
 
-export function notifyAndroidSystem(title: string, body: string): void {
+export function notifyAndroidSystem(title: string, body: string, chatId?: string): void {
   try {
-    window.LunolaTalkAndroid?.showNotification?.(title, body);
+    window.LunolaTalkAndroid?.showNotification?.(title, body, chatId || '');
   } catch {
     // Ignore outside Android WebView
   }
@@ -67,6 +70,23 @@ export async function saveMediaToGallery(url: string, filename?: string): Promis
     const res = await fetch(url, { credentials: 'same-origin' });
     if (!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
+
+    // Use native Android MediaStore bridge when running inside the Android WebView APK
+    if (window.LunolaTalkAndroid?.saveMediaBase64) {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('FileReader failed'));
+        reader.readAsDataURL(blob);
+      });
+      const ok = window.LunolaTalkAndroid.saveMediaBase64(
+        dataUrl,
+        safeName,
+        blob.type || 'image/jpeg'
+      );
+      if (ok) return true;
+    }
+
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;

@@ -915,7 +915,7 @@ export function Sidebar({
       {/* Floating Liquid-Glass Capsule Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/65 dark:bg-[#171E2C]/65 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14),inset_0_1px_1px_rgba(255,255,255,0.7)] grid grid-cols-5 z-30"
+        className="mobile-bottom-nav md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/65 dark:bg-[#171E2C]/65 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14),inset_0_1px_1px_rgba(255,255,255,0.7)] grid grid-cols-5 z-30"
       >
         {/* Flowing Liquid-Glass Active Indicator */}
         <span

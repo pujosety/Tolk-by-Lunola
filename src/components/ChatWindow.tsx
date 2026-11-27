@@ -5,6 +5,7 @@ import {
   Camera,
   Check,
   CheckCheck,
+  ChevronDown,
   Clock,
   Copy,
   Download,
@@ -332,6 +333,8 @@ export function ChatWindow({
   } | null>(null);
   const lastTapRef = useRef<{ msgId: string; time: number } | null>(null);
   const edgeSwipeRef = useRef<{ x: number; y: number } | null>(null);
+  const lightboxTouchRef = useRef<{ y: number } | null>(null);
+  const [showScrollDown, setShowScrollDown] = useState(false);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
@@ -968,8 +971,11 @@ export function ChatWindow({
             inputRef.current?.blur();
           }
         }}
-        onScroll={() => {
+        onScroll={(e) => {
           if (activeMenuMsgId) setActiveMenuMsgId(null);
+          const el = e.currentTarget;
+          const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+          setShowScrollDown(distFromBottom > 180);
         }}
         onTouchStart={(e) => {
           if (e.touches.length === 1 && e.touches[0].clientX < 28) {
@@ -1636,6 +1642,21 @@ export function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* WhatsApp-style Scroll-to-Bottom FAB */}
+      {showScrollDown && (
+        <button
+          type="button"
+          onClick={() => {
+            triggerAndroidHaptic();
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          aria-label="Gulir ke pesan terbaru"
+          className="p5-panel-reveal absolute bottom-20 right-4 z-20 h-10 w-10 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] brutal-shadow flex items-center justify-center brutal-press"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Mention Autocomplete Popover */}
       {mentionCandidates.length > 0 && (
         <div className="p5-panel-reveal mx-3 mb-1 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow overflow-hidden z-20">
@@ -2016,9 +2037,24 @@ export function ChatWindow({
             </button>
           </div>
 
-          {/* Full-Bleed Image Container */}
+          {/* Full-Bleed Image Container (tap backdrop or swipe down to close) */}
           <div
             onClick={() => setLightboxImage(null)}
+            onTouchStart={(e) => {
+              if (e.touches.length === 1) {
+                lightboxTouchRef.current = { y: e.touches[0].clientY };
+              }
+            }}
+            onTouchEnd={(e) => {
+              const start = lightboxTouchRef.current;
+              lightboxTouchRef.current = null;
+              if (start && e.changedTouches.length === 1) {
+                const dy = e.changedTouches[0].clientY - start.y;
+                if (Math.abs(dy) > 70) {
+                  setLightboxImage(null);
+                }
+              }
+            }}
             className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"
           >
             <img

@@ -2,9 +2,11 @@ package com.lunolatalk.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,8 +15,12 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.provider.MediaStore
+import android.util.Base64
+import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
@@ -33,6 +39,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Tolk by Lunola Android WebView Shell
@@ -45,9 +54,15 @@ class MainActivity : AppCompatActivity() {
     private var pendingWebPermissionRequest: PermissionRequest? = null
     private var pendingWebResources: List<String> = emptyList()
     private var notificationCounter = 100
+    private var pendingOpenChatId: String? = null
+    private var lastInsetsPayload: Triple<Int, Int, Int>? = null
 
     private val wasmerAppUrl = BuildConfig.WASMER_APP_URL
     private val notifChannelId = "tolk_messages_channel"
+
+    companion object {
+        private const val EXTRA_CHAT_ID = "extra_chat_id"
+    }
 
     private val fileChooserLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -105,31 +120,79 @@ class MainActivity : AppCompatActivity() {
         createNotificationChannel()
         requestNotificationPermissionIfNeeded()
 
+        pendingOpenChatId = intent?.getStringExtra(EXTRA_CHAT_ID)
+
         webView = WebView(this)
         setContentView(webView)
 
-        // Adaptive system bar + IME insets so buttons & bottom nav never get covered
+        val density = resources.displayMetrics.density.coerceAtLeast(1f)
         ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
-            val insets = windowInsets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
-            )
-            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            val sysBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+            // Keep WebView full-bleed edge-to-edge; forward exact CSS dp insets to JS
+            view.setPadding(sysBars.left, 0, sysBars.right, 0)
+            val topDp = Math.round(sysBars.top / density)
+            val bottomDp = Math.round(sysBars.bottom / density)
+            val imeDp = Math.round(ime.bottom / density)
+            lastInsetsPayload = Triple(topDp, bottomDp, imeDp)
+            dispatchInsetsToWeb(topDp, bottomDp, imeDp)
             WindowInsetsCompat.CONSUMED
+        }
+
+        CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
         }
 
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = false
             allowContentAccess = true
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            userAgentString = "$userAgentString LunolaTalkAndroid/2.1"
+            userAgentString = "$userAgentString LunolaTalkAndroid/2.2"
         }
 
         webView.addJavascriptInterface(LunolaTalkJsBridge(), "LunolaTalkAndroid")
 
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
+            try {
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    val req = DownloadManager.Request(Uri.parse(url)).apply {
+                        setMimeType(mimeType)
+                        addRequestHeader("User-Agent", userAgent)
+                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        setDestinationInExternalPublicDir(
+                            Environment.DIRECTORY_DOWNLOADS,
+                            android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType)
+                        )
+                    }
+                    val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    dm.enqueue(req)
+                    Toast.makeText(this, "Mengunduh media...", Toast.LENGTH_SHORT).show()
+                }
+            } catch (_: Exception) {
+                Toast.makeText(this, "Gagal mengunduh file", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                lastInsetsPayload?.let { (topDp, bottomDp, imeDp) ->
+                    dispatchInsetsToWeb(topDp, bottomDp, imeDp)
+                }
+                pendingOpenChatId?.let { cid ->
+                    pendingOpenChatId = null
+                    dispatchOpenChatToWeb(cid)
+                }
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url ?: return false
                 val allowedHost = Uri.parse(wasmerAppUrl).host
@@ -211,6 +274,36 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(wasmerAppUrl)
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val cid = intent.getStringExtra(EXTRA_CHAT_ID)
+        if (!cid.isNullOrBlank()) {
+            dispatchOpenChatToWeb(cid)
+        }
+    }
+
+    private fun dispatchInsetsToWeb(topDp: Int, bottomDp: Int, imeDp: Int) {
+        if (!::webView.isInitialized) return
+        webView.post {
+            webView.evaluateJavascript(
+                "window.__onAndroidInsets && window.__onAndroidInsets($topDp, $bottomDp, $imeDp);",
+                null
+            )
+        }
+    }
+
+    private fun dispatchOpenChatToWeb(chatId: String) {
+        if (!::webView.isInitialized || chatId.isBlank()) return
+        val quoted = JSONObject.quote(chatId)
+        webView.post {
+            webView.evaluateJavascript(
+                "window.__lunolaOpenChat && window.__lunolaOpenChat($quoted);",
+                null
+            )
+        }
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -255,9 +348,8 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun setStatusBarTheme(isDark: Boolean) {
             runOnUiThread {
-                val bg = if (isDark) Color.parseColor("#0F141E") else Color.parseColor("#F5F7FA")
-                window.statusBarColor = bg
-                window.navigationBarColor = bg
+                window.statusBarColor = Color.TRANSPARENT
+                window.navigationBarColor = Color.TRANSPARENT
                 val controller = WindowInsetsControllerCompat(window, window.decorView)
                 controller.isAppearanceLightStatusBars = !isDark
                 controller.isAppearanceLightNavigationBars = !isDark
@@ -281,7 +373,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
-        fun showNotification(title: String, body: String) {
+        fun showNotification(title: String, body: String, chatId: String = "") {
             runOnUiThread {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                     ContextCompat.checkSelfPermission(
@@ -294,10 +386,14 @@ class MainActivity : AppCompatActivity() {
 
                 val launchIntent = Intent(this@MainActivity, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    if (chatId.isNotBlank()) {
+                        putExtra(EXTRA_CHAT_ID, chatId)
+                    }
                 }
+                val reqCode = if (chatId.isNotBlank()) chatId.hashCode() else notificationCounter
                 val pendingIntent = PendingIntent.getActivity(
                     this@MainActivity,
-                    0,
+                    reqCode,
                     launchIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
@@ -313,6 +409,61 @@ class MainActivity : AppCompatActivity() {
 
                 val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.notify(notificationCounter++, notification)
+            }
+        }
+
+        @JavascriptInterface
+        fun saveMediaBase64(base64Data: String, filename: String, mimeType: String): Boolean {
+            return try {
+                val cleanBase64 = base64Data.substringAfter(",")
+                val bytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                val safeName = filename.ifBlank { "tolk-${System.currentTimeMillis()}.jpg" }
+                val safeMime = mimeType.ifBlank { "image/jpeg" }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val isVideo = safeMime.startsWith("video/")
+                    val isImage = safeMime.startsWith("image/")
+                    val collection = when {
+                        isImage -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        isVideo -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                        else -> MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                    }
+                    val relPath = when {
+                        isImage -> "${Environment.DIRECTORY_PICTURES}/Tolk by Lunola"
+                        isVideo -> "${Environment.DIRECTORY_MOVIES}/Tolk by Lunola"
+                        else -> "${Environment.DIRECTORY_DOWNLOADS}/Tolk by Lunola"
+                    }
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, safeName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, safeMime)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, relPath)
+                        put(MediaStore.MediaColumns.IS_PENDING, 1)
+                    }
+                    val resolver = applicationContext.contentResolver
+                    val uri = resolver.insert(collection, values) ?: return false
+                    resolver.openOutputStream(uri)?.use { out ->
+                        out.write(bytes)
+                    }
+                    values.clear()
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(uri, values, null, null)
+                } else {
+                    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val appDir = File(dir, "Tolk by Lunola")
+                    if (!appDir.exists()) appDir.mkdirs()
+                    val outFile = File(appDir, safeName)
+                    FileOutputStream(outFile).use { it.write(bytes) }
+                }
+
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Disimpan ke Galeri", Toast.LENGTH_SHORT).show()
+                }
+                true
+            } catch (_: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Gagal menyimpan ke Galeri", Toast.LENGTH_SHORT).show()
+                }
+                false
             }
         }
 

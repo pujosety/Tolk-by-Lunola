@@ -206,7 +206,7 @@ export function showBrowserNotification(
 ): void {
   if (typeof window === 'undefined') return;
   if (isRunningInAndroidWebView()) {
-    notifyAndroidSystem(title, body);
+    notifyAndroidSystem(title, body, tag);
     return;
   }
   if (!('Notification' in window)) return;

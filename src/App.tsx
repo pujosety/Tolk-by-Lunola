@@ -1444,6 +1444,15 @@ export function App() {
   }, [token, handleSelectChat]);
 
   useEffect(() => {
+    window.__lunolaOpenChat = (cid: string) => {
+      if (cid) handleSelectChat(cid);
+    };
+    return () => {
+      delete window.__lunolaOpenChat;
+    };
+  }, [handleSelectChat]);
+
+  useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
     const onSwMessage = (event: MessageEvent) => {
       const data = event.data as { type?: string; chatId?: string } | null;
