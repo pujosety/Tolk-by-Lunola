@@ -797,6 +797,14 @@
   background-color: rgba(148, 163, 184, 0.25);
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Adaptive Tolk SVG logo in dark mode (turns dark ink wordmark crisp white without needing a frame) */
 .dark .tolk-logo-adaptive {
   filter: brightness(0) invert(1);
