@@ -159,6 +159,7 @@ export function useCapsuleSwipe(
 ) {
   const [dragOffsetPx, setDragOffsetPx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const offsetRef = useRef(0);
   const dragRef = useRef<{ x: number; y: number; locked: boolean; ignore: boolean } | null>(null);
 
   const onTouchStart = (e: TouchEvent<HTMLElement>) => {
@@ -167,6 +168,7 @@ export function useCapsuleSwipe(
     const ignore = Boolean(
       target?.closest('input[type="range"], input, textarea, select, [data-no-tab-swipe]')
     );
+    offsetRef.current = 0;
     dragRef.current = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
@@ -182,10 +184,10 @@ export function useCapsuleSwipe(
     const dy = e.touches[0].clientY - start.y;
 
     if (!start.locked) {
-      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.1) {
         start.locked = true;
         setIsDragging(true);
-      } else if (Math.abs(dy) > 12) {
+      } else if (Math.abs(dy) > 10) {
         start.ignore = true;
         return;
       } else {
@@ -196,16 +198,20 @@ export function useCapsuleSwipe(
     const atStartEdge = activeIndex === 0 && dx > 0;
     const atEndEdge = activeIndex === count - 1 && dx < 0;
     const damped = atStartEdge || atEndEdge ? dx * 0.28 : dx;
-    setDragOffsetPx(Math.max(-viewportWidth * 0.6, Math.min(viewportWidth * 0.6, damped)));
+    const clamped = Math.max(-viewportWidth * 0.65, Math.min(viewportWidth * 0.65, damped));
+    offsetRef.current = clamped;
+    setDragOffsetPx(clamped);
   };
 
   const finish = () => {
     const start = dragRef.current;
+    const finalDx = offsetRef.current;
     dragRef.current = null;
+    offsetRef.current = 0;
     if (start?.locked) {
-      if (dragOffsetPx < -52 && activeIndex < count - 1) {
+      if (finalDx <= -40 && activeIndex < count - 1) {
         onSelectIndex(activeIndex + 1);
-      } else if (dragOffsetPx > 52 && activeIndex > 0) {
+      } else if (finalDx >= 40 && activeIndex > 0) {
         onSelectIndex(activeIndex - 1);
       }
     }

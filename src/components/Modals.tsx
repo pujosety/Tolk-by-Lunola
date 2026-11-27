@@ -1015,15 +1015,15 @@ export function CreateChatModal({
             ? { transform: `translate3d(${createSwipe.dragOffsetPx}px, 0, 0)` }
             : undefined
         }
-        className={createSwipe.isDragging ? 'touch-pan-y' : 'touch-pan-y transition-transform duration-200 ease-out'}
+        className={`min-h-[60dvh] ${createSwipe.isDragging ? 'touch-pan-y' : 'touch-pan-y transition-transform duration-200 ease-out'}`}
       >
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={mode}
-          initial={{ opacity: 0, x: 16 }}
+          initial={{ opacity: 0, x: 36 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
-          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, x: -36 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
       {mode === 'dm' ? (
         <div className="space-y-3.5">
@@ -1675,19 +1675,19 @@ export function SettingsModal({
               ? { transform: `translate3d(${settingsSwipe.dragOffsetPx}px, 0, 0)` }
               : undefined
           }
-          className={
+          className={`min-h-[60dvh] ${
             settingsSwipe.isDragging
               ? 'touch-pan-y space-y-5'
               : 'touch-pan-y space-y-5 transition-transform duration-200 ease-out'
-          }
+          }`}
         >
         <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, x: 16 }}
+          initial={{ opacity: 0, x: 36 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
-          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          exit={{ opacity: 0, x: -36 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-5"
         >
 
