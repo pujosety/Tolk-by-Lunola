@@ -488,6 +488,13 @@ export function ChatWindow({
   const [unreadWhileScrolledUp, setUnreadWhileScrolledUp] = useState(0);
   const showScrollDownRef = useRef(false);
   const prevMsgLenRef = useRef(messages.length);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottomNow = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  };
 
   const lightboxMediaList = useMemo(
     () =>
@@ -631,6 +638,21 @@ export function ChatWindow({
     setUnreadWhileScrolledUp(0);
     prevMsgLenRef.current = messages.length;
     clearPendingFile();
+    scrollToBottomNow();
+    const tId = window.setTimeout(scrollToBottomNow, 60);
+    return () => window.clearTimeout(tId);
+  }, [chat.id]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      if (!showScrollDownRef.current && el.clientHeight > 0) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [chat.id]);
 
   useEffect(() => {
@@ -640,8 +662,13 @@ export function ChatWindow({
       setUnreadWhileScrolledUp((c) => c + added);
       return;
     }
+    scrollToBottomNow();
     const raf = window.requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: added > 0 ? 'smooth' : 'auto' });
+      if (added > 0) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        scrollToBottomNow();
+      }
     });
     return () => window.cancelAnimationFrame(raf);
   }, [messages.length, chat.id, loading]);
@@ -1337,6 +1364,7 @@ export function ChatWindow({
         })()}
       <div
         key={chat.id}
+        ref={scrollContainerRef}
         style={getWallpaperStyle(appearance, darkMode)}
         className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-[88px] sm:pb-24 space-y-2.5 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
