@@ -51,6 +51,7 @@ import {
   formatLastSeen,
   formatTimeShort,
   isSafeHttpUrl,
+  saveMediaToGallery,
   triggerAndroidHaptic,
 } from '../lib/androidBridge';
 import { t } from '../lib/i18n';
@@ -1515,6 +1516,22 @@ export function ChatWindow({
                           </span>
                         </button>
 
+                        {(msg.attachment?.kind === 'image' || msg.attachment?.kind === 'video') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const att = msg.attachment!;
+                              setActiveMenuMsgId(null);
+                              triggerAndroidHaptic();
+                              void saveMediaToGallery(att.url, att.name);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Simpan ke Galeri</span>
+                          </button>
+                        )}
+
                         {msg.text.trim().length > 0 && (
                           <button
                             type="button"
@@ -1955,29 +1972,55 @@ export function ChatWindow({
         )}
       </footer>
 
-      {/* Image Lightbox */}
+      {/* Full-Screen Image Lightbox */}
       {lightboxRetained.renderedValue && (
         <div
-          onClick={() => setLightboxImage(null)}
+          style={{
+            height: 'var(--app-height, 100dvh)',
+            top: 'var(--vv-offset-top, 0px)',
+          }}
           className={`${
             lightboxRetained.closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-          } fixed inset-0 z-50 bg-[#161B26]/92 flex items-center justify-center p-4`}
+          } fixed inset-x-0 z-[85] bg-black flex flex-col`}
         >
-          <button
-            type="button"
+          {/* Top Overlay Controls */}
+          <div className="pt-safe-2 px-4 pb-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between gap-3 shrink-0 z-10">
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              aria-label="Tutup pratinjau gambar"
+              className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-white brutal-press flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerAndroidHaptic();
+                void saveMediaToGallery(lightboxRetained.renderedValue!);
+              }}
+              aria-label="Simpan gambar ke galeri"
+              className="h-10 px-4 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold brutal-press flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Simpan ke Galeri</span>
+            </button>
+          </div>
+
+          {/* Full-Bleed Image Container */}
+          <div
             onClick={() => setLightboxImage(null)}
-            aria-label="Tutup pratinjau gambar"
-            className="absolute top-4 right-4 h-10 w-10 rounded-xl border border-[#FFFFFF] bg-[#8C0027] text-[#FFFFFF] brutal-press flex items-center justify-center hover:bg-[#6E001F]"
+            className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"
           >
-            <X className="w-5 h-5" />
-          </button>
-          <img
-            src={lightboxRetained.renderedValue}
-            alt="Pratinjau gambar"
-            className={`${
-              lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
-            } max-h-[90dvh] max-w-[92vw] rounded-xl border border-[#FFFFFF] object-contain`}
-          />
+            <img
+              src={lightboxRetained.renderedValue}
+              alt="Pratinjau gambar"
+              onClick={(e) => e.stopPropagation()}
+              className={`${
+                lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
+              } w-full h-full object-contain select-none`}
+            />
+          </div>
         </div>
       )}
 

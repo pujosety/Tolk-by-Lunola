@@ -58,6 +58,43 @@ export function setAndroidCallAudioMode(inCall: boolean): void {
   }
 }
 
+export async function saveMediaToGallery(url: string, filename?: string): Promise<boolean> {
+  const safeName =
+    filename?.trim() ||
+    url.split('/').pop()?.split('?')[0] ||
+    `tolk-media-${Date.now()}.jpg`;
+  try {
+    const res = await fetch(url, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = safeName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+    notifyAndroidToast('Media disimpan ke galeri / unduhan.');
+    return true;
+  } catch {
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeName;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
 export function formatTimeShort(ts: number): string {
   const date = new Date(ts);
   return date.toLocaleTimeString('id-ID', {

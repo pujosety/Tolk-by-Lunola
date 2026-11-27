@@ -121,20 +121,24 @@ export function CallOverlay({
 
   return (
     <div
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
       className={`${
         closing ? 'p5-backdrop-out pointer-events-none' : 'p5-backdrop-in'
-      } fixed inset-0 z-50 bg-[#0F141E]/92 backdrop-blur-md flex items-center justify-center p-4`}
+      } fixed inset-x-0 z-[85] bg-[#0F141E] sm:bg-[#0F141E]/92 sm:backdrop-blur-md flex items-stretch sm:items-center justify-center p-0 sm:p-4`}
     >
       <audio ref={remoteAudioRef} autoPlay playsInline />
 
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative w-full max-w-lg rounded-3xl bg-[#171E2C] border border-[#F5F7FA] overflow-hidden brutal-shadow-lg text-[#F5F7FA]`}
+        } relative w-full h-full sm:h-[88dvh] sm:max-h-[760px] sm:max-w-lg rounded-none sm:rounded-3xl bg-gradient-to-b from-[#23101B] via-[#141A26] to-[#0F141E] sm:border sm:border-[#F5F7FA]/30 overflow-hidden brutal-shadow-lg text-[#F5F7FA] flex flex-col justify-between`}
       >
-        {/* Video Canvas when video call active */}
+        {/* Full-Bleed Video Canvas when video call active */}
         {activeSession.kind === 'video' && (
-          <div className="relative h-80 bg-[#0F141E] border-b-2 border-[#2A364B] flex items-center justify-center">
+          <div className="absolute inset-0 bg-[#0F141E] flex items-center justify-center">
             {remoteStream ? (
               <video
                 ref={remoteVideoRef}
@@ -143,7 +147,7 @@ export function CallOverlay({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="flex flex-col items-center gap-3 text-[#CBBBC2]">
+              <div className="flex flex-col items-center gap-3 text-[#CBBBC2] px-6 text-center">
                 <Avatar
                   name={peerUser?.displayName || 'Pengguna'}
                   imageUrl={peerUser?.avatarUrl}
@@ -162,27 +166,36 @@ export function CallOverlay({
                 autoPlay
                 muted
                 playsInline
-                className="absolute bottom-3 right-3 w-28 h-36 rounded-xl object-cover border border-[#F5F7FA] brutal-shadow-sm bg-[#1E2738]"
+                className="absolute top-20 sm:top-4 right-4 w-28 h-40 rounded-2xl object-cover border-2 border-white/75 brutal-shadow bg-[#1E2738] z-20"
               />
             )}
           </div>
         )}
 
-        {/* Voice Call Header or Video Info */}
-        <div className="p-6 flex flex-col items-center text-center">
+        {/* Top Header Info */}
+        <div
+          className={`relative z-10 pt-safe-3 sm:pt-6 px-6 pb-4 flex flex-col items-center text-center ${
+            activeSession.kind === 'video'
+              ? 'bg-gradient-to-b from-black/75 via-black/35 to-transparent'
+              : 'flex-1 justify-center'
+          }`}
+        >
           {activeSession.kind === 'voice' && (
-            <Avatar
-              name={peerUser?.displayName || 'Pengguna'}
-              imageUrl={peerUser?.avatarUrl}
-              color={peerUser?.avatarColor}
-              size="xl"
-            />
+            <div className="relative mb-2">
+              <div className="absolute -inset-3 rounded-full bg-[#8C0027]/25 animate-ping" />
+              <Avatar
+                name={peerUser?.displayName || 'Pengguna'}
+                imageUrl={peerUser?.avatarUrl}
+                color={peerUser?.avatarColor}
+                size="xl"
+              />
+            </div>
           )}
 
-          <h2 className="mt-4 font-display font-extrabold text-2xl tracking-tight text-[#F5F7FA]">
+          <h2 className="mt-4 font-display font-extrabold text-2xl tracking-tight text-[#F5F7FA] drop-shadow-sm">
             {peerUser?.displayName || 'Pengguna Tolk by Lunola'}
           </h2>
-          <p className="mt-1.5 inline-block px-2.5 py-0.5 rounded-lg bg-[#8C0027] border border-[#F5F7FA] text-xs text-white font-mono font-bold tabular-nums">
+          <p className="mt-2 inline-block px-3 py-1 rounded-full bg-[#8C0027]/90 border border-white/25 text-xs text-white font-mono font-bold tabular-nums">
             {activeSession.state === 'ringing' && activeSession.direction === 'incoming'
               ? activeSession.kind === 'video'
                 ? 'Panggilan video masuk...'
@@ -193,93 +206,99 @@ export function CallOverlay({
               ? 'Menyambungkan WebRTC...'
               : formatDuration(elapsedSec)}
           </p>
+        </div>
 
-          {/* Controls */}
-          <div className="mt-7 flex items-center justify-center gap-3 flex-wrap">
-            {activeSession.direction === 'incoming' && activeSession.state === 'ringing' ? (
-              <>
-                <button
-                  type="button"
-                  onClick={onReject}
-                  aria-label="Tolak panggilan"
-                  className="w-14 h-14 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
-                >
-                  <PhoneOff className="w-6 h-6" />
-                </button>
-                <button
-                  type="button"
-                  onClick={onAccept}
-                  aria-label="Terima panggilan"
-                  className="w-14 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
-                >
-                  {activeSession.kind === 'video' ? <Video className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={toggleMic}
-                  aria-label={micMuted ? 'Aktifkan mikrofon' : 'Bisukan mikrofon'}
-                  className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
-                    micMuted
-                      ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
-                      : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
-                  }`}
-                >
-                  {micMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                </button>
+        {/* Bottom Controls */}
+        <div
+          className={`relative z-10 pt-6 pb-safe-3 sm:pb-7 px-6 flex items-center justify-center gap-3.5 flex-wrap ${
+            activeSession.kind === 'video'
+              ? 'bg-gradient-to-t from-black/85 via-black/45 to-transparent'
+              : ''
+          }`}
+        >
+          {activeSession.direction === 'incoming' && activeSession.state === 'ringing' ? (
+            <>
+              <button
+                type="button"
+                onClick={onReject}
+                aria-label="Tolak panggilan"
+                className="w-16 h-16 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/30 text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+              >
+                <PhoneOff className="w-7 h-7" />
+              </button>
+              <button
+                type="button"
+                onClick={onAccept}
+                aria-label="Terima panggilan"
+                className="w-16 h-16 rounded-full bg-emerald-600 hover:bg-emerald-500 border border-white/30 text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+              >
+                {activeSession.kind === 'video' ? <Video className="w-7 h-7" /> : <Phone className="w-7 h-7" />}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={toggleMic}
+                aria-label={micMuted ? 'Aktifkan mikrofon' : 'Bisukan mikrofon'}
+                className={`w-13 h-13 rounded-full border flex items-center justify-center brutal-press transition-colors ${
+                  micMuted
+                    ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                    : 'bg-white/15 backdrop-blur-md border-white/25 hover:bg-white/25 text-[#F5F7FA]'
+                }`}
+              >
+                {micMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setSpeakerOn((s) => !s)}
-                  aria-label={speakerOn ? 'Matikan speaker' : 'Aktifkan speaker'}
-                  className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
-                    !speakerOn
-                      ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
-                      : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
-                  }`}
-                >
-                  {speakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                </button>
+              <button
+                type="button"
+                onClick={() => setSpeakerOn((s) => !s)}
+                aria-label={speakerOn ? 'Matikan speaker' : 'Aktifkan speaker'}
+                className={`w-13 h-13 rounded-full border flex items-center justify-center brutal-press transition-colors ${
+                  !speakerOn
+                    ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                    : 'bg-white/15 backdrop-blur-md border-white/25 hover:bg-white/25 text-[#F5F7FA]'
+                }`}
+              >
+                {speakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              </button>
 
-                {activeSession.kind === 'video' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={toggleCam}
-                      aria-label={camOff ? 'Nyalakan kamera' : 'Matikan kamera'}
-                      className={`w-12 h-12 rounded-xl border flex items-center justify-center brutal-press transition-colors ${
-                        camOff
-                          ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
-                          : 'bg-[#232D40] border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA]'
-                      }`}
-                    >
-                      {camOff ? <CameraOff className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onSwitchCamera}
-                      aria-label="Ganti kamera depan atau belakang"
-                      title="Ganti kamera"
-                      className="w-12 h-12 rounded-xl bg-[#232D40] border border-[#324058] hover:border-[#F5F7FA] text-[#F5F7FA] flex items-center justify-center brutal-press transition-colors"
-                    >
-                      <RefreshCw className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
+              {activeSession.kind === 'video' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={toggleCam}
+                    aria-label={camOff ? 'Nyalakan kamera' : 'Matikan kamera'}
+                    className={`w-13 h-13 rounded-full border flex items-center justify-center brutal-press transition-colors ${
+                      camOff
+                        ? 'bg-[#F5F7FA] border-[#F5F7FA] text-[#161B26]'
+                        : 'bg-white/15 backdrop-blur-md border-white/25 hover:bg-white/25 text-[#F5F7FA]'
+                    }`}
+                  >
+                    {camOff ? <CameraOff className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSwitchCamera}
+                    aria-label="Ganti kamera depan atau belakang"
+                    title="Ganti kamera"
+                    className="w-13 h-13 rounded-full bg-white/15 backdrop-blur-md border border-white/25 hover:bg-white/25 text-[#F5F7FA] flex items-center justify-center brutal-press transition-colors"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                  </button>
+                </>
+              )}
 
-                <button
-                  type="button"
-                  onClick={() => onEnd(elapsedSec)}
-                  aria-label="Akhiri panggilan"
-                  className="w-14 h-14 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#F5F7FA] text-white flex items-center justify-center brutal-shadow-sm brutal-press"
-                >
-                  <PhoneOff className="w-6 h-6" />
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => onEnd(elapsedSec)}
+                aria-label="Akhiri panggilan"
+                className="w-15 h-15 rounded-full bg-[#8C0027] hover:bg-[#6E001F] border border-white/30 text-white flex items-center justify-center brutal-shadow-sm brutal-press"
+              >
+                <PhoneOff className="w-6 h-6" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -305,17 +324,23 @@ export function CallHistoryModal({
   if (!mounted) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${closing ? 'pointer-events-none' : ''}`}>
+    <div
+      style={{
+        height: 'var(--app-height, 100dvh)',
+        top: 'var(--vv-offset-top, 0px)',
+      }}
+      className={`fixed inset-x-0 z-50 flex items-stretch sm:items-center justify-center p-0 sm:p-4 ${closing ? 'pointer-events-none' : ''}`}
+    >
       <div
-        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} fixed inset-0 bg-[#161B26]/65 backdrop-blur-[2px]`}
+        className={`${closing ? 'p5-backdrop-out' : 'p5-backdrop-in'} hidden sm:block fixed inset-0 bg-[#161B26]/65 backdrop-blur-[2px]`}
         onClick={onClose}
       />
       <div
         className={`${
           closing ? 'p5-modal-out' : 'p5-modal-impact'
-        } relative z-10 w-full max-w-md max-h-[82dvh] flex flex-col rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
+        } relative z-10 w-full h-full sm:h-auto sm:max-w-md sm:max-h-[82dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] sm:border sm:border-[#E6ECF2] sm:dark:border-[#F5F7FA] brutal-shadow-lg overflow-hidden`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
+        <div className="pt-safe-2 sm:pt-4 flex items-center justify-between px-5 pb-4 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
           <div>
             <h2 className="font-display font-extrabold text-xl leading-tight text-[#161B26] dark:text-[#F5F7FA]">
               Riwayat Panggilan
