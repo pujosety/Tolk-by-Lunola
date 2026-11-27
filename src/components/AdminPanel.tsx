@@ -441,7 +441,7 @@ export function AdminPanel({
         </nav>
 
         {/* Mobile 4-Category Floating Capsule Bottom Tab Bar with Sliding Pill */}
-        <nav className="md:hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/75 dark:bg-[#171E2C]/75 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14)] grid grid-cols-4 z-30">
+        <nav className="md:hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full liquid-glass grid grid-cols-4 z-30">
           <span
             aria-hidden="true"
             style={{

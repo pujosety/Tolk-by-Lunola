@@ -964,7 +964,7 @@ export function CreateChatModal({
   const createSwipe = useCapsuleSwipe(3, modeIndex, (idx) => setMode(modeOrder[idx]));
 
   const renderModeSwitcher = () => (
-    <div className="relative grid grid-cols-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] p-1">
+    <div className="relative grid grid-cols-3 rounded-full liquid-glass p-1">
       <span
         aria-hidden="true"
         style={{
@@ -1728,7 +1728,7 @@ export function SettingsModal({
     >
       <div className="space-y-5 text-xs">
         {/* 3-Capsule Segmented Switcher with Sliding Pill */}
-        <div className="relative grid grid-cols-3 p-1 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058]">
+        <div className="relative grid grid-cols-3 p-1 rounded-full liquid-glass">
           <span
             aria-hidden="true"
             style={{

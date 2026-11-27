@@ -717,7 +717,7 @@ export function ChatInfoDrawer({
 
         {/* Capsule Filter Bar (#12: Media | Dokumen | Tautan + Anggota/Suara) */}
         <div className="p-2 border-b-2 border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924]">
-          <div className="flex items-center gap-1 bg-white dark:bg-[#1A2232] p-1 rounded-full border border-[#E6ECF2] dark:border-[#2A364B] overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1 liquid-glass p-1 rounded-full overflow-x-auto no-scrollbar">
             {chat.type === 'group' && (
               <button
                 type="button"

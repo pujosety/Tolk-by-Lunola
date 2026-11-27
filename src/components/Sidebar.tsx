@@ -645,7 +645,7 @@ export function Sidebar({
           <div className="px-3 py-2 bg-[#FFFFFF] dark:bg-[#171E2C] shrink-0">
             <div
               data-no-tab-swipe="true"
-              className="p-1 rounded-full bg-[#F5F7FA] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-1 overflow-x-auto thin-scrollbar"
+              className="p-1 rounded-full liquid-glass flex items-center gap-1 overflow-x-auto thin-scrollbar"
             >
         {folders.map((folder) => {
           const isActive = activeFolder === folder.key;
@@ -1064,7 +1064,7 @@ export function Sidebar({
       {/* Floating Liquid-Glass Capsule Bottom Navigation Bar */}
       <nav
         aria-label="Navigasi utama"
-        className="mobile-bottom-nav md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full bg-[#FFFFFF]/65 dark:bg-[#171E2C]/65 backdrop-blur-2xl border border-white/75 dark:border-white/15 shadow-[0_12px_34px_rgba(22,27,38,0.14),inset_0_1px_1px_rgba(255,255,255,0.7)] grid grid-cols-5 z-30"
+        className="mobile-bottom-nav md:hidden absolute inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] p-1.5 rounded-full liquid-glass grid grid-cols-5 z-30"
       >
         {/* Flowing Liquid-Glass Active Indicator */}
         <span

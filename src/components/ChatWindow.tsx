@@ -1085,8 +1085,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Chat Top Bar (Seamless Futuristic) */}
-      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 bg-[#FFFFFF]/95 dark:bg-[#171E2C]/95 backdrop-blur-md shadow-[0_2px_14px_rgba(15,20,30,0.05)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.28)] flex items-center justify-between gap-2 shrink-0 z-10">
+      {/* Chat Top Bar (Liquid Glass) */}
+      <header className="pt-safe-2 pb-2 min-h-[62px] px-3 sm:px-4 liquid-glass !border-x-0 !border-t-0 flex items-center justify-between gap-2 shrink-0 z-20">
         <div className="flex items-center gap-2.5 min-w-0">
           <button
             type="button"
@@ -1297,7 +1297,7 @@ export function ChatWindow({
       {/* Messages Canvas */}
       <div className="relative flex-1 min-h-0 flex flex-col">
         {miniAudio && (
-          <div className="mx-3 mt-1.5 px-3 py-1.5 rounded-full bg-[#FFFFFF]/95 dark:bg-[#1E2738]/95 border border-[#E6ECF2] dark:border-[#324058] shadow-md flex items-center justify-between gap-2 z-20 p5-panel-reveal">
+          <div className="mx-3 mt-1.5 px-3 py-1.5 rounded-full liquid-glass flex items-center justify-between gap-2 z-20 p5-panel-reveal">
             <div className="flex items-center gap-2 min-w-0">
               <span className="h-6 w-6 rounded-full bg-[#8C0027] text-white flex items-center justify-center shrink-0">
                 <Volume2 className="w-3.5 h-3.5" />
@@ -1329,7 +1329,7 @@ export function ChatWindow({
       <div
         key={chat.id}
         style={getWallpaperStyle(appearance, darkMode)}
-        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5 ${
+        className={`relative z-10 p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 pt-4 pb-28 space-y-2.5 ${
           appearance.wallpaper === 'doodle-animated' ? 'doodle-wallpaper-bg' : ''
         } ${appearance.wallpaper === 'custom' && appearance.customWallpaperUrl ? '!bg-transparent' : ''}`}
         onClick={() => {
@@ -2435,7 +2435,7 @@ export function ChatWindow({
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           }}
           aria-label="Gulir ke pesan terbaru"
-          className="p5-panel-reveal absolute bottom-20 right-4 z-20 h-11 w-11 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] brutal-shadow flex items-center justify-center brutal-press"
+          className="p5-panel-reveal absolute bottom-24 right-4 z-20 h-11 w-11 rounded-full liquid-glass text-[#161B26] dark:text-[#F5F7FA] flex items-center justify-center brutal-press"
         >
           {unreadWhileScrolledUp > 0 && (
             <span className="absolute -top-2 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-[#8C0027] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-sm">
@@ -2446,9 +2446,12 @@ export function ChatWindow({
         </button>
       )}
 
+      {/* Floating Liquid-Glass Dock (Popovers + Composer Capsule) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col justify-end px-2.5 pb-safe-2">
+        <div className="pointer-events-auto flex flex-col">
       {/* Mention Autocomplete Popover */}
       {mentionCandidates.length > 0 && (
-        <div className="p5-panel-reveal mx-3 mb-1 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow overflow-hidden z-20">
+        <div className="p5-panel-reveal mb-1.5 rounded-2xl liquid-glass overflow-hidden z-20">
           {mentionCandidates.map((u) => (
             <button
               key={u.id}
@@ -2473,7 +2476,7 @@ export function ChatWindow({
         <div
           className={`${
             fileBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2.5 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] space-y-1.5`}
+          } mb-1.5 px-4 py-2.5 rounded-2xl liquid-glass space-y-1.5`}
         >
           {pendingFile && (
             <div className="flex items-center gap-3">
@@ -2573,7 +2576,7 @@ export function ChatWindow({
         <div
           className={`${
             replyBarPresence.closing ? 'p5-panel-out pointer-events-none' : 'p5-panel-reveal'
-          } px-4 py-2 bg-[#EAF4FF] dark:bg-[#1E2738] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] flex items-center gap-3`}
+          } mb-1.5 px-4 py-2 rounded-2xl liquid-glass flex items-center gap-3`}
         >
           {editingMsg ? (
             <Edit2 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296] shrink-0" />
@@ -2708,7 +2711,7 @@ export function ChatWindow({
 
       {/* Emoji & Sticker Popover */}
       {emojiOpen && (
-        <div className="mx-3 mb-1.5 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] shadow-xl z-30 space-y-2.5 p5-panel-reveal">
+        <div className="mb-1.5 p-3 rounded-3xl liquid-glass z-30 space-y-2.5 p5-panel-reveal">
           <div className="flex items-center justify-between">
             <div className="grid grid-cols-2 p-0.5 rounded-full bg-[#F5F7FA] dark:bg-[#232D40]">
               {(['emoji', 'sticker'] as const).map((tKey) => (
@@ -2837,7 +2840,7 @@ export function ChatWindow({
 
       {/* + Attachment Action Sheet */}
       {attachMenuOpen && (
-        <div className="mx-3 mb-1.5 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] shadow-xl z-30 grid grid-cols-3 sm:grid-cols-6 gap-2 p5-panel-reveal">
+        <div className="mb-1.5 p-3 rounded-3xl liquid-glass z-30 grid grid-cols-3 sm:grid-cols-6 gap-2 p5-panel-reveal">
           <button
             type="button"
             onClick={() => {
@@ -2922,8 +2925,8 @@ export function ChatWindow({
         </div>
       )}
 
-      {/* Floating Capsule Composer */}
-      <footer className="mx-2.5 mb-safe-2 mt-1 px-2.5 py-2 rounded-full bg-[#FFFFFF]/92 dark:bg-[#171E2C]/92 backdrop-blur-xl border border-[#E6ECF2] dark:border-[#2A364B] shadow-[0_8px_28px_rgba(15,20,30,0.10)] shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+      {/* Floating Liquid-Glass Capsule Composer */}
+      <footer className="px-2.5 py-2 rounded-full liquid-glass shrink-0 transition-[margin-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {selectionMode ? (
           <div className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -3227,6 +3230,8 @@ export function ChatWindow({
           </form>
         )}
       </footer>
+        </div>
+      </div>
 
       {/* Full-Screen Media Lightbox (Carousel + Double-Tap/Pinch Zoom + Swipe-Down Dismiss) */}
       {lightboxRetained.renderedValue && lightboxRetained.renderedValue.attachment && (
