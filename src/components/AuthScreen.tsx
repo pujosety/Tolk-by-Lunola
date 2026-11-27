@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { QrCodeBox } from './QrCodeBox';
+import { TolkHorizontalLogo } from './TolkLogo';
 
 interface AuthScreenProps {
   darkMode: boolean;
@@ -99,8 +100,10 @@ export function AuthScreen({
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+    let maxH = vv.height;
     const syncViewport = () => {
-      const inset = Math.max(0, Math.round(window.innerHeight - vv.height));
+      if (vv.height > maxH) maxH = vv.height;
+      const inset = Math.max(0, Math.round(maxH - vv.height));
       setKeyboardInset(inset > 90 ? inset : 0);
     };
     syncViewport();
@@ -120,7 +123,10 @@ export function AuthScreen({
     setIsInputFocused(true);
     window.setTimeout(() => {
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 150);
+    }, 140);
+    window.setTimeout(() => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 320);
   };
 
   const handleFormBlurCapture = (e: React.FocusEvent<HTMLFormElement>) => {
@@ -153,8 +159,7 @@ export function AuthScreen({
 
   return (
     <div
-      style={keyboardInset > 0 ? { paddingBottom: `${keyboardInset + 20}px` } : undefined}
-      className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col px-safe transition-[padding-bottom] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]"
+      className="relative h-full w-full overflow-y-auto chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] flex flex-col px-safe"
     >
       {/* Top-Right Theme Toggle */}
       <div className="pt-safe-3 px-4 sm:px-6 flex justify-end shrink-0 z-10">
@@ -202,11 +207,7 @@ export function AuthScreen({
 
             <div className="relative z-10">
               <div className="inline-flex items-center">
-                <img
-                  src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-                  alt="Tolk by Lunola"
-                  className="h-12 w-auto object-contain select-none brightness-0 invert"
-                />
+                <TolkHorizontalLogo className="h-12 w-auto select-none brightness-0 invert" />
               </div>
 
               <h1 className="mt-5 font-display font-extrabold text-2xl sm:text-3xl leading-tight tracking-tight text-white">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TolkHorizontalLogo } from './TolkLogo';
 import {
   ArrowLeft,
   ChevronRight,
@@ -306,11 +307,7 @@ export function DrawerMenu({
         {/* Footer */}
         <div className="pt-3 pb-safe-3 px-4 border-t border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#171E2C] text-[11px] text-[#5A6578] dark:text-[#94A3B8] flex items-center justify-between gap-2">
           <div className="px-1 flex items-center">
-            <img
-              src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-              alt="Tolk by Lunola"
-              className="tolk-logo-adaptive h-6 w-auto object-contain select-none"
-            />
+            <TolkHorizontalLogo className="tolk-logo-adaptive h-6 w-auto select-none" />
           </div>
           <span className="font-mono font-bold">Tolk by Lunola</span>
         </div>

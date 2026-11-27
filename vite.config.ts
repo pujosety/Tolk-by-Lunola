@@ -47,9 +47,8 @@ export default defineConfig(() => {
             },
           ],
         },
-        workbox: {
+        injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//, /^\/ws/],
         },
         devOptions: {
           enabled: true,

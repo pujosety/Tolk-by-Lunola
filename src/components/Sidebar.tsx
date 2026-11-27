@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
+import { TolkHorizontalLogo, TolkSymbolSmallLogo } from './TolkLogo';
 import {
   Archive,
   Bell,
@@ -359,11 +360,7 @@ export function Sidebar({
             title="Menu Tolk by Lunola"
             className="h-10 w-10 rounded-xl border border-[#E6ECF2] dark:border-[#2A364B] bg-[#FFFFFF] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#2B364B] brutal-shadow-sm brutal-press flex items-center justify-center p-1.5 shrink-0"
           >
-            <img
-              src="/assets/aistudio/tolk-symbol-small_cb061777.svg"
-              alt="Tolk by Lunola"
-              className="tolk-logo-adaptive w-full h-full object-contain"
-            />
+            <TolkSymbolSmallLogo className="tolk-logo-adaptive w-full h-full" />
           </button>
 
           <button
@@ -451,11 +448,7 @@ export function Sidebar({
           {/* Clean Left Logo (Chats) or Tab Title */}
           <div className="h-11 px-1 flex items-center min-w-0">
             {activeTab === 'chats' ? (
-              <img
-                src="/assets/aistudio/tolk-horizontal_7a55fc8d.svg"
-                alt="Tolk by Lunola"
-                className="tolk-logo-adaptive h-10 w-auto object-contain select-none"
-              />
+              <TolkHorizontalLogo className="tolk-logo-adaptive h-10 w-auto select-none" />
             ) : (
               <h1 className="font-display font-extrabold text-xl text-[#161B26] dark:text-[#F5F7FA] truncate">
                 {activeTab === 'status'

@@ -1659,6 +1659,8 @@ function StoryViewerModal({
                 <input
                   type="text"
                   value={replyText}
+                  onFocus={() => setPaused(true)}
+                  onBlur={() => setPaused(false)}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Balas ${author?.displayName.split(' ')[0] || ''}...`}
                   className="flex-1 h-11 px-4 rounded-full bg-black/55 border border-white/35 backdrop-blur-md text-sm text-white placeholder:text-white/75 focus:outline-none focus:border-white"

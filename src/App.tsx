@@ -38,6 +38,7 @@ import { DEFAULT_CHAT_APPEARANCE } from './lib/appearance';
 import { compressImageFile } from './lib/imageCompression';
 import { Sidebar, type MainNavTab } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
+import { TolkStackedLogo } from './components/TolkLogo';
 import { ChatInfoDrawer } from './components/ChatInfoDrawer';
 import { HeaderOverflowMenu } from './components/HeaderOverflowMenu';
 import {
@@ -1429,11 +1430,7 @@ export function App() {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center chat-canvas-bg text-[#161B26] dark:text-[#F5F7FA] px-6">
         <div className="p5-impact-slam px-7 py-6 rounded-3xl bg-[#FFFFFF] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow-lg flex flex-col items-center">
-          <img
-            src="/assets/aistudio/tolk-stacked_d5d93707.svg"
-            alt="Tolk by Lunola"
-            className="h-32 w-auto object-contain select-none"
-          />
+          <TolkStackedLogo className="h-32 w-auto select-none" />
         </div>
         <p className="mt-4 text-xs font-mono font-bold tracking-wide text-[#5A6578] dark:text-[#CBD5E1] p5-panel-reveal">
           {t(lang, 'connecting')}

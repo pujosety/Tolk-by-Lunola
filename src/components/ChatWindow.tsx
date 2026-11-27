@@ -6,6 +6,7 @@ import {
   Check,
   CheckCheck,
   Clock,
+  Copy,
   Download,
   Edit2,
   Eye,
@@ -282,19 +283,32 @@ export function ChatWindow({
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState<string | null>(null);
-  const [menuOpenUpward, setMenuOpenUpward] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number; upward: boolean; ownMsg: boolean } | null>(null);
   const msgLongPressRef = useRef<number | null>(null);
 
-  const openMessageMenu = (msgId: string, anchorEl?: HTMLElement | null) => {
+  const openMessageMenu = (msgId: string, anchorEl?: HTMLElement | null, ownMessage?: boolean) => {
     if (activeMenuMsgId === msgId) {
       setActiveMenuMsgId(null);
+      setMenuPos(null);
       return;
     }
     if (anchorEl && typeof window !== 'undefined') {
       const rect = anchorEl.getBoundingClientRect();
-      setMenuOpenUpward(rect.bottom + 270 > window.innerHeight);
+      const vvHeight = window.visualViewport?.height || window.innerHeight;
+      const upward = rect.bottom + 300 > vvHeight;
+      const isOwnMsg = ownMessage ?? false;
+      setMenuPos({
+        x: isOwnMsg
+          ? Math.min(rect.right, window.innerWidth - 12)
+          : Math.max(rect.left, 12),
+        y: upward
+          ? Math.max(68, Math.min(rect.top, vvHeight - 16))
+          : Math.max(68, Math.min(rect.bottom + 4, vvHeight - 320)),
+        upward,
+        ownMsg: isOwnMsg,
+      });
     } else {
-      setMenuOpenUpward(false);
+      setMenuPos(null);
     }
     setActiveMenuMsgId(msgId);
   };
@@ -313,7 +327,10 @@ export function ChatWindow({
     y: number;
     locked: boolean;
     ignore: boolean;
+    hapticFired: boolean;
   } | null>(null);
+  const lastTapRef = useRef<{ msgId: string; time: number } | null>(null);
+  const edgeSwipeRef = useRef<{ x: number; y: number } | null>(null);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
@@ -417,6 +434,22 @@ export function ChatWindow({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, chat.id]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    let prevH = vv.height;
+    const onResize = () => {
+      if (vv.height < prevH - 60) {
+        window.setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 120);
+      }
+      prevH = vv.height;
+    };
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, []);
 
   const clearPendingFile = () => {
     if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
@@ -925,6 +958,27 @@ export function ChatWindow({
         style={getWallpaperStyle(appearance, darkMode)}
         className="p5-chat-enter flex-1 overflow-y-auto thin-scrollbar px-3 sm:px-5 py-4 space-y-2.5"
         onClick={() => setActiveMenuMsgId(null)}
+        onScroll={() => {
+          if (activeMenuMsgId) setActiveMenuMsgId(null);
+        }}
+        onTouchStart={(e) => {
+          if (e.touches.length === 1 && e.touches[0].clientX < 28) {
+            edgeSwipeRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          } else {
+            edgeSwipeRef.current = null;
+          }
+        }}
+        onTouchEnd={(e) => {
+          const edge = edgeSwipeRef.current;
+          edgeSwipeRef.current = null;
+          if (!edge || e.changedTouches.length !== 1) return;
+          const dx = e.changedTouches[0].clientX - edge.x;
+          const dy = Math.abs(e.changedTouches[0].clientY - edge.y);
+          if (dx > 72 && dy < 48 && window.innerWidth < 768) {
+            triggerAndroidHaptic();
+            onBackMobile();
+          }
+        }}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
@@ -994,7 +1048,8 @@ export function ChatWindow({
                     if (!ignore) {
                       msgLongPressRef.current = window.setTimeout(() => {
                         msgLongPressRef.current = null;
-                        openMessageMenu(msg.id, rowEl);
+                        triggerAndroidHaptic();
+                        openMessageMenu(msg.id, rowEl, isOwn);
                       }, 450);
                     }
                     swipeReplyRef.current = {
@@ -1002,7 +1057,8 @@ export function ChatWindow({
                       x: e.touches[0].clientX,
                       y: e.touches[0].clientY,
                       locked: false,
-                      ignore,
+                      ignore: ignore || e.touches[0].clientX < 28,
+                      hapticFired: false,
                     };
                   }}
                   onTouchMove={(e) => {
@@ -1019,31 +1075,53 @@ export function ChatWindow({
                       }
                     }
                     if (!start.locked) {
-                      if (dx > 10 && dx > Math.abs(dy) * 1.25) {
+                      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.25) {
                         start.locked = true;
                         setSwipingMsgId(msg.id);
-                      } else if (Math.abs(dy) > 10 || dx < -10) {
+                      } else if (Math.abs(dy) > 10) {
                         start.ignore = true;
                         return;
                       } else {
                         return;
                       }
                     }
-                    setSwipeOffsetX(Math.max(0, Math.min(68, dx)));
+                    const clamped = Math.max(-68, Math.min(68, dx));
+                    if (!start.hapticFired && Math.abs(clamped) >= 44) {
+                      start.hapticFired = true;
+                      triggerAndroidHaptic();
+                    }
+                    setSwipeOffsetX(clamped);
                   }}
-                  onTouchEnd={() => {
+                  onTouchEnd={(e) => {
                     if (msgLongPressRef.current !== null) {
                       window.clearTimeout(msgLongPressRef.current);
                       msgLongPressRef.current = null;
                     }
                     const start = swipeReplyRef.current;
-                    const pulledEnough = swipeOffsetX >= 44 && start?.msgId === msg.id;
+                    const pulledRight = swipeOffsetX >= 44 && start?.msgId === msg.id;
+                    const pulledLeft = swipeOffsetX <= -44 && start?.msgId === msg.id;
+                    const moved = start?.locked;
                     swipeReplyRef.current = null;
                     setSwipingMsgId(null);
                     setSwipeOffsetX(0);
-                    if (pulledEnough) {
+                    if (pulledRight) {
                       setReplyTo(msg);
                       window.setTimeout(() => inputRef.current?.focus(), 60);
+                    } else if (pulledLeft) {
+                      onForwardMessage(msg);
+                    } else if (!moved && !start?.ignore && e.changedTouches.length === 1) {
+                      const now = Date.now();
+                      if (
+                        lastTapRef.current &&
+                        lastTapRef.current.msgId === msg.id &&
+                        now - lastTapRef.current.time < 280
+                      ) {
+                        lastTapRef.current = null;
+                        triggerAndroidHaptic();
+                        void onToggleReaction(msg.id, '❤️');
+                      } else {
+                        lastTapRef.current = { msgId: msg.id, time: now };
+                      }
                     }
                   }}
                   onTouchCancel={() => {
@@ -1056,7 +1134,7 @@ export function ChatWindow({
                     setSwipeOffsetX(0);
                   }}
                   style={
-                    swipingMsgId === msg.id && swipeOffsetX > 0
+                    swipingMsgId === msg.id && swipeOffsetX !== 0
                       ? { transform: `translate3d(${swipeOffsetX}px, 0, 0)` }
                       : undefined
                   }
@@ -1072,6 +1150,14 @@ export function ChatWindow({
                       className="pointer-events-none absolute -left-9 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#8C0027] text-white flex items-center justify-center shadow-sm"
                     >
                       <Reply className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  {swipingMsgId === msg.id && swipeOffsetX < -12 && (
+                    <div
+                      style={{ opacity: Math.min(1, Math.abs(swipeOffsetX) / 44) }}
+                      className="pointer-events-none absolute -right-9 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#161B26] dark:bg-[#232D40] text-white flex items-center justify-center shadow-sm"
+                    >
+                      <Forward className="w-3.5 h-3.5" />
                     </div>
                   )}
                   {!isOwn && chat.type === 'group' && (
@@ -1336,7 +1422,7 @@ export function ChatWindow({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openMessageMenu(msg.id, e.currentTarget);
+                        openMessageMenu(msg.id, e.currentTarget, isOwn);
                       }}
                       aria-label="Opsi pesan"
                       className={`absolute top-1.5 ${
@@ -1346,15 +1432,24 @@ export function ChatWindow({
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Floating Message Context Menu */}
-                    {menuRetained.renderedValue === msg.id && (
+                    {/* Floating Message Context Menu — rendered via portal-like fixed position to avoid bubble clip */}
+                    {menuRetained.renderedValue === msg.id && menuPos && (
                       <div
                         onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'fixed',
+                          zIndex: 9999,
+                          width: '13rem',
+                          ...(menuPos.upward
+                            ? { bottom: `${Math.min(window.innerHeight - 340, Math.max(16, window.innerHeight - menuPos.y))}px` }
+                            : { top: `${menuPos.y}px` }),
+                          ...(menuPos.ownMsg
+                            ? { right: `${window.innerWidth - menuPos.x}px` }
+                            : { left: `${menuPos.x}px` }),
+                        }}
                         className={`${
                           menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
-                        } absolute z-50 ${menuOpenUpward ? 'bottom-8' : 'top-8'} ${
-                          isOwn ? 'right-0' : 'left-0'
-                        } w-52 rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow p-1.5`}
+                        } rounded-xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#F5F7FA] brutal-shadow p-1.5`}
                       >
                         <div className="flex items-center justify-between px-1 py-1 border-b-2 border-[#161B26]/15 dark:border-[#2A364B] mb-1">
                           {QUICK_REACTIONS.map((emoji) => (
@@ -1419,6 +1514,21 @@ export function ChatWindow({
                               : 'Bintangi Pesan'}
                           </span>
                         </button>
+
+                        {msg.text.trim().length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void navigator.clipboard?.writeText(msg.text).catch(() => {});
+                              triggerAndroidHaptic();
+                              setActiveMenuMsgId(null);
+                            }}
+                            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Salin Teks</span>
+                          </button>
+                        )}
 
                         {msg.text.trim().length > 0 && (
                           <button
@@ -1701,7 +1811,7 @@ export function ChatWindow({
       )}
 
       {/* Neo-Brutalist Composer */}
-      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] shrink-0">
+      <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] shrink-0 transition-[padding-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
         {!canPost ? (
           <div className="py-2 text-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
             {chat.suspended
@@ -1770,7 +1880,12 @@ export function ChatWindow({
               ref={inputRef}
               rows={1}
               value={draftText}
-              onFocus={() => setComposerFocused(true)}
+              onFocus={() => {
+                setComposerFocused(true);
+                window.setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 260);
+              }}
               onBlur={() => setComposerFocused(false)}
               onChange={(e) => handleInputChange(e.target.value)}
               onPaste={handlePaste}
