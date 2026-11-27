@@ -211,6 +211,20 @@ export function AdminPanel({
     refreshSection();
   }, [refreshSection]);
 
+  const activeCategory: AdminCategory =
+    ADMIN_MENUS.find((m) => m.key === menu)?.category || 'overview';
+  const activeCatIdx = Math.max(
+    0,
+    ADMIN_CATEGORIES.findIndex((c) => c.key === activeCategory)
+  );
+  const adminSwipe = useCapsuleSwipe(
+    ADMIN_CATEGORIES.length,
+    activeCatIdx,
+    (idx) => setMenu(ADMIN_CATEGORIES[idx].menus[0]),
+    typeof window !== 'undefined' ? window.innerWidth : 390
+  );
+  const categorySubMenus = ADMIN_MENUS.filter((m) => m.category === activeCategory);
+
   const { mounted, closing } = useAnimatedPresence(open, 210);
   const confirmRetained = useRetainedValue(confirmAction, 200);
   const edgeSwipe = useSwipeGesture({
@@ -340,20 +354,6 @@ export function AdminPanel({
       </div>
     );
   }
-
-  const activeCategory: AdminCategory =
-    ADMIN_MENUS.find((m) => m.key === menu)?.category || 'overview';
-  const activeCatIdx = Math.max(
-    0,
-    ADMIN_CATEGORIES.findIndex((c) => c.key === activeCategory)
-  );
-  const adminSwipe = useCapsuleSwipe(
-    ADMIN_CATEGORIES.length,
-    activeCatIdx,
-    (idx) => setMenu(ADMIN_CATEGORIES[idx].menus[0]),
-    typeof window !== 'undefined' ? window.innerWidth : 390
-  );
-  const categorySubMenus = ADMIN_MENUS.filter((m) => m.category === activeCategory);
 
   return (
     <div
