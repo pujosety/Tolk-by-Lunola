@@ -264,6 +264,11 @@ export const api = {
       } | null;
       forwardedFrom?: { senderName: string; chatTitle?: string } | null;
       attachment?: Attachment | null;
+      poll?: {
+        question: string;
+        allowMultiple: boolean;
+        options: Array<{ text: string }>;
+      } | null;
       scheduledFor?: number | null;
     }
   ) =>
@@ -289,6 +294,18 @@ export const api = {
     requestJson<{ message: Message }>(
       `/api/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/react`,
       { method: 'POST', token, body: { emoji } }
+    ),
+
+  votePoll: (token: string, chatId: string, messageId: string, optionId: string) =>
+    requestJson<{ message: Message }>(
+      `/api/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/vote`,
+      { method: 'POST', token, body: { optionId } }
+    ),
+
+  markViewOnceViewed: (token: string, chatId: string, messageId: string) =>
+    requestJson<{ message: Message }>(
+      `/api/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/view-once`,
+      { method: 'POST', token }
     ),
 
   pinMessage: (token: string, chatId: string, messageId: string | null) =>

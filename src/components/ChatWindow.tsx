@@ -2,11 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
+  BarChart3,
   CalendarClock,
   Camera,
   Check,
   CheckCheck,
+  CheckSquare,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Copy,
   Download,
@@ -17,6 +21,7 @@ import {
   Forward,
   Info,
   Languages,
+  Lock,
   Mic,
   MoreVertical,
   Paperclip,
@@ -24,6 +29,7 @@ import {
   Phone,
   Pin,
   Play,
+  Plus,
   RefreshCw,
   Reply,
   Search,
@@ -36,6 +42,8 @@ import {
   UploadCloud,
   Video,
   X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import type {
   Attachment,
@@ -85,6 +93,11 @@ interface ChatWindowProps {
     text: string;
     replyToId?: string | null;
     attachment?: Attachment | null;
+    poll?: {
+      question: string;
+      allowMultiple: boolean;
+      options: Array<{ text: string }>;
+    } | null;
     scheduledFor?: number | null;
   }) => Promise<void>;
   onUploadFile: (
@@ -95,6 +108,8 @@ interface ChatWindowProps {
   onEditMessage: (messageId: string, text: string) => Promise<void>;
   onDeleteMessage: (messageId: string) => Promise<void>;
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
+  onVotePoll?: (messageId: string, optionId: string) => Promise<void>;
+  onMarkViewOnceViewed?: (messageId: string) => Promise<void>;
   onPinMessage: (messageId: string | null) => Promise<void>;
   onToggleStarMessage: (messageId: string, starred?: boolean) => Promise<void>;
   onForwardMessage: (message: Message) => void;
@@ -275,6 +290,8 @@ export function ChatWindow({
   onEditMessage,
   onDeleteMessage,
   onToggleReaction,
+  onVotePoll,
+  onMarkViewOnceViewed,
   onPinMessage,
   onToggleStarMessage,
   onForwardMessage,
@@ -321,7 +338,21 @@ export function ChatWindow({
   const [searchOpen, setSearchOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxMsgId, setLightboxMsgId] = useState<string | null>(null);
+  const [lightboxZoom, setLightboxZoom] = useState<number>(1);
+  const [viewOnceModalMsg, setViewOnceModalMsg] = useState<Message | null>(null);
+  const [pendingViewOnce, setPendingViewOnce] = useState(false);
+  const [pollModalOpen, setPollModalOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMsgIds, setSelectedMsgIds] = useState<Set<string>>(() => new Set());
+  const [recordLocked, setRecordLocked] = useState(false);
+  const [recordSwipe, setRecordSwipe] = useState<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
+  const [recordLevels, setRecordLevels] = useState<number[]>([25, 45, 70, 50, 80, 40, 65, 35]);
+  const recordTouchRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
+  const analyserRafRef = useRef<number | null>(null);
   const [sending, setSending] = useState(false);
   const [composerFocused, setComposerFocused] = useState(false);
   const [sendKick, setSendKick] = useState(0);
@@ -337,11 +368,26 @@ export function ChatWindow({
   } | null>(null);
   const lastTapRef = useRef<{ msgId: string; time: number } | null>(null);
   const edgeSwipeRef = useRef<{ x: number; y: number } | null>(null);
-  const lightboxTouchRef = useRef<{ y: number } | null>(null);
+  const lightboxTouchRef = useRef<{ x: number; y: number; pinchDist?: number } | null>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [unreadWhileScrolledUp, setUnreadWhileScrolledUp] = useState(0);
   const showScrollDownRef = useRef(false);
   const prevMsgLenRef = useRef(messages.length);
+
+  const lightboxMediaList = useMemo(
+    () =>
+      messages.filter(
+        (m) =>
+          !m.attachment?.viewOnce &&
+          (m.attachment?.kind === 'image' || m.attachment?.kind === 'video')
+      ),
+    [messages]
+  );
+  const lightboxIdx = useMemo(
+    () => (lightboxMsgId ? lightboxMediaList.findIndex((m) => m.id === lightboxMsgId) : -1),
+    [lightboxMsgId, lightboxMediaList]
+  );
+  const activeLightboxMsg = lightboxIdx >= 0 ? lightboxMediaList[lightboxIdx] : null;
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
@@ -396,7 +442,7 @@ export function ChatWindow({
     175
   );
   const schedulePresence = useAnimatedPresence(scheduleOpen && canPost, 175);
-  const lightboxRetained = useRetainedValue(lightboxImage, 200);
+  const lightboxRetained = useRetainedValue(activeLightboxMsg, 200);
 
   const pinnedMessage = useMemo(
     () => messages.find((m) => m.id === chat.pinnedMessageId) || null,
@@ -494,6 +540,7 @@ export function ChatWindow({
     } else {
       setPendingPreviewUrl(null);
     }
+    setPendingViewOnce(false);
   };
 
   useEffect(() => {
@@ -542,6 +589,12 @@ export function ChatWindow({
           uploadedAttachment = await onUploadFile(pendingFile, (pct) => {
             setUploadProgress(pct);
           });
+          if (
+            pendingViewOnce &&
+            (uploadedAttachment.kind === 'image' || uploadedAttachment.kind === 'video')
+          ) {
+            uploadedAttachment = { ...uploadedAttachment, viewOnce: true, viewedBy: [] };
+          }
         }
         await onSendMessage({
           text: trimmed,
@@ -1198,6 +1251,27 @@ export function ChatWindow({
                       <Forward className="w-4 h-4" />
                     </div>
                   )}
+                  {selectionMode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedMsgIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(msg.id)) next.delete(msg.id);
+                          else next.add(msg.id);
+                          return next;
+                        });
+                      }}
+                      aria-label={`Pilih pesan ${msg.id}`}
+                      className={`mr-1.5 self-center h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        selectedMsgIds.has(msg.id)
+                          ? 'bg-[#8C0027] border-[#8C0027] text-white'
+                          : 'border-[#94A3B8] bg-white/80 dark:bg-[#1E2738]'
+                      }`}
+                    >
+                      {selectedMsgIds.has(msg.id) && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
                   {!isOwn && chat.type === 'group' && (
                     <div className="w-8 shrink-0">
                       {showSenderName && (
@@ -1311,31 +1385,139 @@ export function ChatWindow({
                         </div>
                       )}
 
-                      {/* Image Attachment */}
-                      {msg.attachment?.kind === 'image' && (
-                        <button
-                          type="button"
-                          onClick={() => setLightboxImage(msg.attachment!.url)}
-                          className="block w-full max-w-[300px] sm:max-w-[340px] mb-1.5 rounded-2xl overflow-hidden bg-black/5 dark:bg-black/25 focus:outline-none"
-                        >
-                          <img
-                            src={msg.attachment.url}
-                            alt={msg.attachment.name}
-                            className="block w-full max-h-80 object-contain rounded-2xl"
-                            loading="lazy"
-                          />
-                        </button>
+                      {/* View-Once Media Attachment */}
+                      {msg.attachment?.viewOnce && (msg.attachment.kind === 'image' || msg.attachment.kind === 'video') ? (
+                        (() => {
+                          const alreadyViewed = !isOwn && msg.attachment!.viewedBy?.includes(currentUser.id);
+                          return (
+                            <button
+                              type="button"
+                              disabled={alreadyViewed}
+                              onClick={() => {
+                                if (alreadyViewed) return;
+                                setViewOnceModalMsg(msg);
+                                if (!isOwn) void onMarkViewOnceViewed?.(msg.id);
+                              }}
+                              className={`mb-1.5 px-3 py-2 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all ${
+                                alreadyViewed
+                                  ? 'opacity-60 cursor-default bg-black/10 border-current/20'
+                                  : isOwn
+                                  ? 'bg-white/15 border-white/30 text-white hover:bg-white/25'
+                                  : 'bg-[#EAF4FF] dark:bg-[#1E2738] border-[#BEDEFF] dark:border-[#324058] text-[#8C0027] dark:text-[#F47296]'
+                              }`}
+                            >
+                              <span className="h-5 w-5 rounded-full border border-current flex items-center justify-center text-[10px] font-mono">
+                                1
+                              </span>
+                              <span>
+                                {alreadyViewed
+                                  ? 'Dibuka'
+                                  : msg.attachment!.kind === 'video'
+                                  ? 'Video Sekali Lihat'
+                                  : 'Foto Sekali Lihat'}
+                              </span>
+                            </button>
+                          );
+                        })()
+                      ) : (
+                        <>
+                          {/* Image Attachment */}
+                          {msg.attachment?.kind === 'image' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLightboxZoom(1);
+                                setLightboxMsgId(msg.id);
+                              }}
+                              className="block w-full max-w-[300px] sm:max-w-[340px] mb-1.5 rounded-2xl overflow-hidden bg-black/5 dark:bg-black/25 focus:outline-none"
+                            >
+                              <img
+                                src={msg.attachment.url}
+                                alt={msg.attachment.name}
+                                className="block w-full max-h-80 object-contain rounded-2xl"
+                                loading="lazy"
+                              />
+                            </button>
+                          )}
+
+                          {/* Video Attachment */}
+                          {msg.attachment?.kind === 'video' && (
+                            <div className="mb-1.5 rounded-lg overflow-hidden border border-[#E6ECF2] bg-black">
+                              <video
+                                src={msg.attachment.url}
+                                controls
+                                preload="metadata"
+                                className="max-h-72 max-w-full"
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
 
-                      {/* Video Attachment */}
-                      {msg.attachment?.kind === 'video' && (
-                        <div className="mb-1.5 rounded-lg overflow-hidden border border-[#E6ECF2] bg-black">
-                          <video
-                            src={msg.attachment.url}
-                            controls
-                            preload="metadata"
-                            className="max-h-72 max-w-full"
-                          />
+                      {/* Interactive Poll Card */}
+                      {msg.poll && (
+                        <div className="mb-1.5 min-w-[220px] max-w-[300px] space-y-2">
+                          <div className="flex items-start gap-1.5">
+                            <BarChart3 className="w-4 h-4 shrink-0 mt-0.5 opacity-85" />
+                            <div>
+                              <div className="text-[13px] font-bold leading-snug">{msg.poll.question}</div>
+                              <div className="text-[10px] opacity-75">
+                                {msg.poll.allowMultiple ? 'Pilih satu atau lebih' : 'Pilih satu'}
+                              </div>
+                            </div>
+                          </div>
+                          {(() => {
+                            const totalVotes = msg.poll!.options.reduce(
+                              (sum, o) => sum + o.voterIds.length,
+                              0
+                            );
+                            return (
+                              <div className="space-y-1.5">
+                                {msg.poll!.options.map((opt) => {
+                                  const voted = opt.voterIds.includes(currentUser.id);
+                                  const pct =
+                                    totalVotes > 0
+                                      ? Math.round((opt.voterIds.length / totalVotes) * 100)
+                                      : 0;
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => void onVotePoll?.(msg.id, opt.id)}
+                                      className={`relative w-full text-left px-2.5 py-2 rounded-xl border overflow-hidden transition-all ${
+                                        voted
+                                          ? isOwn
+                                            ? 'border-white/60 bg-white/15'
+                                            : 'border-[#8C0027] bg-[#8C0027]/10'
+                                          : isOwn
+                                          ? 'border-white/25 bg-black/15 hover:bg-black/25'
+                                          : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#1E2738]'
+                                      }`}
+                                    >
+                                      <div
+                                        style={{ width: `${pct}%` }}
+                                        className={`absolute inset-y-0 left-0 transition-all duration-300 ${
+                                          isOwn ? 'bg-white/20' : 'bg-[#8C0027]/15 dark:bg-[#F47296]/20'
+                                        }`}
+                                      />
+                                      <div className="relative flex items-center justify-between gap-2 text-xs">
+                                        <span className="flex items-center gap-1.5 font-semibold truncate">
+                                          {voted && <Check className="w-3.5 h-3.5 shrink-0" />}
+                                          <span className="truncate">{opt.text}</span>
+                                        </span>
+                                        <span className="font-mono text-[10px] font-bold shrink-0 tabular-nums">
+                                          {opt.voterIds.length} ({pct}%)
+                                        </span>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                                <div className="text-[10px] font-mono opacity-75 text-right">
+                                  Total suara: {totalVotes}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
 
@@ -1536,6 +1718,19 @@ export function ChatWindow({
                         >
                           <Forward className="w-3.5 h-3.5" />
                           <span>Teruskan</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectionMode(true);
+                            setSelectedMsgIds(new Set([msg.id]));
+                            setActiveMenuMsgId(null);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex items-center gap-2"
+                        >
+                          <CheckSquare className="w-3.5 h-3.5" />
+                          <span>Pilih Pesan</span>
                         </button>
 
                         <button
@@ -1751,6 +1946,25 @@ export function ChatWindow({
                 </div>
               </div>
 
+              {(pendingFile.type.startsWith('image/') || pendingFile.type.startsWith('video/')) && (
+                <button
+                  type="button"
+                  onClick={() => setPendingViewOnce((v) => !v)}
+                  aria-label="Aktifkan mode sekali lihat"
+                  title="Sekali Lihat"
+                  className={`h-8 px-2.5 rounded-full border text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors ${
+                    pendingViewOnce
+                      ? 'bg-[#8C0027] border-[#8C0027] text-white'
+                      : 'bg-white dark:bg-[#171E2C] border-[#E6ECF2] dark:border-[#324058] text-[#5A6578] dark:text-[#CBD5E1]'
+                  }`}
+                >
+                  <span className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[9px] font-mono">
+                    1
+                  </span>
+                  <span className="hidden sm:inline">Sekali Lihat</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={clearPendingFile}
@@ -1895,7 +2109,89 @@ export function ChatWindow({
 
       {/* Neo-Brutalist Composer */}
       <footer className="pt-2.5 pb-safe-3 px-3 bg-[#FFFFFF] dark:bg-[#171E2C] border-t-2 border-[#E6ECF2] dark:border-[#2A364B] shrink-0 transition-[padding-bottom] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
-        {!canPost ? (
+        {selectionMode ? (
+          <div className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectionMode(false);
+                  setSelectedMsgIds(new Set());
+                }}
+                className="h-9 px-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold text-[#161B26] dark:text-[#F5F7FA]"
+              >
+                Batal
+              </button>
+              <span className="text-xs font-bold text-[#161B26] dark:text-[#F5F7FA] truncate">
+                {selectedMsgIds.size} dipilih
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                disabled={selectedMsgIds.size === 0}
+                onClick={() => {
+                  const selected = messages.filter((m) => selectedMsgIds.has(m.id));
+                  const joined = selected.map((m) => m.text).filter(Boolean).join('\n');
+                  if (joined) void navigator.clipboard?.writeText(joined).catch(() => {});
+                  setSelectionMode(false);
+                  setSelectedMsgIds(new Set());
+                }}
+                aria-label="Salin pesan terpilih"
+                className="h-9 w-9 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] flex items-center justify-center disabled:opacity-40"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={selectedMsgIds.size === 0}
+                onClick={async () => {
+                  for (const id of selectedMsgIds) {
+                    await onToggleStarMessage(id);
+                  }
+                  setSelectionMode(false);
+                  setSelectedMsgIds(new Set());
+                }}
+                aria-label="Bintangi pesan terpilih"
+                className="h-9 w-9 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] flex items-center justify-center disabled:opacity-40"
+              >
+                <Star className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={selectedMsgIds.size === 0}
+                onClick={() => {
+                  const first = messages.find((m) => selectedMsgIds.has(m.id));
+                  if (first) onForwardMessage(first);
+                  setSelectionMode(false);
+                  setSelectedMsgIds(new Set());
+                }}
+                aria-label="Teruskan pesan terpilih"
+                className="h-9 w-9 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] flex items-center justify-center disabled:opacity-40"
+              >
+                <Forward className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={selectedMsgIds.size === 0}
+                onClick={async () => {
+                  for (const id of selectedMsgIds) {
+                    const target = messages.find((m) => m.id === id);
+                    if (target && (target.senderId === currentUser.id || isGroupAdminOrMod)) {
+                      await onDeleteMessage(id);
+                    }
+                  }
+                  setSelectionMode(false);
+                  setSelectedMsgIds(new Set());
+                }}
+                aria-label="Hapus pesan terpilih"
+                className="h-9 w-9 rounded-full bg-[#FEF2F2] dark:bg-[#2B1217] text-[#B91C1C] dark:text-[#FF6B81] border border-[#FECACA] dark:border-[#5C1D24] flex items-center justify-center disabled:opacity-40"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : !canPost ? (
           <div className="py-2 text-center text-xs font-semibold text-[#5A6578] dark:text-[#94A3B8]">
             {chat.suspended
               ? 'Grup atau channel ini sedang ditangguhkan oleh administrator.'
@@ -1904,28 +2200,89 @@ export function ChatWindow({
                 : 'Mode pengumuman aktif — hanya admin & moderator yang dapat mengirim pesan.'}
           </div>
         ) : recording ? (
-          <div className="p5-panel-reveal flex items-center justify-between gap-3 h-11 px-3 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#8C0027] brutal-shadow-sm">
-            <div className="flex items-center gap-2.5">
-              <span className="h-3 w-3 rounded-md bg-[#8C0027] animate-pulse" />
-              <span className="font-mono text-sm font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums">
-                Merekam {formatDuration(recordSec)}
+          <div
+            onTouchStart={(e) => {
+              if (e.touches.length === 1) {
+                recordTouchRef.current = {
+                  x: e.touches[0].clientX,
+                  y: e.touches[0].clientY,
+                  active: true,
+                };
+              }
+            }}
+            onTouchMove={(e) => {
+              const start = recordTouchRef.current;
+              if (!start?.active || e.touches.length !== 1) return;
+              const dx = e.touches[0].clientX - start.x;
+              const dy = e.touches[0].clientY - start.y;
+              setRecordSwipe({ dx, dy });
+              if (dx < -80) {
+                recordTouchRef.current = null;
+                setRecordSwipe({ dx: 0, dy: 0 });
+                setRecordLocked(false);
+                triggerAndroidHaptic();
+                cancelVoiceRecording();
+              } else if (dy < -60 && !recordLocked) {
+                setRecordLocked(true);
+                setRecordSwipe({ dx: 0, dy: 0 });
+                triggerAndroidHaptic();
+              }
+            }}
+            onTouchEnd={() => {
+              recordTouchRef.current = null;
+              setRecordSwipe({ dx: 0, dy: 0 });
+            }}
+            style={{
+              transform: recordSwipe.dx < 0 ? `translateX(${Math.max(-90, recordSwipe.dx)}px)` : undefined,
+            }}
+            className="p5-panel-reveal flex items-center justify-between gap-2 h-11 px-3 rounded-xl bg-[#EAF4FF] dark:bg-[#1B2436] border border-[#8C0027] brutal-shadow-sm transition-transform"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="h-3 w-3 rounded-full bg-[#8C0027] animate-pulse shrink-0" />
+              <span className="font-mono text-xs font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums shrink-0">
+                {formatDuration(recordSec)}
               </span>
+              <div className="hidden xs:flex items-center gap-0.5 h-5">
+                {recordLevels.map((lvl, idx) => (
+                  <span
+                    key={idx}
+                    style={{ height: `${Math.max(20, (lvl + ((recordSec * 17 + idx * 23) % 40)) % 100)}%` }}
+                    className="w-1 rounded-full bg-[#8C0027]/75 dark:bg-[#F47296]/80 transition-all duration-150"
+                  />
+                ))}
+              </div>
+              {recordLocked ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#8C0027] dark:text-[#F47296]">
+                  <Lock className="w-3 h-3" />
+                  <span>Terkunci</span>
+                </span>
+              ) : (
+                <span className="text-[11px] text-[#5A6578] dark:text-[#94A3B8] truncate">
+                  ← Geser batal · ↑ Kunci
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={cancelVoiceRecording}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/10"
+                onClick={() => {
+                  setRecordLocked(false);
+                  cancelVoiceRecording();
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#5A6578] dark:text-[#CBD5E1] hover:bg-black/10"
               >
                 Batal
               </button>
               <button
                 type="button"
-                onClick={stopVoiceRecording}
-                className="h-9 px-3.5 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] brutal-shadow-sm brutal-press text-xs font-bold flex items-center gap-1.5"
+                onClick={() => {
+                  setRecordLocked(false);
+                  stopVoiceRecording();
+                }}
+                className="h-9 px-3 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] text-[#FFFFFF] border border-[#E6ECF2] brutal-shadow-sm brutal-press text-xs font-bold flex items-center gap-1.5"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
-                <span>Kirim Suara</span>
+                <span>Kirim</span>
               </button>
             </div>
           </div>
@@ -1943,20 +2300,34 @@ export function ChatWindow({
               className="hidden"
             />
             {!composerFocused && (
-              <button
-                type="button"
-                onClick={() => setScheduleOpen((v) => !v)}
-                disabled={sending || Boolean(editingMsg)}
-                aria-label={t(lang, 'scheduleMessage')}
-                title={t(lang, 'scheduleMessage')}
-                className={`h-11 w-10 rounded-full border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 transition-all ${
-                  scheduledFor
-                    ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
-                    : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
-                }`}
-              >
-                <CalendarClock className="w-4 h-4" />
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setScheduleOpen((v) => !v)}
+                  disabled={sending || Boolean(editingMsg)}
+                  aria-label={t(lang, 'scheduleMessage')}
+                  title={t(lang, 'scheduleMessage')}
+                  className={`h-11 w-10 rounded-full border brutal-shadow-sm brutal-press flex items-center justify-center shrink-0 transition-all ${
+                    scheduledFor
+                      ? 'bg-[#8C0027] text-[#FFFFFF] border-[#E6ECF2]'
+                      : 'border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white'
+                  }`}
+                >
+                  <CalendarClock className="w-4 h-4" />
+                </button>
+                {(chat.type === 'group' || chat.type === 'channel') && (
+                  <button
+                    type="button"
+                    onClick={() => setPollModalOpen(true)}
+                    disabled={sending || Boolean(editingMsg)}
+                    aria-label="Buat polling"
+                    title="Buat polling"
+                    className="h-11 w-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F5F7FA] hover:bg-[#8C0027] hover:text-white brutal-shadow-sm brutal-press flex items-center justify-center shrink-0"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </button>
+                )}
+              </>
             )}
 
             <textarea
@@ -2038,8 +2409,8 @@ export function ChatWindow({
         )}
       </footer>
 
-      {/* Full-Screen Image Lightbox */}
-      {lightboxRetained.renderedValue && (
+      {/* Full-Screen Media Lightbox (Carousel + Double-Tap/Pinch Zoom + Swipe-Down Dismiss) */}
+      {lightboxRetained.renderedValue && lightboxRetained.renderedValue.attachment && (
         <div
           style={{
             height: 'var(--app-height, 100dvh)',
@@ -2050,57 +2421,294 @@ export function ChatWindow({
           } fixed inset-x-0 z-[85] bg-black flex flex-col`}
         >
           {/* Top Overlay Controls */}
-          <div className="pt-safe-2 px-4 pb-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between gap-3 shrink-0 z-10">
+          <div className="pt-safe-2 px-4 pb-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between gap-2 shrink-0 z-10">
             <button
               type="button"
-              onClick={() => setLightboxImage(null)}
-              aria-label="Tutup pratinjau gambar"
+              onClick={() => setLightboxMsgId(null)}
+              aria-label="Tutup pratinjau media"
               className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-white brutal-press flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                triggerAndroidHaptic();
-                void saveMediaToGallery(lightboxRetained.renderedValue!);
-              }}
-              aria-label="Simpan gambar ke galeri"
-              className="h-10 px-4 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold brutal-press flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Simpan ke Galeri</span>
-            </button>
+            <span className="text-xs font-mono text-white/80">
+              {lightboxMediaList.length > 1 && lightboxIdx >= 0
+                ? `${lightboxIdx + 1} / ${lightboxMediaList.length}`
+                : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              {lightboxRetained.renderedValue.attachment.kind === 'image' && (
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom((z) => (z > 1 ? 1 : 2.2))}
+                  aria-label="Zoom gambar"
+                  className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                >
+                  {lightboxZoom > 1 ? <ZoomOut className="w-4 h-4" /> : <ZoomIn className="w-4 h-4" />}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerAndroidHaptic();
+                  void saveMediaToGallery(lightboxRetained.renderedValue!.attachment!.url);
+                }}
+                aria-label="Simpan media ke galeri"
+                className="h-10 px-4 rounded-full bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold brutal-press flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Simpan</span>
+              </button>
+            </div>
           </div>
 
-          {/* Full-Bleed Image Container (tap backdrop or swipe down to close) */}
+          {/* Full-Bleed Media Container */}
           <div
-            onClick={() => setLightboxImage(null)}
+            onClick={() => setLightboxMsgId(null)}
             onTouchStart={(e) => {
-              if (e.touches.length === 1) {
-                lightboxTouchRef.current = { y: e.touches[0].clientY };
+              if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                lightboxTouchRef.current = { x: 0, y: 0, pinchDist: Math.hypot(dx, dy) };
+              } else if (e.touches.length === 1) {
+                lightboxTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              }
+            }}
+            onTouchMove={(e) => {
+              if (e.touches.length === 2 && lightboxTouchRef.current?.pinchDist) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.hypot(dx, dy);
+                const ratio = dist / lightboxTouchRef.current.pinchDist;
+                setLightboxZoom(Math.max(1, Math.min(3, Number((ratio * 1.1).toFixed(2)))));
               }
             }}
             onTouchEnd={(e) => {
               const start = lightboxTouchRef.current;
               lightboxTouchRef.current = null;
-              if (start && e.changedTouches.length === 1) {
+              if (start && !start.pinchDist && e.changedTouches.length === 1) {
+                const dx = e.changedTouches[0].clientX - start.x;
                 const dy = e.changedTouches[0].clientY - start.y;
-                if (Math.abs(dy) > 70) {
-                  setLightboxImage(null);
+                if (Math.abs(dy) > 75 && Math.abs(dy) > Math.abs(dx) && lightboxZoom <= 1.05) {
+                  setLightboxMsgId(null);
+                } else if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) && lightboxZoom <= 1.05) {
+                  if (dx < 0 && lightboxIdx >= 0 && lightboxIdx < lightboxMediaList.length - 1) {
+                    setLightboxZoom(1);
+                    setLightboxMsgId(lightboxMediaList[lightboxIdx + 1].id);
+                  } else if (dx > 0 && lightboxIdx > 0) {
+                    setLightboxZoom(1);
+                    setLightboxMsgId(lightboxMediaList[lightboxIdx - 1].id);
+                  }
                 }
               }
             }}
-            className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"
+            className="relative flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"
           >
-            <img
-              src={lightboxRetained.renderedValue}
-              alt="Pratinjau gambar"
-              onClick={(e) => e.stopPropagation()}
-              className={`${
-                lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
-              } w-full h-full object-contain select-none`}
+            {lightboxIdx > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxZoom(1);
+                  setLightboxMsgId(lightboxMediaList[lightboxIdx - 1].id);
+                }}
+                aria-label="Media sebelumnya"
+                className="hidden sm:flex absolute left-4 z-10 h-11 w-11 rounded-full bg-white/15 hover:bg-white/25 text-white items-center justify-center"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            {lightboxRetained.renderedValue.attachment.kind === 'video' ? (
+              <video
+                src={lightboxRetained.renderedValue.attachment.url}
+                controls
+                autoPlay
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-full max-h-full"
+              />
+            ) : (
+              <img
+                src={lightboxRetained.renderedValue.attachment.url}
+                alt="Pratinjau gambar"
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxZoom((z) => (z > 1 ? 1 : 2.2));
+                }}
+                style={{ transform: `scale(${lightboxZoom})` }}
+                className={`${
+                  lightboxRetained.closing ? 'p5-modal-out' : 'p5-modal-impact'
+                } w-full h-full object-contain select-none transition-transform duration-200`}
+              />
+            )}
+            {lightboxIdx >= 0 && lightboxIdx < lightboxMediaList.length - 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxZoom(1);
+                  setLightboxMsgId(lightboxMediaList[lightboxIdx + 1].id);
+                }}
+                aria-label="Media berikutnya"
+                className="hidden sm:flex absolute right-4 z-10 h-11 w-11 rounded-full bg-white/15 hover:bg-white/25 text-white items-center justify-center"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* View-Once Media Secure Overlay */}
+      {viewOnceModalMsg?.attachment && (
+        <div
+          style={{ height: 'var(--app-height, 100dvh)', top: 'var(--vv-offset-top, 0px)' }}
+          className="fixed inset-x-0 z-[90] bg-black text-white flex flex-col p5-backdrop-in"
+        >
+          <div className="pt-safe-2 px-4 pb-3 flex items-center justify-between bg-black/80">
+            <span className="text-xs font-bold flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full border border-white flex items-center justify-center text-[10px] font-mono">
+                1
+              </span>
+              <span>Media Sekali Lihat</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setViewOnceModalMsg(null)}
+              className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div
+            onClick={() => setViewOnceModalMsg(null)}
+            className="flex-1 min-h-0 flex items-center justify-center p-4"
+          >
+            {viewOnceModalMsg.attachment.kind === 'video' ? (
+              <video
+                src={viewOnceModalMsg.attachment.url}
+                controls
+                autoPlay
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-full max-h-full rounded-xl"
+              />
+            ) : (
+              <img
+                src={viewOnceModalMsg.attachment.url}
+                alt="Media sekali lihat"
+                className="max-w-full max-h-full object-contain select-none"
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Poll Modal */}
+      {pollModalOpen && (
+        <div
+          onClick={() => setPollModalOpen(false)}
+          className="fixed inset-0 z-[80] bg-black/55 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 pb-safe-3 space-y-3.5 brutal-shadow-lg p5-modal-impact"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA] flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#8C0027] dark:text-[#F47296]" />
+                <span>Buat Polling</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPollModalOpen(false)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <input
+              type="text"
+              value={pollQuestion}
+              onChange={(e) => setPollQuestion(e.target.value)}
+              placeholder="Ajukan pertanyaan polling..."
+              maxLength={200}
+              className="w-full h-10 px-3.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs font-semibold text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
             />
+            <div className="space-y-2 max-h-52 overflow-y-auto thin-scrollbar">
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={(e) =>
+                      setPollOptions((prev) => prev.map((v, i) => (i === idx ? e.target.value : v)))
+                    }
+                    placeholder={`Pilihan ${idx + 1}`}
+                    maxLength={100}
+                    className="flex-1 h-9 px-3 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA] focus:outline-none focus:border-[#8C0027]"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setPollOptions((prev) => prev.filter((_, i) => i !== idx))}
+                      className="h-8 w-8 rounded-lg text-[#5A6578] hover:text-[#8C0027] flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {pollOptions.length < 6 && (
+              <button
+                type="button"
+                onClick={() => setPollOptions((prev) => [...prev, ''])}
+                className="text-xs font-bold text-[#8C0027] dark:text-[#F47296] flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah pilihan</span>
+              </button>
+            )}
+            <label className="flex items-center justify-between text-xs text-[#5A6578] dark:text-[#CBD5E1] cursor-pointer pt-1">
+              <span>Izinkan beberapa jawaban</span>
+              <input
+                type="checkbox"
+                checked={pollAllowMultiple}
+                onChange={(e) => setPollAllowMultiple(e.target.checked)}
+                className="h-4 w-4 accent-[#8C0027]"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={
+                !pollQuestion.trim() ||
+                pollOptions.filter((o) => o.trim()).length < 2 ||
+                sending
+              }
+              onClick={async () => {
+                const validOpts = pollOptions.map((o) => o.trim()).filter(Boolean);
+                if (!pollQuestion.trim() || validOpts.length < 2) return;
+                setSending(true);
+                try {
+                  await onSendMessage({
+                    text: '',
+                    poll: {
+                      question: pollQuestion.trim(),
+                      allowMultiple: pollAllowMultiple,
+                      options: validOpts.map((text) => ({ text })),
+                    },
+                  });
+                  setPollModalOpen(false);
+                  setPollQuestion('');
+                  setPollOptions(['', '']);
+                  setPollAllowMultiple(false);
+                } finally {
+                  setSending(false);
+                }
+              }}
+              className="w-full h-11 rounded-2xl bg-[#8C0027] hover:bg-[#6E001F] text-white text-xs font-bold disabled:opacity-40 brutal-press"
+            >
+              Kirim Polling
+            </button>
           </div>
         </div>
       )}

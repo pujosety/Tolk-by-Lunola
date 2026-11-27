@@ -2386,11 +2386,53 @@ async function startServer(): Promise<void> {
             typeof rawAtt.durationSec === 'number'
               ? Math.max(1, Math.min(600, Math.round(rawAtt.durationSec)))
               : undefined,
+          viewOnce:
+            rawAtt.viewOnce === true && (rawAtt.kind === 'image' || rawAtt.kind === 'video')
+              ? true
+              : undefined,
+          viewedBy:
+            rawAtt.viewOnce === true && (rawAtt.kind === 'image' || rawAtt.kind === 'video')
+              ? []
+              : undefined,
         };
       }
     }
 
-    if (!text && !attachment) {
+    let poll: Message['poll'] = null;
+    if (req.body?.poll && typeof req.body.poll === 'object') {
+      const rawPoll = req.body.poll as {
+        question?: unknown;
+        allowMultiple?: unknown;
+        options?: unknown;
+      };
+      const question = sanitizeText(rawPoll.question, 200);
+      const rawOptions = Array.isArray(rawPoll.options) ? rawPoll.options : [];
+      const options = rawOptions
+        .slice(0, 8)
+        .map((o, idx) => {
+          const optText = sanitizeText(
+            typeof o === 'string' ? o : (o as { text?: unknown })?.text,
+            100
+          );
+          if (!optText) return null;
+          return {
+            id: `opt_${idx}_${crypto.randomBytes(3).toString('hex')}`,
+            text: optText,
+            voterIds: [] as string[],
+          };
+        })
+        .filter((o): o is { id: string; text: string; voterIds: string[] } => o !== null);
+
+      if (question && options.length >= 2) {
+        poll = {
+          question,
+          allowMultiple: Boolean(rawPoll.allowMultiple),
+          options,
+        };
+      }
+    }
+
+    if (!text && !attachment && !poll) {
       res.status(400).json({ error: 'Pesan atau lampiran tidak boleh kosong.' });
       return;
     }
@@ -2418,6 +2460,7 @@ async function startServer(): Promise<void> {
       forwardedFrom,
       mentions: mentions.length > 0 ? mentions : undefined,
       attachment,
+      poll: poll || undefined,
       reactions: [],
       readBy: [userId],
       views: chat.type === 'channel' ? 1 : undefined,
@@ -2531,6 +2574,69 @@ async function startServer(): Promise<void> {
     }
     saveStore(store);
     broadcastToChat(chat, { type: 'message:updated', message: msg });
+    res.json({ message: msg });
+  });
+
+  // Vote on Poll Message
+  app.post('/api/chats/:chatId/messages/:messageId/vote', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const optionId = sanitizeText(req.body?.optionId, 64);
+    if (!optionId) {
+      res.status(400).json({ error: 'Opsi polling diperlukan.' });
+      return;
+    }
+    const chat = store.chats[req.params.chatId];
+    if (!chat || !chat.memberIds.includes(userId)) {
+      res.status(404).json({ error: 'Percakapan tidak ditemukan.' });
+      return;
+    }
+    const msg = (store.messages[chat.id] || []).find((m) => m.id === req.params.messageId);
+    if (!msg || !msg.poll) {
+      res.status(404).json({ error: 'Polling tidak ditemukan.' });
+      return;
+    }
+    const targetOpt = msg.poll.options.find((o) => o.id === optionId);
+    if (!targetOpt) {
+      res.status(400).json({ error: 'Opsi polling tidak valid.' });
+      return;
+    }
+    const alreadyVoted = targetOpt.voterIds.includes(userId);
+    if (!msg.poll.allowMultiple) {
+      msg.poll.options.forEach((o) => {
+        o.voterIds = o.voterIds.filter((id) => id !== userId);
+      });
+      if (!alreadyVoted) {
+        targetOpt.voterIds.push(userId);
+      }
+    } else if (alreadyVoted) {
+      targetOpt.voterIds = targetOpt.voterIds.filter((id) => id !== userId);
+    } else {
+      targetOpt.voterIds.push(userId);
+    }
+    saveStore(store);
+    broadcastToChat(chat, { type: 'message:updated', message: msg });
+    res.json({ message: msg });
+  });
+
+  // Mark View-Once Media as Viewed
+  app.post('/api/chats/:chatId/messages/:messageId/view-once', requireAuth, (req: AuthedRequest, res) => {
+    const userId = req.userId!;
+    const chat = store.chats[req.params.chatId];
+    if (!chat || !chat.memberIds.includes(userId)) {
+      res.status(404).json({ error: 'Percakapan tidak ditemukan.' });
+      return;
+    }
+    const msg = (store.messages[chat.id] || []).find((m) => m.id === req.params.messageId);
+    if (!msg || !msg.attachment?.viewOnce) {
+      res.status(404).json({ error: 'Media sekali lihat tidak ditemukan.' });
+      return;
+    }
+    const viewedBy = msg.attachment.viewedBy || [];
+    if (!viewedBy.includes(userId)) {
+      msg.attachment.viewedBy = [...viewedBy, userId];
+      saveStore(store);
+      broadcastToChat(chat, { type: 'message:updated', message: msg });
+    }
     res.json({ message: msg });
   });
 

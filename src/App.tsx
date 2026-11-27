@@ -1154,6 +1154,11 @@ export function App() {
       text: string;
       replyToId?: string | null;
       attachment?: Attachment | null;
+      poll?: {
+        question: string;
+        allowMultiple: boolean;
+        options: Array<{ text: string }>;
+      } | null;
       scheduledFor?: number | null;
     }) => {
       if (!token || !activeChatId) return;
@@ -1208,6 +1213,30 @@ export function App() {
     async (messageId: string, emoji: string) => {
       if (!token || !activeChatId) return;
       const { message } = await api.toggleReaction(token, activeChatId, messageId, emoji);
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [activeChatId]: (prev[activeChatId] || []).map((m) => (m.id === message.id ? message : m)),
+      }));
+    },
+    [token, activeChatId]
+  );
+
+  const handleVotePoll = useCallback(
+    async (messageId: string, optionId: string) => {
+      if (!token || !activeChatId) return;
+      const { message } = await api.votePoll(token, activeChatId, messageId, optionId);
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [activeChatId]: (prev[activeChatId] || []).map((m) => (m.id === message.id ? message : m)),
+      }));
+    },
+    [token, activeChatId]
+  );
+
+  const handleMarkViewOnceViewed = useCallback(
+    async (messageId: string) => {
+      if (!token || !activeChatId) return;
+      const { message } = await api.markViewOnceViewed(token, activeChatId, messageId);
       setMessagesByChat((prev) => ({
         ...prev,
         [activeChatId]: (prev[activeChatId] || []).map((m) => (m.id === message.id ? message : m)),
@@ -1730,6 +1759,8 @@ export function App() {
               onEditMessage={handleEditMessage}
               onDeleteMessage={handleDeleteMessage}
               onToggleReaction={handleToggleReaction}
+              onVotePoll={handleVotePoll}
+              onMarkViewOnceViewed={handleMarkViewOnceViewed}
               onPinMessage={handlePinMessage}
               onToggleStarMessage={handleToggleStarMessage}
               onForwardMessage={(msg) => setForwardMsg(msg)}

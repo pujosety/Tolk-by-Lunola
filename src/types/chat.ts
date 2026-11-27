@@ -98,6 +98,20 @@ export interface Attachment {
   mimeType: string;
   size: number;
   durationSec?: number;
+  viewOnce?: boolean;
+  viewedBy?: string[];
+}
+
+export interface PollOption {
+  id: string;
+  text: string;
+  voterIds: string[];
+}
+
+export interface PollData {
+  question: string;
+  allowMultiple: boolean;
+  options: PollOption[];
 }
 
 export interface MessageReaction {
@@ -128,6 +142,7 @@ export interface Message {
   } | null;
   mentions?: string[];
   attachment?: Attachment | null;
+  poll?: PollData | null;
   reactions: MessageReaction[];
   readBy: string[];
   views?: number;
