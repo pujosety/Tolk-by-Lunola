@@ -1292,6 +1292,24 @@ async function startServer(): Promise<void> {
     });
   });
 
+  // Readiness Probe (checks DB connectivity & signing secret)
+  app.get('/api/ready', async (_req, res) => {
+    const hasSecret = SESSION_SECRET.length >= 16;
+    if (!hasSecret) {
+      res.status(503).json({ ready: false, reason: 'missing_session_secret' });
+      return;
+    }
+    if (dbPool) {
+      try {
+        await dbPool.query('SELECT 1');
+      } catch {
+        res.status(503).json({ ready: false, database: 'mysql', reason: 'db_unreachable' });
+        return;
+      }
+    }
+    res.json({ ready: true, database: dbPool ? 'mysql' : 'json-file' });
+  });
+
   const ensureVapidKeys = () => {
     const envPub = process.env.VAPID_PUBLIC_KEY?.trim();
     const envPriv = process.env.VAPID_PRIVATE_KEY?.trim();
@@ -1528,7 +1546,12 @@ async function startServer(): Promise<void> {
     }
   >();
 
-  app.post('/api/auth/qr/create', async (_req, res) => {
+  app.post('/api/auth/qr/create', async (req, res) => {
+    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local');
+    if (!checkRateLimit(`qr-create:${ip}`, 15)) {
+      res.status(429).json({ error: 'Terlalu banyak permintaan QR. Tunggu 1 menit.' });
+      return;
+    }
     const now = Date.now();
     const challengeId = `qr_${crypto.randomBytes(8).toString('hex')}`;
     const secret = crypto.randomBytes(16).toString('hex');
@@ -1556,6 +1579,11 @@ async function startServer(): Promise<void> {
   });
 
   app.post('/api/auth/qr/status', async (req, res) => {
+    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local');
+    if (!checkRateLimit(`qr-status:${ip}`, 60)) {
+      res.status(429).json({ error: 'Terlalu banyak polling QR.' });
+      return;
+    }
     const challengeId = typeof req.body?.challengeId === 'string' ? req.body.challengeId : '';
     const secret = typeof req.body?.secret === 'string' ? req.body.secret : '';
     const now = Date.now();
@@ -3403,8 +3431,42 @@ async function startServer(): Promise<void> {
     res.status(201).json({ report });
   });
 
+  function verifyMagicBytes(buf: Buffer, mime: string): boolean {
+    if (buf.length < 4) return mime.startsWith('text/') || mime === 'application/json';
+    const b0 = buf[0], b1 = buf[1], b2 = buf[2], b3 = buf[3];
+    if (mime === 'image/png') return b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47;
+    if (mime === 'image/jpeg' || mime === 'image/jpg') return b0 === 0xff && b1 === 0xd8 && b2 === 0xff;
+    if (mime === 'image/gif') return b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38;
+    if (mime === 'image/webp') {
+      return buf.length >= 12 && buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WEBP';
+    }
+    if (mime === 'application/pdf') return buf.subarray(0, 4).toString('ascii') === '%PDF';
+    if (mime === 'application/zip') return b0 === 0x50 && b1 === 0x4b && (b2 === 0x03 || b2 === 0x05 || b2 === 0x07);
+    if (mime === 'video/mp4' || mime === 'audio/mp4' || mime === 'audio/x-m4a') {
+      return buf.length >= 8 && buf.subarray(4, 8).toString('ascii') === 'ftyp';
+    }
+    if (mime === 'video/webm' || mime === 'audio/webm') {
+      return b0 === 0x1a && b1 === 0x45 && b2 === 0xdf && b3 === 0xa3;
+    }
+    if (mime === 'audio/ogg') return buf.subarray(0, 4).toString('ascii') === 'OggS';
+    if (mime === 'audio/mpeg' || mime === 'audio/mp3') {
+      return (b0 === 0x49 && b1 === 0x44 && b2 === 0x33) || (b0 === 0xff && (b1 & 0xe0) === 0xe0);
+    }
+    if (mime === 'audio/wav' || mime === 'audio/x-wav') {
+      return buf.length >= 12 && buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WAVE';
+    }
+    if (mime.startsWith('text/') || mime === 'application/json') {
+      return !buf.subarray(0, Math.min(buf.length, 512)).includes(0);
+    }
+    return true;
+  }
+
   // Safe Media & Document Upload Endpoint
   app.post('/api/upload', requireAuth, (req: AuthedRequest, res) => {
+    if (!checkRateLimit(`upload:${req.userId}`, 30)) {
+      res.status(429).json({ error: 'Terlalu banyak unggahan. Tunggu 1 menit.' });
+      return;
+    }
     const dataUrl = typeof req.body?.dataUrl === 'string' ? req.body.dataUrl : '';
     const originalName = sanitizeText(req.body?.name, 100) || 'lampiran';
     const durationSec =
@@ -3431,6 +3493,10 @@ async function startServer(): Promise<void> {
       res.status(413).json({
         error: `Ukuran file melebihi batas server (${store.settings.maxUploadMb} MB).`,
       });
+      return;
+    }
+    if (!verifyMagicBytes(buffer, mimeType)) {
+      res.status(400).json({ error: 'Isi file tidak cocok dengan tipe MIME yang dideklarasikan.' });
       return;
     }
 
@@ -3546,6 +3612,10 @@ async function startServer(): Promise<void> {
 
   // First-Run Admin Claim (only allowed if env ADMIN_PASSCODE is unset and not yet claimed)
   app.post('/api/admin/claim', requireAuth, (req: AuthedRequest, res) => {
+    if (!checkRateLimit(`admin-claim:${req.userId}`, 5)) {
+      res.status(429).json({ error: 'Terlalu banyak percobaan klaim admin.' });
+      return;
+    }
     const envCode = process.env.ADMIN_PASSCODE || '';
     if (envCode.length >= 6) {
       res.status(403).json({ error: 'ADMIN_PASSCODE sudah dikonfigurasi di server.' });
@@ -3591,6 +3661,11 @@ async function startServer(): Promise<void> {
     }
 
     if (!valid) {
+      const actor = store.users[req.userId!];
+      if (actor) {
+        appendAudit(actor, 'admin:unlock_failed', actor.username, 'Percobaan kode sandi admin gagal.');
+        saveStore(store);
+      }
       res.status(401).json({ error: 'Kode sandi admin tidak valid.' });
       return;
     }
