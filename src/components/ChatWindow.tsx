@@ -299,10 +299,13 @@ export function ChatWindow({
       const vvHeight = window.visualViewport?.height || window.innerHeight;
       const upward = rect.bottom + 300 > vvHeight;
       const isOwnMsg = ownMessage ?? false;
+      const menuWidth = 208; // 13rem
+      const clampedX = Math.max(
+        12,
+        Math.min(isOwnMsg ? rect.right - menuWidth : rect.left, window.innerWidth - menuWidth - 12)
+      );
       setMenuPos({
-        x: isOwnMsg
-          ? Math.min(rect.right, window.innerWidth - 12)
-          : Math.max(rect.left, 12),
+        x: clampedX,
         y: upward
           ? Math.max(68, Math.min(rect.top, vvHeight - 16))
           : Math.max(68, Math.min(rect.bottom + 4, vvHeight - 320)),
@@ -1484,9 +1487,7 @@ export function ChatWindow({
                           ...(menuPos.upward
                             ? { bottom: `${Math.min(window.innerHeight - 340, Math.max(16, window.innerHeight - menuPos.y))}px` }
                             : { top: `${menuPos.y}px` }),
-                          ...(menuPos.ownMsg
-                            ? { right: `${window.innerWidth - menuPos.x}px` }
-                            : { left: `${menuPos.x}px` }),
+                          left: `${menuPos.x}px`,
                         }}
                         className={`${
                           menuRetained.closing ? 'p5-menu-out pointer-events-none' : 'p5-menu-in'
@@ -1973,7 +1974,7 @@ export function ChatWindow({
                   void handleSend();
                 }
               }}
-              placeholder="..."
+              placeholder="Ketik pesan"
               className="flex-1 h-11 max-h-32 min-h-[44px] py-[11px] px-4 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-sm leading-[20px] text-[#161B26] dark:text-[#F5F7FA] placeholder:text-[#6B768A] dark:placeholder:text-[#7E8DA4] resize-none overflow-y-auto focus:outline-none focus:border-[#8C0027] dark:focus:border-[#8C0027] transition-all"
             />
 

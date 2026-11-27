@@ -68,7 +68,7 @@ export function CallsView({
 
       {/* Inline New Call Contact Picker */}
       {pickerOpen && (
-        <div className="p5-panel-reveal p-3.5 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] space-y-2.5">
+        <div className="shrink-0 p5-panel-reveal p-3.5 border-b border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#131924] space-y-2.5">
           <div className="relative">
             <Search className="w-4 h-4 text-[#5A6578] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -79,7 +79,7 @@ export function CallsView({
               className="w-full h-9 pl-9 pr-3 rounded-full bg-[#FFFFFF] dark:bg-[#1E2738] border border-[#E6ECF2] dark:border-[#2E3B52] text-xs text-[#161B26] dark:text-[#F1F5F9] focus:outline-none focus:border-[#8C0027]"
             />
           </div>
-          <div className="max-h-52 overflow-y-auto thin-scrollbar space-y-1">
+          <div className="max-h-72 overflow-y-auto thin-scrollbar space-y-1.5 pb-1">
             {contacts.length === 0 ? (
               <div className="py-4 text-center text-xs text-[#5A6578] dark:text-[#94A3B8]">
                 Kontak tidak ditemukan.

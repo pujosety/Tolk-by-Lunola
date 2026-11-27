@@ -390,7 +390,7 @@ export function ChatInfoDrawer({
               <span>{chat.isArchivedByUser ? 'Keluarkan dari Arsip' : 'Arsipkan Chat'}</span>
             </span>
             <span className="font-mono text-[11px] text-[#6B768A] dark:text-[#7E8DA4]">
-              {chat.isArchivedByUser ? 'Diarsipkan' : 'Aktif'}
+              {chat.isArchivedByUser ? 'Diarsipkan' : 'Tidak'}
             </span>
           </button>
 

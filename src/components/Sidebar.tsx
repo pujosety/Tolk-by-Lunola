@@ -565,6 +565,11 @@ export function Sidebar({
       <div
         ref={pagerViewportRef}
         className="flex-1 overflow-hidden min-h-0"
+        onScroll={(e) => {
+          if (e.currentTarget.scrollLeft !== 0) {
+            e.currentTarget.scrollLeft = 0;
+          }
+        }}
         onTouchStart={handleTabTouchStart}
         onTouchMove={handleTabTouchMove}
         onTouchEnd={handleTabTouchEnd}
@@ -580,7 +585,13 @@ export function Sidebar({
               : 'transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
           }`}
         >
-        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0 relative">
+        <div
+          aria-hidden={!isDraggingTab && currentTabIdx !== 0}
+          {...(!isDraggingTab && currentTabIdx !== 0 ? ({ inert: '' } as Record<string, unknown>) : {})}
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 relative ${
+            !isDraggingTab && currentTabIdx !== 0 ? 'pointer-events-none' : ''
+          }`}
+        >
           {/* Folder Tabs */}
           <div
             data-no-tab-swipe="true"
@@ -856,7 +867,13 @@ export function Sidebar({
       </button>
         </div>
 
-        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+        <div
+          aria-hidden={!isDraggingTab && currentTabIdx !== 1}
+          {...(!isDraggingTab && currentTabIdx !== 1 ? ({ inert: '' } as Record<string, unknown>) : {})}
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 ${
+            !isDraggingTab && currentTabIdx !== 1 ? 'pointer-events-none' : ''
+          }`}
+        >
           <UpdatesView
             stories={stories}
             channels={chats.filter((c) => c.type === 'channel')}
@@ -874,7 +891,13 @@ export function Sidebar({
           />
         </div>
 
-        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+        <div
+          aria-hidden={!isDraggingTab && currentTabIdx !== 2}
+          {...(!isDraggingTab && currentTabIdx !== 2 ? ({ inert: '' } as Record<string, unknown>) : {})}
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 ${
+            !isDraggingTab && currentTabIdx !== 2 ? 'pointer-events-none' : ''
+          }`}
+        >
           <NotificationsUpdatesView
             currentUserId={currentUser.id}
             users={users}
@@ -884,7 +907,13 @@ export function Sidebar({
           />
         </div>
 
-        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+        <div
+          aria-hidden={!isDraggingTab && currentTabIdx !== 3}
+          {...(!isDraggingTab && currentTabIdx !== 3 ? ({ inert: '' } as Record<string, unknown>) : {})}
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 ${
+            !isDraggingTab && currentTabIdx !== 3 ? 'pointer-events-none' : ''
+          }`}
+        >
           <CallsView
             calls={calls}
             currentUser={currentUser}
@@ -894,7 +923,13 @@ export function Sidebar({
           />
         </div>
 
-        <div className="w-1/5 shrink-0 h-full flex flex-col min-h-0">
+        <div
+          aria-hidden={!isDraggingTab && currentTabIdx !== 4}
+          {...(!isDraggingTab && currentTabIdx !== 4 ? ({ inert: '' } as Record<string, unknown>) : {})}
+          className={`w-1/5 shrink-0 h-full flex flex-col min-h-0 ${
+            !isDraggingTab && currentTabIdx !== 4 ? 'pointer-events-none' : ''
+          }`}
+        >
           <YouView
             lang={lang}
             user={currentUser}

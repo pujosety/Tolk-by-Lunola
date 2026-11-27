@@ -843,7 +843,7 @@ export function CreateChatModal({
   onCreateChat,
 }: {
   open: boolean;
-  initialMode: 'dm' | 'group' | 'channel';
+  initialMode: 'dm' | 'group' | 'channel' | 'qr';
   users: Record<string, UserProfile>;
   currentUserId: string;
   contactIds: string[];
@@ -860,8 +860,10 @@ export function CreateChatModal({
     memberIds?: string[];
   }) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<'dm' | 'group' | 'channel'>(initialMode);
-  const [showMyQr, setShowMyQr] = useState(false);
+  const [mode, setMode] = useState<'dm' | 'group' | 'channel'>(
+    initialMode === 'qr' ? 'dm' : initialMode
+  );
+  const [showMyQr, setShowMyQr] = useState(initialMode === 'qr');
   const [scanQrOpen, setScanQrOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<UserProfile[]>([]);
@@ -874,8 +876,9 @@ export function CreateChatModal({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setMode(initialMode);
+    setMode(initialMode === 'qr' ? 'dm' : initialMode);
     if (open) {
+      setShowMyQr(initialMode === 'qr');
       setQuery('');
       setLookupResults([]);
       setError('');

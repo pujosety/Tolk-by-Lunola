@@ -234,7 +234,7 @@ export function App() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [createModalState, setCreateModalState] = useState<{
     open: boolean;
-    mode: 'dm' | 'group' | 'channel';
+    mode: 'dm' | 'group' | 'channel' | 'qr';
   }>({ open: false, mode: 'dm' });
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const [reportTarget, setReportTarget] = useState<{
@@ -1624,7 +1624,7 @@ export function App() {
             }}
             onStartCall={(peerId, kind) => void handleStartCall(peerId, kind)}
             onOpenProfile={() => setProfileModalOpen(true)}
-            onOpenQrCard={() => setCreateModalState({ open: true, mode: 'dm' })}
+            onOpenQrCard={() => setCreateModalState({ open: true, mode: 'qr' })}
             onOpenStarred={() => {
               setStarredModalOpen(true);
               void loadStarredMessages();
