@@ -2461,10 +2461,15 @@ async function startServer(): Promise<void> {
         : null;
 
     const rawSticker = req.body?.sticker;
+    const isCustomStickerData =
+      rawSticker &&
+      typeof rawSticker.id === 'string' &&
+      /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(rawSticker.id) &&
+      rawSticker.id.length <= 120_000;
     const sticker =
       rawSticker && typeof rawSticker.id === 'string'
         ? {
-            id: sanitizeText(rawSticker.id, 40),
+            id: isCustomStickerData ? rawSticker.id : sanitizeText(rawSticker.id, 40),
             label: sanitizeText(rawSticker.label, 40) || 'Stiker',
           }
         : null;

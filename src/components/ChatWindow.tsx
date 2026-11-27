@@ -2805,21 +2805,28 @@ export function ChatWindow({
                   reader.onload = () => {
                     const img = new Image();
                     img.onload = () => {
+                      const size = 128;
                       const canvas = document.createElement('canvas');
-                      canvas.width = 160;
-                      canvas.height = 160;
+                      canvas.width = size;
+                      canvas.height = size;
                       const ctx = canvas.getContext('2d');
                       if (!ctx) return;
-                      ctx.drawImage(img, 0, 0, 160, 160);
-                      const dataUrl = canvas.toDataURL('image/webp', 0.8);
-                      const next = [
-                        ...customStickers.slice(-11),
-                        { id: `cs_${Date.now()}`, dataUrl, label: f.name.slice(0, 10) },
-                      ];
-                      setCustomStickers(next);
-                      try {
-                        window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
-                      } catch {}
+                      const scale = Math.min(size / img.width, size / img.height);
+                      const w = img.width * scale;
+                      const h = img.height * scale;
+                      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+                      const dataUrl = canvas.toDataURL('image/png');
+                      const label = f.name.replace(/\.[^.]+$/, '').slice(0, 12) || 'Stiker';
+                      setCustomStickers((prev) => {
+                        const next = [
+                          ...prev.slice(-11),
+                          { id: `cs_${Date.now()}`, dataUrl, label },
+                        ];
+                        try {
+                          window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
+                        } catch {}
+                        return next;
+                      });
                     };
                     img.src = String(reader.result || '');
                   };
