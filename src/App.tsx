@@ -22,6 +22,7 @@ import type {
 import { api, LunolaTalkSocket, type ServerWsEvent } from './lib/api';
 import {
   notifyAndroidToast,
+  syncAndroidAuthToken,
   syncAndroidStatusBar,
   triggerAndroidHaptic,
 } from './lib/androidBridge';
@@ -311,6 +312,10 @@ export function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('high-contrast', highContrast);
   }, [highContrast]);
+
+  useEffect(() => {
+    syncAndroidAuthToken(token || '');
+  }, [token]);
 
   // Global keyboard shortcuts: Ctrl+K focuses search, Ctrl+B toggles sidebar minimize
   useEffect(() => {

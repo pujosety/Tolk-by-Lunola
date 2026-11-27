@@ -52,7 +52,7 @@ import type {
   UserProfile,
 } from '../types/chat';
 import { formatTimeShort, isRunningInAndroidWebView } from '../lib/androidBridge';
-import { requestBrowserNotificationPermission } from '../lib/pwa';
+import { requestBrowserNotificationPermission, showBrowserNotification } from '../lib/pwa';
 import { Avatar } from './Avatar';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
 import { useSwipeGesture } from '../lib/useSwipeGesture';
@@ -1785,19 +1785,35 @@ export function SettingsModal({
             <span>Notifikasi & Nada</span>
           </h3>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-[#5A6578] dark:text-[#CBBBC2] font-medium">Notifikasi Browser</span>
-            {notifPermission === 'granted' ? (
-              <span className="text-emerald-700 dark:text-emerald-400 font-bold">Aktif</span>
-            ) : (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => void handleEnableBrowserNotif()}
-                className="px-3 py-1 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] text-white font-bold brutal-press"
+                onClick={() =>
+                  showBrowserNotification(
+                    'Tes Notifikasi Tolk',
+                    'Notifikasi Android & browser sudah aktif!',
+                    undefined,
+                    { forceInForeground: true }
+                  )
+                }
+                className="px-2.5 py-1 rounded-xl bg-[#EAF4FF] dark:bg-[#1E2738] border border-[#BEDEFF] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] font-bold brutal-press"
               >
-                Izinkan Notifikasi
+                Tes Notif
               </button>
-            )}
+              {notifPermission === 'granted' ? (
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Aktif</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleEnableBrowserNotif()}
+                  className="px-3 py-1 rounded-xl bg-[#8C0027] hover:bg-[#6E001F] border border-[#E6ECF2] dark:border-[#F5F7FA] text-white font-bold brutal-press"
+                >
+                  Izinkan Notifikasi
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between">

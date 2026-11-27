@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRA_CHAT_ID = "extra_chat_id"
+        @Volatile
+        var isForeground: Boolean = true
     }
 
     private val fileChooserLauncher =
@@ -272,6 +274,25 @@ class MainActivity : AppCompatActivity() {
         })
 
         webView.loadUrl(wasmerAppUrl)
+
+        val savedToken = getSharedPreferences(TolkNotificationService.PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(TolkNotificationService.KEY_AUTH_TOKEN, null)
+        if (!savedToken.isNullOrBlank()) {
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, TolkNotificationService::class.java)
+            )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isForeground = true
+    }
+
+    override fun onPause() {
+        isForeground = false
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -403,12 +424,31 @@ class MainActivity : AppCompatActivity() {
                     .setContentTitle(title.take(80))
                     .setContentText(body.take(180))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
                     .build()
 
                 val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.notify(notificationCounter++, notification)
+            }
+        }
+
+        @JavascriptInterface
+        fun setAuthToken(token: String) {
+            runOnUiThread {
+                val clean = token.trim()
+                getSharedPreferences(TolkNotificationService.PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(TolkNotificationService.KEY_AUTH_TOKEN, clean)
+                    .apply()
+                val svcIntent = Intent(this@MainActivity, TolkNotificationService::class.java)
+                if (clean.isNotEmpty()) {
+                    ContextCompat.startForegroundService(this@MainActivity, svcIntent)
+                } else {
+                    stopService(svcIntent)
+                }
             }
         }
 
