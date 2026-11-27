@@ -436,6 +436,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
+        fun openNotificationSettings() {
+            runOnUiThread {
+                val intent = Intent().apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        action = android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                        putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
+                    } else {
+                        action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        data = Uri.fromParts("package", packageName, null)
+                    }
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
         fun setAuthToken(token: String) {
             runOnUiThread {
                 val clean = token.trim()

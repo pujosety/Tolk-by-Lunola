@@ -393,6 +393,22 @@ export function ChatWindow({
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [optimisticUploads, setOptimisticUploads] = useState<
+    Array<{
+      tempId: string;
+      localUrl: string;
+      kind: 'image' | 'video' | 'file';
+      name: string;
+      size: number;
+      text: string;
+      progress: number;
+      error?: string;
+      file: File;
+      replyToId?: string | null;
+      viewOnce?: boolean;
+      scheduledFor?: number | null;
+    }>
+  >([]);
   const [isDragging, setIsDragging] = useState(false);
 
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -551,6 +567,8 @@ export function ChatWindow({
   }, [draftText]);
 
   const handleInputChange = (val: string) => {
+    if (activeMenuMsgId) setActiveMenuMsgId(null);
+    if (scheduleOpen) setScheduleOpen(false);
     onDraftChange(val);
     onTyping(val.trim().length > 0);
     if (typingTimeoutRef.current !== null) {
@@ -559,6 +577,71 @@ export function ChatWindow({
     typingTimeoutRef.current = window.setTimeout(() => {
       onTyping(false);
     }, 2400);
+  };
+
+  const compressImageIfNeeded = async (file: File): Promise<File> => {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.size <= 1.5 * 1024 * 1024) {
+      return file;
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const maxDim = 1600;
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.84)
+      );
+      if (!blob || blob.size >= file.size) return file;
+      const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+      return new File([blob], newName, { type: 'image/jpeg' });
+    } catch {
+      return file;
+    }
+  };
+
+  const runOptimisticUpload = async (item: {
+    tempId: string;
+    localUrl: string;
+    file: File;
+    text: string;
+    replyToId?: string | null;
+    viewOnce?: boolean;
+    scheduledFor?: number | null;
+  }) => {
+    try {
+      const readyFile = await compressImageIfNeeded(item.file);
+      let uploadedAttachment = await onUploadFile(readyFile, (pct) => {
+        setOptimisticUploads((prev) =>
+          prev.map((u) => (u.tempId === item.tempId ? { ...u, progress: pct, error: undefined } : u))
+        );
+      });
+      if (
+        item.viewOnce &&
+        (uploadedAttachment.kind === 'image' || uploadedAttachment.kind === 'video')
+      ) {
+        uploadedAttachment = { ...uploadedAttachment, viewOnce: true, viewedBy: [] };
+      }
+      await onSendMessage({
+        text: item.text,
+        replyToId: item.replyToId || null,
+        attachment: uploadedAttachment,
+        scheduledFor: item.scheduledFor,
+      });
+      setOptimisticUploads((prev) => prev.filter((u) => u.tempId !== item.tempId));
+      URL.revokeObjectURL(item.localUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengunggah.';
+      setOptimisticUploads((prev) =>
+        prev.map((u) => (u.tempId === item.tempId ? { ...u, error: msg } : u))
+      );
+    }
   };
 
   const insertMention = (username: string) => {
@@ -572,51 +655,81 @@ export function ChatWindow({
     const trimmed = draftText.trim();
     if ((!trimmed && !pendingFile) || sending) return;
 
-    setSending(true);
     setSendKick((k) => k + 1);
     setUploadError(null);
     triggerAndroidHaptic();
 
-    try {
-      if (editingMsg) {
+    if (editingMsg) {
+      setSending(true);
+      try {
         await onEditMessage(editingMsg.id, trimmed);
         setEditingMsg(null);
         onDraftChange('');
-      } else {
-        let uploadedAttachment: Attachment | null = null;
-        if (pendingFile) {
-          setUploadProgress(5);
-          uploadedAttachment = await onUploadFile(pendingFile, (pct) => {
-            setUploadProgress(pct);
-          });
-          if (
-            pendingViewOnce &&
-            (uploadedAttachment.kind === 'image' || uploadedAttachment.kind === 'video')
-          ) {
-            uploadedAttachment = { ...uploadedAttachment, viewOnce: true, viewedBy: [] };
-          }
-        }
-        await onSendMessage({
-          text: trimmed,
-          replyToId: replyTo?.id || null,
-          attachment: uploadedAttachment,
-          scheduledFor,
-        });
-        setReplyTo(null);
-        setScheduledFor(null);
-        setScheduleOpen(false);
-        onDraftChange('');
-        clearPendingFile();
+        onTyping(false);
+      } finally {
+        setSending(false);
       }
+      return;
+    }
+
+    if (pendingFile) {
+      const fileToUpload = pendingFile;
+      const kind: 'image' | 'video' | 'file' = fileToUpload.type.startsWith('image/')
+        ? 'image'
+        : fileToUpload.type.startsWith('video/')
+        ? 'video'
+        : 'file';
+      const localUrl = URL.createObjectURL(fileToUpload);
+      const item = {
+        tempId: `opt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        localUrl,
+        kind,
+        name: fileToUpload.name,
+        size: fileToUpload.size,
+        text: trimmed,
+        progress: 8,
+        file: fileToUpload,
+        replyToId: replyTo?.id || null,
+        viewOnce: pendingViewOnce,
+        scheduledFor,
+      };
+      setOptimisticUploads((prev) => [...prev, item]);
+      setReplyTo(null);
+      setScheduledFor(null);
+      setScheduleOpen(false);
+      onDraftChange('');
+      clearPendingFile();
       onTyping(false);
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         inputRef.current?.blur();
         setComposerFocused(false);
       }
-    } catch (err) {
-      if (pendingFile) {
-        setUploadError(err instanceof Error ? err.message : 'Gagal mengunggah lampiran.');
-        setUploadProgress(null);
+      window.setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 40);
+      void runOptimisticUpload(item);
+      return;
+    }
+
+    setSending(true);
+    try {
+      await onSendMessage({
+        text: trimmed,
+        replyToId: replyTo?.id || null,
+        attachment: null,
+        scheduledFor,
+      });
+      setReplyTo(null);
+      setScheduledFor(null);
+      setScheduleOpen(false);
+      onDraftChange('');
+      onTyping(false);
+      window.setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 40);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        inputRef.current?.blur();
+        setComposerFocused(false);
       }
     } finally {
       setSending(false);
@@ -1864,6 +1977,104 @@ export function ChatWindow({
             );
           })
         )}
+        {/* Optimistic Media Upload Bubbles (WhatsApp-style circular spinner on image) */}
+        {optimisticUploads.map((item) => {
+          const radius = 18;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference - (Math.min(100, Math.max(5, item.progress)) / 100) * circumference;
+          return (
+            <div key={item.tempId} className="flex justify-end p5-msg-own">
+              <div className="max-w-[84%] sm:max-w-[68%]">
+                <div className={`px-3.5 py-2.5 ${getBubbleClasses(appearance, true)}`}>
+                  {item.kind === 'image' ? (
+                    <div className="relative w-full max-w-[300px] sm:max-w-[340px] mb-1.5 rounded-2xl overflow-hidden bg-black/25">
+                      <img
+                        src={item.localUrl}
+                        alt={item.name}
+                        className="block w-full max-h-80 object-contain rounded-2xl brightness-75"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                        {item.error ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void runOptimisticUpload(item)}
+                              aria-label="Coba unggah lagi"
+                              className="h-11 px-3.5 rounded-full bg-[#8C0027] text-white text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                              <span>Coba Lagi</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOptimisticUploads((prev) => prev.filter((u) => u.tempId !== item.tempId));
+                                URL.revokeObjectURL(item.localUrl);
+                              }}
+                              aria-label="Batalkan unggahan"
+                              className="h-11 w-11 rounded-full bg-black/60 text-white flex items-center justify-center"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative h-12 w-12 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                            <svg className="h-12 w-12 -rotate-90 animate-spin" viewBox="0 0 44 44">
+                              <circle
+                                cx="22"
+                                cy="22"
+                                r={radius}
+                                fill="none"
+                                stroke="rgba(255,255,255,0.22)"
+                                strokeWidth="3"
+                              />
+                              <circle
+                                cx="22"
+                                cy="22"
+                                r={radius}
+                                fill="none"
+                                stroke="#FFFFFF"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={offset}
+                              />
+                            </svg>
+                            <span className="absolute font-mono text-[10px] font-bold text-white tabular-nums">
+                              {item.progress}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : item.kind === 'video' ? (
+                    <div className="relative mb-1.5 rounded-lg overflow-hidden bg-black max-w-[300px]">
+                      <video src={item.localUrl} muted className="max-h-64 max-w-full brightness-75" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                        <div className="h-11 w-11 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-1.5 p-2.5 rounded-lg border bg-[#161B26]/25 border-[#FFFFFF]/35 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
+                      <div className="min-w-0 flex-1 text-xs truncate">{item.name}</div>
+                    </div>
+                  )}
+                  {item.text && (
+                    <p className="text-[14px] leading-[1.5] whitespace-pre-wrap break-words">
+                      {item.text}
+                    </p>
+                  )}
+                  <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#FFF2A7]/90">
+                    <Clock className="w-3 h-3" />
+                    <span>{item.error ? 'Gagal' : 'Mengirim...'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -1973,20 +2184,6 @@ export function ChatWindow({
               >
                 <X className="w-4 h-4" />
               </button>
-            </div>
-          )}
-
-          {uploadProgress !== null && (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] overflow-hidden">
-                <div
-                  className="h-full bg-[#8C0027] transition-all"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <span className="font-mono text-[11px] font-bold text-[#8C0027] dark:text-[#F47296] tabular-nums">
-                {uploadProgress}%
-              </span>
             </div>
           )}
 
@@ -2627,6 +2824,7 @@ export function ChatWindow({
             </div>
             <input
               type="text"
+              autoFocus
               value={pollQuestion}
               onChange={(e) => setPollQuestion(e.target.value)}
               placeholder="Ajukan pertanyaan polling..."

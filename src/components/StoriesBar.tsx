@@ -782,18 +782,38 @@ function CreateStoryModal({
             style={{ backgroundColor: bgColor }}
           >
             {media?.kind === 'image' && (
-              <img
-                src={media.url}
-                alt="Preview status"
-                className="max-h-56 rounded-xl border border-white/80 object-contain mb-2"
-              />
+              <div className="relative mb-2">
+                <img
+                  src={media.url}
+                  alt="Preview status"
+                  className="max-h-56 rounded-xl border border-white/80 object-contain"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 rounded-xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
+                    <div className="h-10 w-10 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
+                    <span className="font-mono text-[11px] font-bold text-white tabular-nums">
+                      {uploadPct}%
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
             {media?.kind === 'video' && (
-              <video
-                src={media.url}
-                controls
-                className="max-h-56 rounded-xl border border-white/80 mb-2"
-              />
+              <div className="relative mb-2">
+                <video
+                  src={media.url}
+                  controls
+                  className="max-h-56 rounded-xl border border-white/80"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 rounded-xl bg-black/55 flex flex-col items-center justify-center gap-1.5">
+                    <div className="h-10 w-10 rounded-full border-[3px] border-white/25 border-t-white animate-spin" />
+                    <span className="font-mono text-[11px] font-bold text-white tabular-nums">
+                      {uploadPct}%
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
             <textarea
               rows={3}

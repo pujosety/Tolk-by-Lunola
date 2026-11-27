@@ -641,6 +641,18 @@ export function Sidebar({
                 ? 'Try another keyword or start a new chat.'
                 : 'Coba kata kunci lain atau mulai obrolan baru.'}
             </p>
+            {(searchQuery.trim() !== '' || activeFolder !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSearchChange('');
+                  onSelectFolder('all');
+                }}
+                className="mt-3 px-4 py-2 rounded-full bg-[#8C0027] text-white text-xs font-bold brutal-press"
+              >
+                {lang === 'en' ? 'Show All Chats' : 'Tampilkan Semua Chat'}
+              </button>
+            )}
           </div>
         ) : (
           filteredChats.map((chat) => {

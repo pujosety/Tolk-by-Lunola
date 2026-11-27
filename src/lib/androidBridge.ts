@@ -6,6 +6,7 @@ declare global {
       setStatusBarTheme?: (isDark: boolean) => void;
       setCallAudioMode?: (inCall: boolean) => void;
       showNotification?: (title: string, body: string, chatId?: string) => void;
+      openNotificationSettings?: () => void;
       setAuthToken?: (token: string) => void;
       saveMediaBase64?: (base64Data: string, filename: string, mimeType: string) => boolean;
       showToast?: (message: string) => void;
@@ -57,6 +58,14 @@ export function notifyAndroidSystem(title: string, body: string, chatId?: string
 export function syncAndroidAuthToken(token: string): void {
   try {
     window.LunolaTalkAndroid?.setAuthToken?.(token);
+  } catch {
+    // Ignore outside Android WebView
+  }
+}
+
+export function openAndroidNotificationSettings(): void {
+  try {
+    window.LunolaTalkAndroid?.openNotificationSettings?.();
   } catch {
     // Ignore outside Android WebView
   }

@@ -51,7 +51,7 @@ import type {
   UserPrivacySettings,
   UserProfile,
 } from '../types/chat';
-import { formatTimeShort, isRunningInAndroidWebView } from '../lib/androidBridge';
+import { formatTimeShort, isRunningInAndroidWebView, openAndroidNotificationSettings } from '../lib/androidBridge';
 import { requestBrowserNotificationPermission, showBrowserNotification } from '../lib/pwa';
 import { Avatar } from './Avatar';
 import { useAnimatedPresence } from '../lib/useAnimatedPresence';
@@ -1066,6 +1066,7 @@ export function CreateChatModal({
             <Search className="w-4 h-4 text-[#5A6578] dark:text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              autoFocus={!showMyQr}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau @username..."
@@ -1802,6 +1803,15 @@ export function SettingsModal({
               >
                 Tes Notif
               </button>
+              {isRunningInAndroidWebView() && (
+                <button
+                  type="button"
+                  onClick={() => openAndroidNotificationSettings()}
+                  className="px-2.5 py-1 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-[#161B26] dark:text-[#F5F7FA] font-bold brutal-press"
+                >
+                  Izin HP
+                </button>
+              )}
               {notifPermission === 'granted' ? (
                 <span className="text-emerald-700 dark:text-emerald-400 font-bold">Aktif</span>
               ) : (
