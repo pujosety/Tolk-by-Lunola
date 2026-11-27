@@ -445,6 +445,12 @@ export function ChatWindow({
     }
   });
   const customStickerInputRef = useRef<HTMLInputElement | null>(null);
+  const [stickerCropSrc, setStickerCropSrc] = useState<string | null>(null);
+  const [stickerCropLabel, setStickerCropLabel] = useState('');
+  const [stickerZoom, setStickerZoom] = useState(1);
+  const [stickerOffset, setStickerOffset] = useState({ x: 0, y: 0 });
+  const [stickerNatural, setStickerNatural] = useState({ w: 1, h: 1 });
+  const stickerDragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxMsgId, setLightboxMsgId] = useState<string | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState<number>(1);
@@ -2776,20 +2782,38 @@ export function ChatWindow({
                   </button>
                 ))}
                 {customStickers.map((cs) => (
-                  <button
-                    key={cs.id}
-                    type="button"
-                    onClick={async () => {
-                      setEmojiOpen(false);
-                      await onSendMessage({ text: '', sticker: { id: cs.dataUrl, label: cs.label } });
-                    }}
-                    className="p-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
-                  >
-                    <img src={cs.dataUrl} alt={cs.label} className="w-8 h-8 rounded-lg object-cover" />
-                    <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1] truncate w-full text-center">
-                      {cs.label}
-                    </span>
-                  </button>
+                  <div key={cs.id} className="relative group">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setEmojiOpen(false);
+                        await onSendMessage({ text: '', sticker: { id: cs.dataUrl, label: cs.label } });
+                      }}
+                      className="w-full p-1.5 rounded-xl bg-[#F5F7FA] dark:bg-[#232D40] hover:bg-[#EAF4FF] dark:hover:bg-[#1B2436] flex flex-col items-center gap-1"
+                    >
+                      <img src={cs.dataUrl} alt={cs.label} className="w-9 h-9 rounded-lg object-cover" />
+                      <span className="text-[10px] font-bold text-[#5A6578] dark:text-[#CBD5E1] truncate w-full text-center">
+                        {cs.label}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Hapus stiker"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCustomStickers((prev) => {
+                          const next = prev.filter((item) => item.id !== cs.id);
+                          try {
+                            window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
+                          } catch {}
+                          return next;
+                        });
+                      }}
+                      className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#161B26]/80 text-white text-[10px] flex items-center justify-center opacity-80 hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
               <input
@@ -2803,32 +2827,16 @@ export function ChatWindow({
                   if (!f) return;
                   const reader = new FileReader();
                   reader.onload = () => {
+                    const src = String(reader.result || '');
                     const img = new Image();
                     img.onload = () => {
-                      const size = 128;
-                      const canvas = document.createElement('canvas');
-                      canvas.width = size;
-                      canvas.height = size;
-                      const ctx = canvas.getContext('2d');
-                      if (!ctx) return;
-                      const scale = Math.min(size / img.width, size / img.height);
-                      const w = img.width * scale;
-                      const h = img.height * scale;
-                      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-                      const dataUrl = canvas.toDataURL('image/png');
-                      const label = f.name.replace(/\.[^.]+$/, '').slice(0, 12) || 'Stiker';
-                      setCustomStickers((prev) => {
-                        const next = [
-                          ...prev.slice(-11),
-                          { id: `cs_${Date.now()}`, dataUrl, label },
-                        ];
-                        try {
-                          window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
-                        } catch {}
-                        return next;
-                      });
+                      setStickerNatural({ w: img.width || 1, h: img.height || 1 });
+                      setStickerZoom(1);
+                      setStickerOffset({ x: 0, y: 0 });
+                      setStickerCropLabel(f.name.replace(/\.[^.]+$/, '').slice(0, 14) || 'Stiker');
+                      setStickerCropSrc(src);
                     };
-                    img.src = String(reader.result || '');
+                    img.src = src;
                   };
                   reader.readAsDataURL(f);
                 }}
@@ -3774,6 +3782,177 @@ export function ChatWindow({
                 Kirim
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive 1:1 Square Sticker Cropper & Compressor Modal */}
+      {stickerCropSrc && (
+        <div
+          onClick={() => setStickerCropSrc(null)}
+          className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 p5-backdrop-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xs rounded-3xl bg-[#FFFFFF] dark:bg-[#171E2C] border border-[#E6ECF2] dark:border-[#324058] p-5 space-y-4 p5-modal-impact"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-extrabold text-base text-[#161B26] dark:text-[#F5F7FA]">
+                  Potong Stiker (1:1)
+                </h3>
+                <p className="text-[11px] text-[#5A6578] dark:text-[#94A3B8]">
+                  Geser & zoom untuk mengepaskan kotak stiker
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStickerCropSrc(null)}
+                className="h-8 w-8 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 240x240 Square Crop Viewport */}
+            <div
+              onPointerDown={(e) => {
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                stickerDragRef.current = {
+                  x: e.clientX,
+                  y: e.clientY,
+                  ox: stickerOffset.x,
+                  oy: stickerOffset.y,
+                };
+              }}
+              onPointerMove={(e) => {
+                const drag = stickerDragRef.current;
+                if (!drag) return;
+                setStickerOffset({
+                  x: drag.ox + (e.clientX - drag.x),
+                  y: drag.oy + (e.clientY - drag.y),
+                });
+              }}
+              onPointerUp={() => {
+                stickerDragRef.current = null;
+              }}
+              onPointerCancel={() => {
+                stickerDragRef.current = null;
+              }}
+              className="relative mx-auto w-[240px] h-[240px] rounded-3xl overflow-hidden border-2 border-[#8C0027] bg-[#F5F7FA] dark:bg-[#0F141E] touch-none cursor-grab active:cursor-grabbing select-none"
+            >
+              {(() => {
+                const box = 240;
+                const coverScale = Math.max(box / stickerNatural.w, box / stickerNatural.h) * stickerZoom;
+                const drawW = stickerNatural.w * coverScale;
+                const drawH = stickerNatural.h * coverScale;
+                return (
+                  <img
+                    src={stickerCropSrc}
+                    alt="Crop preview"
+                    draggable={false}
+                    style={{
+                      width: `${drawW}px`,
+                      height: `${drawH}px`,
+                      left: `${(box - drawW) / 2 + stickerOffset.x}px`,
+                      top: `${(box - drawH) / 2 + stickerOffset.y}px`,
+                    }}
+                    className="absolute max-w-none pointer-events-none"
+                  />
+                );
+              })()}
+              <div className="pointer-events-none absolute inset-0 border border-white/40 rounded-3xl" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block space-y-1">
+                <div className="flex justify-between text-[11px] font-semibold text-[#5A6578] dark:text-[#CBD5E1]">
+                  <span>Perbesar (Zoom)</span>
+                  <span className="font-mono font-bold">{stickerZoom.toFixed(1)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={stickerZoom}
+                  onChange={(e) => setStickerZoom(Number(e.target.value))}
+                  className="w-full accent-[#8C0027]"
+                />
+              </label>
+
+              <input
+                type="text"
+                maxLength={14}
+                value={stickerCropLabel}
+                onChange={(e) => setStickerCropLabel(e.target.value)}
+                placeholder="Nama stiker..."
+                className="w-full h-9 px-3 rounded-full bg-[#F5F7FA] dark:bg-[#232D40] border border-[#E6ECF2] dark:border-[#324058] text-xs text-[#161B26] dark:text-[#F5F7FA]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStickerCropSrc(null)}
+                className="flex-1 h-10 rounded-full border border-[#E6ECF2] dark:border-[#324058] text-xs font-bold text-[#5A6578] dark:text-[#CBD5E1]"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const outSize = 160;
+                    const previewBox = 240;
+                    const ratio = outSize / previewBox;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = outSize;
+                    canvas.height = outSize;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    const coverScale = Math.max(previewBox / img.width, previewBox / img.height) * stickerZoom;
+                    const drawW = img.width * coverScale * ratio;
+                    const drawH = img.height * coverScale * ratio;
+                    const drawX = ((previewBox - img.width * coverScale) / 2 + stickerOffset.x) * ratio;
+                    const drawY = ((previewBox - img.height * coverScale) / 2 + stickerOffset.y) * ratio;
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+                    // Adaptive compression: try WebP qualities first, fallback to JPEG if needed
+                    let compressed = canvas.toDataURL('image/webp', 0.78);
+                    if (!compressed.startsWith('data:image/webp')) {
+                      compressed = canvas.toDataURL('image/jpeg', 0.78);
+                    }
+                    if (compressed.length > 36_000) {
+                      compressed = compressed.startsWith('data:image/webp')
+                        ? canvas.toDataURL('image/webp', 0.55)
+                        : canvas.toDataURL('image/jpeg', 0.55);
+                    }
+                    if (compressed.length > 48_000) {
+                      compressed = canvas.toDataURL('image/jpeg', 0.45);
+                    }
+
+                    const label = stickerCropLabel.trim() || 'Stiker';
+                    setCustomStickers((prev) => {
+                      const next = [
+                        ...prev.slice(-11),
+                        { id: `cs_${Date.now()}`, dataUrl: compressed, label },
+                      ];
+                      try {
+                        window.localStorage.setItem('tolk_custom_stickers', JSON.stringify(next));
+                      } catch {}
+                      return next;
+                    });
+                    setStickerCropSrc(null);
+                  };
+                  img.src = stickerCropSrc;
+                }}
+                className="flex-1 h-10 rounded-full bg-[#8C0027] text-white text-xs font-bold"
+              >
+                Simpan Stiker
+              </button>
+            </div>
           </div>
         </div>
       )}
