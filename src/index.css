@@ -4,7 +4,7 @@
 @theme {
   --font-display: "Outfit", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 
   --color-maroon-50: #FDF0F3;
   --color-maroon-100: #FADCE4;
@@ -52,7 +52,7 @@
   --text: #F5F7FA;
   --text-muted: #AAB6C8;
   --border: #2A364B;
-  --brand: #C83A5A;
+  --brand: #8C0027;
   --success: #43C58B;
   --danger: #FF6B6B;
   --tolk-bg: var(--bg);

@@ -161,7 +161,7 @@ export function YouView({
               <div className="font-display font-extrabold text-base leading-tight truncate">
                 {user.displayName}
               </div>
-              <div className="text-[11px] font-mono text-[#FFF2A7] truncate">
+              <div className="text-xs font-medium text-white/85 truncate">
                 @{user.username}
                 {user.role !== 'user' ? ` · ${user.role.replace('_', ' ')}` : ''}
               </div>
