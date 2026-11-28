@@ -4,9 +4,11 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import WebSocket from 'ws';
 
 const PORT = 3199;
 const BASE = `http://127.0.0.1:${PORT}`;
+const WS_URL = `ws://127.0.0.1:${PORT}/ws`;
 
 let tmpDir;
 let serverProc;
@@ -68,7 +70,7 @@ test('health & readiness endpoints return ok/ready', async () => {
   assert.equal(ready.ready, true);
 });
 
-test('auth register, login, QR POST status, magic-byte upload, and logout', async () => {
+test('auth register, QR POST status, magic-byte upload, chat CRUD, WS auth, and admin RBAC', async () => {
   const username = `tester_${Date.now().toString(36)}`;
   const regRes = await fetch(`${BASE}/api/auth/register`, {
     method: 'POST',
@@ -125,6 +127,92 @@ test('auth register, login, QR POST status, magic-byte upload, and logout', asyn
     }),
   });
   assert.equal(goodUpload.status, 201);
+
+  // Create group chat, send message, edit message, delete message
+  const createChatRes = await fetch(`${BASE}/api/chats`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${regData.token}`,
+    },
+    body: JSON.stringify({ type: 'group', title: 'Test Group' }),
+  });
+  assert.equal(createChatRes.status, 201);
+  const { chat } = await createChatRes.json();
+  assert.ok(chat?.id);
+
+  const sendMsgRes = await fetch(`${BASE}/api/chats/${chat.id}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${regData.token}`,
+    },
+    body: JSON.stringify({ text: 'Halo dari test otomatis' }),
+  });
+  assert.equal(sendMsgRes.status, 201);
+  const { message } = await sendMsgRes.json();
+  assert.equal(message.text, 'Halo dari test otomatis');
+
+  const editMsgRes = await fetch(`${BASE}/api/messages/${message.id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${regData.token}`,
+    },
+    body: JSON.stringify({ chatId: chat.id, text: 'Pesan teredit' }),
+  });
+  assert.equal(editMsgRes.status, 200);
+
+  const delMsgRes = await fetch(`${BASE}/api/chats/${chat.id}/messages/${message.id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${regData.token}` },
+  });
+  assert.equal(delMsgRes.status, 200);
+
+  // WebSocket auth: valid token gets auth:ok, invalid token closes with 4001
+  await new Promise((resolve, reject) => {
+    const wsBad = new WebSocket(WS_URL);
+    wsBad.on('open', () => wsBad.send(JSON.stringify({ type: 'auth', token: 'invalid.token' })));
+    wsBad.on('close', (code) => {
+      assert.equal(code, 4001);
+      resolve();
+    });
+    wsBad.on('error', reject);
+  });
+
+  await new Promise((resolve, reject) => {
+    const wsGood = new WebSocket(WS_URL);
+    wsGood.on('open', () => wsGood.send(JSON.stringify({ type: 'auth', token: regData.token })));
+    wsGood.on('message', (raw) => {
+      const evt = JSON.parse(raw.toString());
+      if (evt.type === 'auth:ok') {
+        wsGood.close();
+        resolve();
+      }
+    });
+    wsGood.on('error', reject);
+  });
+
+  // Admin RBAC: non-admin rejected with 403, then claim succeeds and overview returns 200
+  const adminDeny = await fetch(`${BASE}/api/admin/overview`, {
+    headers: { Authorization: `Bearer ${regData.token}` },
+  });
+  assert.equal(adminDeny.status, 403);
+
+  const claimRes = await fetch(`${BASE}/api/admin/claim`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${regData.token}`,
+    },
+    body: JSON.stringify({ passcode: 'StrongAdminPass99!' }),
+  });
+  assert.equal(claimRes.status, 200);
+
+  const adminAllow = await fetch(`${BASE}/api/admin/overview`, {
+    headers: { Authorization: `Bearer ${regData.token}` },
+  });
+  assert.equal(adminAllow.status, 200);
 
   const logoutRes = await fetch(`${BASE}/api/auth/logout`, {
     method: 'POST',

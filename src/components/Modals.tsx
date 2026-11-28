@@ -88,6 +88,25 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   const { mounted, closing } = useAnimatedPresence(open, 200);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      prevFocusRef.current = document.activeElement as HTMLElement | null;
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && closable) {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', onKey);
+      return () => window.removeEventListener('keydown', onKey);
+    } else if (prevFocusRef.current) {
+      const el = prevFocusRef.current;
+      prevFocusRef.current = null;
+      window.setTimeout(() => el.focus?.(), 40);
+    }
+  }, [open, closable, onClose]);
+
   const edgeSwipe = useSwipeGesture({
     direction: 'right',
     edgeOnlyPx: 28,
@@ -98,6 +117,9 @@ function ModalShell({
   if (!mounted) return null;
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       style={{
         height: 'var(--app-height, 100dvh)',
         top: 'var(--vv-offset-top, 0px)',
@@ -131,7 +153,7 @@ function ModalShell({
                 type="button"
                 onClick={onClose}
                 aria-label="Kembali"
-                className="md:hidden h-10 w-10 rounded-full border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
+                className="md:hidden h-11 w-11 rounded-full border border-[#E6ECF2] dark:border-[#2A364B] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press flex items-center justify-center shrink-0"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -152,7 +174,7 @@ function ModalShell({
               type="button"
               onClick={onClose}
               aria-label="Tutup dialog"
-              className="hidden md:flex h-9 w-9 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press items-center justify-center shrink-0"
+              className="hidden md:flex h-11 w-11 rounded-full border border-[#E6ECF2] dark:border-[#324058] bg-[#F5F7FA] dark:bg-[#232D40] text-[#161B26] dark:text-[#F1F5F9] hover:bg-[#8C0027] hover:text-white brutal-press items-center justify-center shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
