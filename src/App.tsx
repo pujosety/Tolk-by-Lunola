@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Lock, MessageCircle, WifiOff } from 'lucide-react';
 import type {
   Attachment,
@@ -57,13 +57,46 @@ import {
   SettingsModal,
   StarredMessagesModal,
 } from './components/Modals';
-import {
-  CallOverlay,
-  type ActiveCallSession,
-} from './components/CallOverlay';
-import { AdminPanel } from './components/AdminPanel';
+import type { ActiveCallSession } from './components/CallOverlay';
 import { AuthScreen } from './components/AuthScreen';
-import { CameraCaptureModal } from './components/CameraCaptureModal';
+
+const CallOverlay = lazy(() =>
+  import('./components/CallOverlay').then((m) => ({ default: m.CallOverlay }))
+);
+const AdminPanel = lazy(() =>
+  import('./components/AdminPanel').then((m) => ({ default: m.AdminPanel }))
+);
+const CameraCaptureModal = lazy(() =>
+  import('./components/CameraCaptureModal').then((m) => ({ default: m.CameraCaptureModal }))
+);
+
+const OUTBOX_STORAGE_KEY = 'tolk_outbox_v1';
+interface OutboxItem {
+  clientMsgId: string;
+  chatId: string;
+  payload: Parameters<typeof api.sendMessage>[2];
+  queuedAt: number;
+}
+
+function readOutbox(): OutboxItem[] {
+  try {
+    const raw = localStorage.getItem(OUTBOX_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeOutbox(items: OutboxItem[]): void {
+  try {
+    if (items.length === 0) localStorage.removeItem(OUTBOX_STORAGE_KEY);
+    else localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(items.slice(-50)));
+  } catch {
+    // ignore storage quota errors
+  }
+}
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -1477,6 +1510,63 @@ export function App() {
     [token, showToast]
   );
 
+  const applySentMessage = useCallback(
+    (targetChatId: string, message: Message, scheduled: boolean) => {
+      if (scheduled) {
+        setScheduledByChat((prev) => ({
+          ...prev,
+          [targetChatId]: [...(prev[targetChatId] || []), message],
+        }));
+      } else {
+        setMessagesByChat((prev) => {
+          const list = prev[targetChatId] || [];
+          if (list.some((m) => m.id === message.id)) return prev;
+          return { ...prev, [targetChatId]: [...list, message] };
+        });
+        setChats((prev) =>
+          sortChats(
+            prev.map((c) => (c.id === targetChatId ? { ...c, lastMessage: message } : c))
+          )
+        );
+      }
+    },
+    []
+  );
+
+  const flushOutbox = useCallback(async () => {
+    if (!token || !navigator.onLine) return;
+    const queue = readOutbox();
+    if (queue.length === 0) return;
+    const remaining: OutboxItem[] = [];
+    let flushedCount = 0;
+    for (let i = 0; i < queue.length; i += 1) {
+      const item = queue[i];
+      try {
+        const { message, scheduled } = await api.sendMessage(token, item.chatId, {
+          ...item.payload,
+          clientMsgId: item.clientMsgId,
+        });
+        applySentMessage(item.chatId, message, scheduled);
+        flushedCount += 1;
+      } catch (err) {
+        if (!navigator.onLine || err instanceof TypeError) {
+          remaining.push(...queue.slice(i));
+          break;
+        }
+        // Drop permanently rejected items (e.g. 403/404) so they don't block the queue
+      }
+    }
+    writeOutbox(remaining);
+    if (flushedCount > 0) {
+      showToast(`${flushedCount} pesan tertunda berhasil terkirim.`);
+    }
+  }, [token, applySentMessage, showToast]);
+
+  useEffect(() => {
+    if (!token || !isOnline) return;
+    void flushOutbox();
+  }, [token, isOnline, flushOutbox]);
+
   const handleSendMessage = useCallback(
     async (payload: {
       text: string;
@@ -1492,29 +1582,50 @@ export function App() {
       location?: LocationPayload | null;
       sticker?: { id: string; label: string } | null;
       scheduledFor?: number | null;
+      clientMsgId?: string;
     }) => {
       if (!token || !activeChatId) return;
-      const { message, scheduled } = await api.sendMessage(token, activeChatId, payload);
-      if (scheduled) {
-        setScheduledByChat((prev) => ({
-          ...prev,
-          [activeChatId]: [...(prev[activeChatId] || []), message],
-        }));
-        showToast('Pesan dijadwalkan untuk dikirim otomatis.');
-      } else {
-        setMessagesByChat((prev) => {
-          const list = prev[activeChatId] || [];
-          if (list.some((m) => m.id === message.id)) return prev;
-          return { ...prev, [activeChatId]: [...list, message] };
+      const clientMsgId =
+        payload.clientMsgId ||
+        `cmsg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      const fullPayload = { ...payload, clientMsgId };
+
+      if (!navigator.onLine) {
+        const queue = readOutbox();
+        queue.push({
+          clientMsgId,
+          chatId: activeChatId,
+          payload: fullPayload,
+          queuedAt: Date.now(),
         });
-        setChats((prev) =>
-          sortChats(
-            prev.map((c) => (c.id === activeChatId ? { ...c, lastMessage: message } : c))
-          )
-        );
+        writeOutbox(queue);
+        showToast('Offline — pesan masuk antrean dan akan dikirim otomatis.');
+        return;
+      }
+
+      try {
+        const { message, scheduled } = await api.sendMessage(token, activeChatId, fullPayload);
+        applySentMessage(activeChatId, message, scheduled);
+        if (scheduled) {
+          showToast('Pesan dijadwalkan untuk dikirim otomatis.');
+        }
+      } catch (err) {
+        if (!navigator.onLine || err instanceof TypeError) {
+          const queue = readOutbox();
+          queue.push({
+            clientMsgId,
+            chatId: activeChatId,
+            payload: fullPayload,
+            queuedAt: Date.now(),
+          });
+          writeOutbox(queue);
+          showToast('Koneksi terputus — pesan masuk antrean otomatis.');
+          return;
+        }
+        throw err;
       }
     },
-    [token, activeChatId, showToast]
+    [token, activeChatId, applySentMessage, showToast]
   );
 
   const handleEditMessage = useCallback(
@@ -2584,57 +2695,65 @@ export function App() {
         }}
       />
 
-      <CallOverlay
-        session={callSession}
-        peerUser={callSession ? users[callSession.peerId] || null : null}
-        localStream={localStream}
-        remoteStream={remoteStream}
-        onAccept={() => void handleAcceptCall()}
-        onReject={handleRejectCall}
-        onEnd={handleEndCall}
-        onSwitchCamera={() => void handleSwitchCamera()}
-      />
+      <Suspense fallback={null}>
+        {callSession && (
+          <CallOverlay
+            session={callSession}
+            peerUser={users[callSession.peerId] || null}
+            localStream={localStream}
+            remoteStream={remoteStream}
+            onAccept={() => void handleAcceptCall()}
+            onReject={handleRejectCall}
+            onEnd={handleEndCall}
+            onSwitchCamera={() => void handleSwitchCamera()}
+          />
+        )}
 
-      <CameraCaptureModal
-        open={quickCameraOpen}
-        mode="photo"
-        onClose={() => setQuickCameraOpen(false)}
-        onCapturePhoto={async (file) => {
-          setQuickCameraOpen(false);
-          try {
-            const att = await handleUploadFile(file);
-            await handleCreateStory({
-              kind: 'image',
-              text: '',
-              bgColor: '#8C0027',
-              mediaUrl: att.url,
-              privacy: 'everyone',
-            });
-            setActiveMainTab('status');
-            showToast('Foto diterbitkan ke Status 24 jam.');
-          } catch (err) {
-            showToast(err instanceof Error ? err.message : 'Gagal mengunggah foto kamera.');
-          }
-        }}
-      />
+        {quickCameraOpen && (
+          <CameraCaptureModal
+            open={quickCameraOpen}
+            mode="photo"
+            onClose={() => setQuickCameraOpen(false)}
+            onCapturePhoto={async (file) => {
+              setQuickCameraOpen(false);
+              try {
+                const att = await handleUploadFile(file);
+                await handleCreateStory({
+                  kind: 'image',
+                  text: '',
+                  bgColor: '#8C0027',
+                  mediaUrl: att.url,
+                  privacy: 'everyone',
+                });
+                setActiveMainTab('status');
+                showToast('Foto diterbitkan ke Status 24 jam.');
+              } catch (err) {
+                showToast(err instanceof Error ? err.message : 'Gagal mengunggah foto kamera.');
+              }
+            }}
+          />
+        )}
 
-      <AdminPanel
-        open={adminPanelOpen}
-        token={token}
-        currentUser={currentUser}
-        adminAuthState={adminAuthState}
-        onClose={() => setAdminPanelOpen(false)}
-        onUserUpdated={(updated) => {
-          setCurrentUser(updated);
-          setUsers((prev) => ({ ...prev, [updated.id]: updated }));
-          setAdminAuthState((prev) => ({ ...prev, hasClaimedAdmin: true }));
-        }}
-        onSettingsUpdated={(updated) => {
-          setSettings(updated);
-          setMaxUploadMb(updated.maxUploadMb || 25);
-        }}
-        onNotify={showToast}
-      />
+        {adminPanelOpen && (
+          <AdminPanel
+            open={adminPanelOpen}
+            token={token}
+            currentUser={currentUser}
+            adminAuthState={adminAuthState}
+            onClose={() => setAdminPanelOpen(false)}
+            onUserUpdated={(updated) => {
+              setCurrentUser(updated);
+              setUsers((prev) => ({ ...prev, [updated.id]: updated }));
+              setAdminAuthState((prev) => ({ ...prev, hasClaimedAdmin: true }));
+            }}
+            onSettingsUpdated={(updated) => {
+              setSettings(updated);
+              setMaxUploadMb(updated.maxUploadMb || 25);
+            }}
+            onNotify={showToast}
+          />
+        )}
+      </Suspense>
 
       {/* In-App Push Notification Banner (tappable to jump to chat) */}
       {inAppNotif && (

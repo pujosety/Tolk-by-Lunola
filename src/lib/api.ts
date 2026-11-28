@@ -54,14 +54,16 @@ async function requestJson<T>(
     method?: string;
     token?: string | null;
     body?: unknown;
+    headers?: Record<string, string>;
   } = {}
 ): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(options.headers || {}) };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   if (options.token) headers['Authorization'] = `Bearer ${options.token}`;
 
   const res = await fetch(path, {
     method: options.method || 'GET',
+    credentials: 'include',
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
@@ -287,11 +289,17 @@ export const api = {
       location?: { lat: number; lng: number; label?: string } | null;
       sticker?: { id: string; label: string } | null;
       scheduledFor?: number | null;
+      clientMsgId?: string;
     }
   ) =>
     requestJson<{ message: Message; scheduled: boolean }>(
       `/api/chats/${encodeURIComponent(chatId)}/messages`,
-      { method: 'POST', token, body: payload }
+      {
+        method: 'POST',
+        token,
+        body: payload,
+        headers: payload.clientMsgId ? { 'Idempotency-Key': payload.clientMsgId } : undefined,
+      }
     ),
 
   editMessage: (token: string, messageId: string, chatId: string, text: string) =>

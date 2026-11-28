@@ -26,6 +26,15 @@ import type {
   UserPrivacySettings,
   UserProfile,
 } from './src/types/chat.ts';
+import {
+  SESSION_COOKIE_NAME,
+  clearSessionCookie,
+  hashSecret,
+  parseCookies,
+  setSessionCookie,
+  verifyMagicBytes,
+  verifySecret,
+} from './server/security.ts';
 
 const PORT = Number(process.env.PORT || 3000);
 const ROOT_DIR = fs.existsSync('/app/dist/index.html') ? '/app' : process.cwd();
@@ -252,19 +261,6 @@ function pickColor(seed: string): string {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-
-function hashSecret(secret: string, salt?: string): { hash: string; salt: string } {
-  const actualSalt = salt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(secret, actualSalt, 64).toString('hex');
-  return { hash, salt: actualSalt };
-}
-
-function verifySecret(secret: string, storedHash: string, storedSalt: string): boolean {
-  const derived = crypto.scryptSync(secret, storedSalt, 64);
-  const target = Buffer.from(storedHash, 'hex');
-  if (derived.length !== target.length) return false;
-  return crypto.timingSafeEqual(derived, target);
 }
 
 function signToken(payloadObj: { uid: string; sid: string }): string {
@@ -1138,12 +1134,14 @@ interface AuthedRequest extends Request {
 
 function requireAuth(req: AuthedRequest, res: Response, next: NextFunction): void {
   const header = req.headers.authorization || '';
-  const match = /^Bearer\s+(.+)$/i.exec(header);
-  if (!match) {
+  const bearerMatch = /^Bearer\s+(.+)$/i.exec(header);
+  const cookieToken = parseCookies(req.headers.cookie)[SESSION_COOKIE_NAME];
+  const rawToken = bearerMatch?.[1] || cookieToken || '';
+  if (!rawToken) {
     res.status(401).json({ error: 'Sesi tidak valid. Silakan masuk kembali.' });
     return;
   }
-  const verified = verifyToken(match[1]);
+  const verified = verifyToken(rawToken);
   if (!verified || !store.users[verified.uid] || !store.sessions[verified.sid]) {
     res.status(401).json({ error: 'Sesi telah dicabut atau kedaluwarsa.' });
     return;
@@ -1487,6 +1485,7 @@ async function startServer(): Promise<void> {
     const { token } = createSessionForUser(userId, req);
     saveStore(store);
 
+    setSessionCookie(res, token, IS_PROD);
     broadcastAll({ type: 'user:updated', user: toPublicUser(newUser) });
     res.status(201).json({ token, user: toPublicUser(newUser, true) });
   });
@@ -1533,6 +1532,7 @@ async function startServer(): Promise<void> {
     const { token } = createSessionForUser(user.id, req);
     saveStore(store);
 
+    setSessionCookie(res, token, IS_PROD);
     res.json({ token, user: toPublicUser(user, true) });
   });
 
@@ -1640,6 +1640,7 @@ async function startServer(): Promise<void> {
     ensureDefaultChatsForUser(user.id);
     const { token } = createSessionForUser(user.id, req);
     saveStore(store);
+    setSessionCookie(res, token, IS_PROD);
     res.json({ status: 'approved', token, user: toPublicUser(user, true) });
   });
 
@@ -1684,6 +1685,7 @@ async function startServer(): Promise<void> {
     delete store.sessions[sid];
     saveStore(store);
     revokeSessionSockets(sid);
+    clearSessionCookie(res, IS_PROD);
     res.json({ ok: true });
   });
 
@@ -2373,6 +2375,11 @@ async function startServer(): Promise<void> {
     res.json({ messages: activeMsgs, scheduledMessages: scheduledForChat });
   });
 
+  const idempotencyCache = new Map<
+    string,
+    { message: Message; scheduled: boolean; expiresAt: number }
+  >();
+
   // Send or Schedule a Message
   app.post('/api/chats/:chatId/messages', requireAuth, (req: AuthedRequest, res) => {
     const userId = req.userId!;
@@ -2399,6 +2406,20 @@ async function startServer(): Promise<void> {
     if ((chat.type === 'channel' || chat.adminOnlyPost) && !isAdminOrMod) {
       res.status(403).json({ error: 'Hanya admin yang dapat mengirim pesan di sini.' });
       return;
+    }
+
+    const rawIdemKey =
+      (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) ||
+      (typeof req.body?.clientMsgId === 'string' ? req.body.clientMsgId : '');
+    const idemKey = rawIdemKey.trim().slice(0, 128);
+    const idemCacheKey = idemKey ? `${userId}:${chat.id}:${idemKey}` : '';
+    if (idemCacheKey) {
+      const cached = idempotencyCache.get(idemCacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        res.status(200).json({ message: cached.message, scheduled: cached.scheduled });
+        return;
+      }
+      if (cached) idempotencyCache.delete(idemCacheKey);
     }
 
     const text = sanitizeText(req.body?.text, 4000);
@@ -2600,9 +2621,25 @@ async function startServer(): Promise<void> {
       expiresAt: chat.selfDestructSec > 0 ? (scheduledFor || now) + chat.selfDestructSec * 1000 : null,
     };
 
+    const storeIdempotency = (scheduled: boolean) => {
+      if (!idemCacheKey) return;
+      idempotencyCache.set(idemCacheKey, {
+        message,
+        scheduled,
+        expiresAt: Date.now() + 5 * 60_000,
+      });
+      if (idempotencyCache.size > 2000) {
+        const cutoff = Date.now();
+        for (const [k, v] of idempotencyCache) {
+          if (v.expiresAt <= cutoff) idempotencyCache.delete(k);
+        }
+      }
+    };
+
     if (scheduledFor) {
       store.scheduledMessages.push(message);
       saveStore(store);
+      storeIdempotency(true);
       res.status(201).json({ message, scheduled: true });
       return;
     }
@@ -2611,6 +2648,7 @@ async function startServer(): Promise<void> {
     store.messages[chat.id].push(message);
     store.users[userId].lastReadByChat[chat.id] = now;
     saveStore(store);
+    storeIdempotency(false);
 
     broadcastToChat(chat, { type: 'message:created', message });
     sendPushForChatMessage(chat, message);
@@ -3430,36 +3468,6 @@ async function startServer(): Promise<void> {
     saveStore(store);
     res.status(201).json({ report });
   });
-
-  function verifyMagicBytes(buf: Buffer, mime: string): boolean {
-    if (buf.length < 4) return mime.startsWith('text/') || mime === 'application/json';
-    const b0 = buf[0], b1 = buf[1], b2 = buf[2], b3 = buf[3];
-    if (mime === 'image/png') return b0 === 0x89 && b1 === 0x50 && b2 === 0x4e && b3 === 0x47;
-    if (mime === 'image/jpeg' || mime === 'image/jpg') return b0 === 0xff && b1 === 0xd8 && b2 === 0xff;
-    if (mime === 'image/gif') return b0 === 0x47 && b1 === 0x49 && b2 === 0x46 && b3 === 0x38;
-    if (mime === 'image/webp') {
-      return buf.length >= 12 && buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WEBP';
-    }
-    if (mime === 'application/pdf') return buf.subarray(0, 4).toString('ascii') === '%PDF';
-    if (mime === 'application/zip') return b0 === 0x50 && b1 === 0x4b && (b2 === 0x03 || b2 === 0x05 || b2 === 0x07);
-    if (mime === 'video/mp4' || mime === 'audio/mp4' || mime === 'audio/x-m4a') {
-      return buf.length >= 8 && buf.subarray(4, 8).toString('ascii') === 'ftyp';
-    }
-    if (mime === 'video/webm' || mime === 'audio/webm') {
-      return b0 === 0x1a && b1 === 0x45 && b2 === 0xdf && b3 === 0xa3;
-    }
-    if (mime === 'audio/ogg') return buf.subarray(0, 4).toString('ascii') === 'OggS';
-    if (mime === 'audio/mpeg' || mime === 'audio/mp3') {
-      return (b0 === 0x49 && b1 === 0x44 && b2 === 0x33) || (b0 === 0xff && (b1 & 0xe0) === 0xe0);
-    }
-    if (mime === 'audio/wav' || mime === 'audio/x-wav') {
-      return buf.length >= 12 && buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WAVE';
-    }
-    if (mime.startsWith('text/') || mime === 'application/json') {
-      return !buf.subarray(0, Math.min(buf.length, 512)).includes(0);
-    }
-    return true;
-  }
 
   // Safe Media & Document Upload Endpoint
   app.post('/api/upload', requireAuth, (req: AuthedRequest, res) => {

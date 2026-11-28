@@ -82,6 +82,13 @@ test('auth register, QR POST status, magic-byte upload, chat CRUD, WS auth, and 
     }),
   });
   assert.equal(regRes.status, 201);
+  const setCookie = regRes.headers.get('set-cookie') || '';
+  assert.ok(setCookie.includes('tolk_session=') && setCookie.includes('HttpOnly'));
+  const sessionCookie = setCookie.split(';')[0];
+  const meCookieRes = await fetch(`${BASE}/api/auth/me`, {
+    headers: { Cookie: sessionCookie },
+  });
+  assert.equal(meCookieRes.status, 200);
   const regData = await regRes.json();
   assert.ok(regData.token);
 
@@ -141,17 +148,32 @@ test('auth register, QR POST status, magic-byte upload, chat CRUD, WS auth, and 
   const { chat } = await createChatRes.json();
   assert.ok(chat?.id);
 
+  const idemKey = `idem_${Date.now().toString(36)}`;
   const sendMsgRes = await fetch(`${BASE}/api/chats/${chat.id}/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${regData.token}`,
+      'Idempotency-Key': idemKey,
     },
     body: JSON.stringify({ text: 'Halo dari test otomatis' }),
   });
   assert.equal(sendMsgRes.status, 201);
   const { message } = await sendMsgRes.json();
   assert.equal(message.text, 'Halo dari test otomatis');
+
+  const dupMsgRes = await fetch(`${BASE}/api/chats/${chat.id}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${regData.token}`,
+      'Idempotency-Key': idemKey,
+    },
+    body: JSON.stringify({ text: 'Halo dari test otomatis' }),
+  });
+  assert.equal(dupMsgRes.status, 200);
+  const { message: dupMessage } = await dupMsgRes.json();
+  assert.equal(dupMessage.id, message.id);
 
   const editMsgRes = await fetch(`${BASE}/api/messages/${message.id}`, {
     method: 'PATCH',
